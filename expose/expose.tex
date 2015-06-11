@@ -31,7 +31,7 @@ Using NEST software, the BBP Neurorobotics team was then able to simulate a
 scaled-down model of the mouse brain on a laptop computer, paving the way towards
 making a mouse brain interact with an environment. A full-scale implementation of
 the mouse brain model is possible, but requires the use of super-computers.
-The current functionality of NEST supports  generation of large neuronal networks
+The current functionality of NEST supports  generating large neuronal networks
 on a super computer based an random distributions. For the mouse brain model
 exact point neurons and connections information are available. The information should
 be used to load the mouse brain model to NEST. Therefore the network creation
@@ -39,19 +39,19 @@ functionality of NEST has to be extended to support efficient parallel IO.
 Currently the point-neuron model of the mouse brain is stored in HDF5 files.
 The underlaying data structure was created to load the data to laptop computers.
 Considering super-computers the data structure of the files should be
-validated in respect to efficiency and possibly adapted to the new requirements.
+validated in respect to efficiency and potentially adapted to new requirements.
 
 %The BBP HPC team has extensive knowledge on developing and optimizing applications for large core counts.
 
 \section{NEST implementation}
 
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
-an user interface based on an own description language SLI and  and a Python interface.
+an user interface based on an own description language \emph{SLI} and  and a Python interface.
 The new use case shell be integrated into the standard work flow of NEST.
 Besides the functionality in \emph{C++} the interfaces have to be extended.
 The difficulties of the network generation is based on a difference in 
 the NEST internal data structure and the data delivered by the Allien Institute.
-Connection information contains target and source neurons besides bio chemical
+Connection information contains target and source neurons besides biochemical
 information of the synapses. Because of the in vitro injection methods the
 connection information maps the synapse from the source to the target neurons.
 For multi process simulations NEST distributes all neurons based on a modulo function 
