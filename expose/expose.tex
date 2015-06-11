@@ -1,0 +1,85 @@
+\documentclass[a4paper]{article}
+ 
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subfigure}
+\usepackage{epstopdf}
+\usepackage[ansinew]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+%\setlength{\oddsidemargin}{0cm}
+%\setlength{\evensidemargin}{0cm}
+%\setlength{\topmargin}{0cm}
+
+\usepackage[]{algorithm2e}
+
+\usepackage{a4wide}
+
+\title{Mouse Brain Model Close to Real Time Simulation - Expose}
+\author{Till Schumann}
+%\date{}
+
+\begin{document}
+   \maketitle
+
+
+\section{Introduction}
+In 2014, the BBP Neurorobotics team successfully produced a point-neuron model
+of a mouse brain from data provided by the Allen Institute for Brain Science.
+Using NEST software, the BBP Neurorobotics team was then able to simulate a
+scaled-down model of the mouse brain on a laptop computer, paving the way towards
+making a mouse brain interact with an environment. A full-scale implementation of
+the mouse brain model is possible, but requires the use of super-computers.
+The current functionality of NEST supports  generation of large neuronal networks
+on a super computer based an random distributions. For the mouse brain model
+exact point neurons and connections information are available. The information should
+be used to load the mouse brain model to NEST. Therefore the network creation
+functionality of NEST has to be extended to support efficient parallel IO.
+Currently the point-neuron model of the mouse brain is stored in HDF5 files.
+The underlaying data structure was created to load the data to laptop computers.
+Considering super-computers the data structure of the files should be
+validated in respect to efficiency and possibly adapted to the new requirements.
+
+%The BBP HPC team has extensive knowledge on developing and optimizing applications for large core counts.
+
+\section{NEST implementation}
+
+The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
+an user interface based on an own description language SLI and  and a Python interface.
+The new use case shell be integrated into the standard work flow of NEST.
+Besides the functionality in \emph{C++} the interfaces have to be extended.
+The difficulties of the network generation is based on a difference in 
+the NEST internal data structure and the data delivered by the Allien Institute.
+Connection information contains target and source neurons besides bio chemical
+information of the synapses. Because of the in vitro injection methods the
+connection information maps the synapse from the source to the target neurons.
+For multi process simulations NEST distributes all neurons based on a modulo function 
+to the processes. Because of memory optimizations the synapses are stored on the
+post synaptic process. Which means that the connection information is stored
+on the process, where the target neuron is located. Therefore a transformation of the given data is
+necessary. Preprocessing of the input data should be avoided to capture future use cases.
+The resulting implementation shell load the connection information in parallel,
+distribute the synapse information to the post synaptic node and store it in
+the NEST data structure.
+
+  
+
+%In 2014, they extracted the core functionalities of NEURON simulation software into a new software referred as coreNeuron, reducing the number of lines of the code from 300k to 15k. In addition, they were able %%to greatly improve the performance of the new implementation by using OpenMP, full vectorization of the kernels, reaching almost maximum performance of the full JUQUEEN system (458752 cores, 29360128 threads).
+
+
+\section{Summary}
+This master thesis aims at producing a full-scale point-neuron model of the mouse
+brain, based on the preparatory work of the Neurorobotics team. To this end, the
+current tool-chain will be ported to the BlueGene IV system. To reduce time to
+solution, optimization opportunities will be investigated and implemented whenever
+possible.
+Finally, we expect this master thesis to support the definition of requirements for the
+Human Brain Project HPC platform, both in terms of networking and future system design.
+
+\newpage
+\bibliographystyle{plain}
+
+\bibliography{./expose}
+
+\end{document}
