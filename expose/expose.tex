@@ -55,13 +55,30 @@ Connection information contains target and source neurons besides biochemical
 information of the synapses. Because of the in vitro injection methods the
 connection information maps the synapse from the source to the target neurons.
 For multi process simulations NEST distributes all neurons based on a modulo function 
-to the processes. Because of memory optimizations the synapses are stored on the
+to the processes. Because of memory optimizations the synapses are only stored on the
 post synaptic process. Which means that the connection information is stored
 on the process, where the target neuron is located. Therefore a transformation of the given data is
-necessary. Preprocessing of the input data should be avoided to capture future use cases.
-The resulting implementation shell load the connection information in parallel,
+necessary. Preprocessing of the input data should be avoided as far as possible to capture
+future use cases.
+The resulting implementation shell load the connection information efficiently in parallel,
 distribute the synapse information to the post synaptic node and store it in
 the NEST data structure.
+Further requirements of the implementation are an efficient use of the the available resources as
+memory and and computation power. As the implementation runs during the build up process of the
+NEST network, the implementation has to handle variations of the available resources. 
+
+\newpage
+\section{Road map}
+\begin{enumerate}
+    \item Analyze existing code of scaled-down model of the mouse brain from the Neurorobotics team
+    \item Define requirements of the new implementation in terms of memory consumption and computation power
+    \item Define future requirements to mouse, rat and cat brain models using NEST
+    \item Validate and eventually adapt HDF5 file format
+    \item Develop algorithm to distribute connection information
+    \item Implement Algorithm and test on the Blue Gene Q
+    \item Integrate Algorithm in the NEST work flow
+    \item Optimization of code execution to reduce time to solution of mouse brain model on the Blue Gene Q
+\end{enumerate}
 
   
 
@@ -77,9 +94,9 @@ possible.
 Finally, we expect this master thesis to support the definition of requirements for the
 Human Brain Project HPC platform, both in terms of networking and future system design.
 
-\newpage
-\bibliographystyle{plain}
+%\newpage
+%\bibliographystyle{plain}
 
-\bibliography{./expose}
+%\bibliography{./expose}
 
 \end{document}
