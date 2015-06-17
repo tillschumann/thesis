@@ -24,75 +24,62 @@
    \maketitle
 
 
-\section{Introduction}
-In 2014, the BBP Neurorobotics team successfully produced a point-neuron model
-of a mouse brain from data provided by the Allen Institute for Brain Science.
+\section{Scope}
+In 2014, the Neurorobotics team of the Blue Brain Project (BBP), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
+of a mouse brain from data provided by the Allen Institute for Brain Science (Provide reference of Allen Institute).
 Using NEST software, the BBP Neurorobotics team was then able to simulate a
 scaled-down model of the mouse brain on a laptop computer, paving the way towards
 making a mouse brain interact with an environment. A full-scale implementation of
-the mouse brain model is possible, but requires the use of super-computers.
+the mouse brain model is possible, but requires the of large scale resources with low latency requirements only modern supercomputers can today provide.
 The current functionality of NEST supports  generating large neuronal networks
-on a super computer based an random distributions. For the mouse brain model
-exact point neurons and connections information are available. The information should
-be used to load the mouse brain model to NEST. Therefore the network creation
-functionality of NEST has to be extended to support efficient parallel IO.
-Currently the point-neuron model of the mouse brain is stored in HDF5 files.
-The underlaying data structure was created to load the data to laptop computers.
-Considering super-computers the data structure of the files should be
-validated in respect to efficiency and potentially adapted to new requirements.
+on a super computer based an random distributions but not yet from experimental data contained in brain atlases. 
+We suggest as part of this thesis to first develop the means to fully model a mouse brain from experimental data using NEST software on available supercomputing architectures.
+Building from this experience, we wish to work on accelerating NEST computation up to real time so that the study of mouse brain plasticity becomes
+tractable. Leveraging from this new set of functionalities, we plan to derive network requirements for the HBP to drive the design
+of the HBP network accross supercomputing centers so that both neurorobotics and interactive supercomputing applications can be demonstrated.    
 
-%The BBP HPC team has extensive knowledge on developing and optimizing applications for large core counts.
-
-\section{NEST implementation}
+\section{NEST implementation details}
 
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
 an user interface based on an own description language \emph{SLI} and  and a Python interface.
-The new use case shell be integrated into the standard work flow of NEST.
+The new use case shall be integrated into the standard work flow of NEST.
 Besides the functionality in \emph{C++} the interfaces have to be extended.
 The difficulties of the network generation is based on a difference in 
-the NEST internal data structure and the data delivered by the Allien Institute.
+the NEST internal data structure and the data delivered by the Allen Institute.
 Connection information contains target and source neurons besides biochemical
 information of the synapses. Because of the in vitro injection methods the
 connection information maps the synapse from the source to the target neurons.
 For multi process simulations NEST distributes all neurons based on a modulo function 
 to the processes. Because of memory optimizations the synapses are only stored on the
-post synaptic process. Which means that the connection information is stored
+post synaptic process. This means that the connection information is stored
 on the process, where the target neuron is located. Therefore a transformation of the given data is
 necessary. Preprocessing of the input data should be avoided as far as possible to capture
 future use cases.
-The resulting implementation shell load the connection information efficiently in parallel,
+The resulting implementation shall load the connection information efficiently in parallel,
 distribute the synapse information to the post synaptic node and store it in
 the NEST data structure.
 Further requirements of the implementation are an efficient use of the available resources as
-memory and computation power. As the implementation runs during the build up process of the
-NEST network, the implementation has to handle variations of the available resources. 
+memory and computation power. 
 
-\newpage
-\section{Road map}
+\section{Roadmap}
+We expect to implement the following roadmap during this master thesis.
 \begin{enumerate}
     \item Analyze existing code of scaled-down model of the mouse brain from the Neurorobotics team
     \item Define requirements of the new implementation in terms of memory consumption and computation power
     \item Define future requirements to mouse, rat and cat brain models using NEST
-    \item Validate and eventually adapt HDF5 file format
+    \item Validate and possibly adapt HDF5 file format
     \item Develop algorithm to distribute connection information
-    \item Implement Algorithm and test on the Blue Gene Q
+    \item Implement Algorithm and test on the IBM Blue Gene/Q
     \item Integrate Algorithm in the NEST work flow
-    \item Optimization of code execution to reduce time to solution of mouse brain model on the Blue Gene Q
+    \item Optimization of code execution to reduce time to solution of mouse brain model on the IBM Blue Gene/Q
+    \item Demonstration of effectivness of the implementation by modeling a full mouse brain on IBM Blue Gene/Q
+    \Item Integration of the built model to other application such as neurorobotics and interactive supercomputing at large scale
 \end{enumerate}
 
   
 
 %In 2014, they extracted the core functionalities of NEURON simulation software into a new software referred as coreNeuron, reducing the number of lines of the code from 300k to 15k. In addition, they were able %%to greatly improve the performance of the new implementation by using OpenMP, full vectorization of the kernels, reaching almost maximum performance of the full JUQUEEN system (458752 cores, 29360128 threads).
 
-
-\section{Summary}
-This master thesis aims at producing a full-scale point-neuron model of the mouse
-brain, based on the preparatory work of the Neurorobotics team. To this end, the
-current tool-chain will be ported to the BlueGene IV system. To reduce time to
-solution, optimization opportunities will be investigated and implemented whenever
-possible.
-Finally, we expect this master thesis to support the definition of requirements for the
-Human Brain Project HPC platform, both in terms of networking and future system design.
 
 %\newpage
 %\bibliographystyle{plain}
