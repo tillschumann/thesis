@@ -16,7 +16,8 @@
 
 \usepackage{a4wide}
 
-\title{Mouse Brain Model Close to Real Time Simulation - Expose}
+\title{Porting Allen mouse brain model to IBM Blue Gene/Q - Expose}
+
 \author{Till Schumann}
 %\date{}
 
@@ -65,16 +66,15 @@ memory and computation power.
 \section{Roadmap}
 We expect to implement the following roadmap during this master thesis.
 \begin{enumerate}
-    \item Analyze existing code of scaled-down model of the mouse brain from the Neurorobotics team
-    \item Define requirements of the new implementation in terms of memory consumption and computation power
-    \item Define future requirements to mouse, rat and cat brain models using NEST
-    \item Validate and possibly adapt HDF5 file format
-    \item Develop algorithm to distribute connection information
-    \item Implement Algorithm and test on the IBM Blue Gene/Q
-    \item Integrate Algorithm in the NEST work flow
-    \item Optimization of code execution to reduce time to solution of mouse brain model on the IBM Blue Gene/Q
-    \item Demonstration of effectiveness of the implementation by modeling a full mouse brain on IBM Blue Gene/Q
-    \item Integration of the built model to other application such as neurorobotics and interactive supercomputing at large scale
+    \item Analysis of existing NEST implementation and scaled-down model of the mouse brain built by BBP Neurorobotics team
+	\item Definition of work flow and requirements (algorithm complexity) to support loading scaled-down mouse brain model on HPC systems
+	\item Implementation of prototype algorithm to support loading and distributing neuron data and connection in parallel
+	\item Validate and benchmark prototype implementation on IBM Blue Gene/Q up to 4 racks (4096 nodes)
+	\item Integration of prototype implementation into NEST software
+	\item Improvement of user experience by integration of functionality into NEST python interface
+	\item Integration of prototype workflow with visualization pipelines 
+	\item Investigation of metrics and  methods to provide useful insights to scientific users
+
 \end{enumerate}
 
   

@@ -1,0 +1,109 @@
+\documentclass[a4paper]{article}
+ 
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subfigure}
+\usepackage{epstopdf}
+\usepackage[ansinew]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+%\setlength{\oddsidemargin}{0cm}
+%\setlength{\evensidemargin}{0cm}
+%\setlength{\topmargin}{0cm}
+
+\usepackage[]{algorithm2e}
+
+\usepackage{a4wide}
+
+\title{ Port Potjans2014 params to Allen mouse brain model }
+\author{Till Schumann}
+%\date{}
+
+\begin{document}
+   \maketitle
+
+\section{Get Params}
+
+	\subsection{Neurons}
+	PyNN startup script is given: \url{https://github.com/NeuralEnsemble/PyNN/tree/master/examples/Potjans2014}.
+	General point neuron settings:
+	
+	\lstset{language=Python,caption={point neuron settings},label=pointneuron}
+	\begin{lstlisting}
+		g = -4.
+		neuron_params = {
+		'cm' : 0.25, # nF
+		'i_offset' : 0.0, # nA
+		'tau_m' : 10.0, # ms
+		'tau_refrac': 2.0, # ms
+		'tau_syn_E' : 0.5, # ms
+		'tau_syn_I' : 0.5, # ms
+		'v_reset' : -65.0, # mV
+		'v_rest' : -65.0, # mV
+		'v_thresh' : -50.0 # mV
+		}
+	\end{lstlisting}
+	
+	%If a DC current is applied to all neurons it can be calculated via:
+	%\begin{equation}
+	%I_e = bg_{rate} * K_{ext} * w_{mean} * tau_{syn_{E}} / 1000
+	%\end{equation}
+	%For inhibitory neurons $K_{ext}$ is around $1850$ and for excitatory neurons it is around $2150$.
+	%$bg_{rate}$ is equal to $8 spikes/s$.
+
+	
+	\lstset{language=Python,caption={IF\_curr\_exp},label=ifcurrexp}
+	\begin{lstlisting}
+		class IF_curr_exp(cells.IF_curr_exp):
+    """
+    Leaky integrate and fire model with fixed threshold and
+    decaying-exponential post-synaptic current. (Separate synaptic currents for
+    excitatory and inhibitory synapses.
+    """
+    
+    translations = common.build_translations(
+        ('v_rest',     'E_L'),
+        ('v_reset',    'V_reset'),
+        ('cm',         'C_m',      1000.0), # C_m is in pF, cm in nF
+        ('tau_m',      'tau_m'),
+        ('tau_refrac', 't_ref_abs',  "max(get_time_step(), tau_refrac)", "t_ref_abs"),
+        ('tau_syn_E',  'tau_syn_ex'),
+        ('tau_syn_I',  'tau_syn_in'),
+        ('v_thresh',   'V_th'),
+        ('i_offset',   'I_e',      1000.0), # I_e is in pA, i_offset in nA
+        ('v_init',     'v_init'),
+    )
+    nest_name = 'iaf_psc_exp'
+	\end{lstlisting}
+	
+	\subsection{Synapses}
+	Static synapses are used.
+	\lstset{language=Python,caption={IF\_curr\_exp},label=ifcurrexp}
+	\begin{lstlisting}
+	#Mean and standard deviation of initial membrane potential distribution
+	V0_mean = -58. # mV
+	V0_sd = 5. # mV
+	
+	Background rate per synapse
+	bg_rate = 8. # spikes/s	
+	
+	Mean synaptic weight for exitatory projections:
+	w_mean = 87.8e-3 # nA
+	w_ext = 87.8e-3 # nA
+	w_rel = 0.1
+	
+	# Means and standard deviations of delays from given source populations (ms)
+	d_mean = {'E': 1.5, 'I': 0.75}
+	d_sd = {'E': 0.75, 'I': 0.375}
+	\end{lstlisting}
+	
+		
+	
+	
+
+
+
+
+\end{document}

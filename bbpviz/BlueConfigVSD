@@ -1,0 +1,17 @@
+Run Default
+{
+        Date    19.2.15
+        Time    15:18:00
+          Version 1
+           Prefix /gpfs/bbp.cscs.ch/home/schumann/nestio/viz/bbpviz
+      CircuitPath /gpfs/bbp.cscs.ch/home/schumann/nestio/viz/bbpviz
+          nrnPath /gpfs/bbp.cscs.ch/home/schumann/nestio/viz/bbpviz
+       CurrentDir /gpfs/bbp.cscs.ch/home/schumann/nestio/viz/bbpviz
+       OutputRoot /gpfs/bbp.cscs.ch/home/schumann/nestio/viz/bbpviz
+    CircuitTarget Mosaic
+          RunMode LoadBalance
+         Duration 100
+               Dt 0.1
+       SpikesPath /gpfs/bbp.cscs.ch/home/schumann/nestio/viz/bbpviz/data.bsr
+}
+

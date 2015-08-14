@@ -1,0 +1,48 @@
+\documentclass[a4paper]{article}
+ 
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subfigure}
+\usepackage{epstopdf}
+\usepackage[ansinew]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+%\setlength{\oddsidemargin}{0cm}
+%\setlength{\evensidemargin}{0cm}
+%\setlength{\topmargin}{0cm}
+
+\usepackage[]{algorithm2e}
+
+\usepackage{a4wide}
+
+\title{Visualize Allen mouse brain model}
+\author{BBP}
+%\date{}
+
+\begin{document}
+   \maketitle
+
+\section{Introduction}
+The Neurorobotics group combined data from the Allen institute for Brain science to produce a point-neuron model of the mouse brain.
+Running this model in NEST is a first try to simulate a full characterized mouse brain model based on the Allen Brain Atlas.
+To make it run NEST has to be adapted to different strategies of loading data.
+Further new visualization strategies have to be investigated to analyze the behavior of this model.
+Besides the large amount of data which has to be processed, the data has to be streamed or stored to disk for processing,
+because the simulation by itself requires full computation and memory capacity of the cluster nodes.
+\newline
+The 	innovation of the full characterized mouse brain model is the integration of the point-neuron model with real coordinate information based on in vitro measurements. Additionally synapse information are given for all neurons.
+Thus an exact geometrical representation of the point-neuron model in a 3D manner is possible.
+The button-up approach makes a mapping of single simulated neuron quantities on the geometrical representation possible: 
+E.g. mapping spiking activity on the 3D representation allows to visualize dynamic spiking propagation on different scales.
+Thus you could realize a zoom from the whole brain model down to single neurons.
+As the point neuron model is given a 3D representation could be rendered ones.
+
+
+
+
+%\bibliographystyle{plain}
+
+%\bibliography{./Viz_AllenMBM}
+
+\end{document}
