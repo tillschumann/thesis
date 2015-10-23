@@ -2,10 +2,11 @@ import numpy as np
 import csv
 import matplotlib.pyplot as plt
 from os import listdir
+import glob
+import sys
 
-
-data=np.array(np.zeros(2289097),dtype=object)
-neurons = np.zeros(2289097).astype('int32')
+data=np.array(np.zeros(62160),dtype=object)
+neurons = np.zeros(62160).astype('int32')
 
 
 data_i=0
@@ -16,10 +17,10 @@ RANK=872
 
 cn=0
 
-for f in listdir('nest_output5'):
+for f in glob.glob(sys.argv[1]):
   if 'spike' in f:
     print f
-    traceFile=csv.reader(open('nest_output5/%s'%f,"rb"),delimiter='\t')
+    traceFile=csv.reader(open(f,"rb"),delimiter='\t')
 
 
     x=np.array(list(traceFile))

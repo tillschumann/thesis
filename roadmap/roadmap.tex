@@ -101,6 +101,14 @@ In the current implementation the NEST connect call takes around $25 \mu s$ per 
 	\label{Mikesformatcon}
 \end{figure}
 
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{NESTconnectWthreads.eps}
+	\caption{Multi threaded Connect vs sequential Connect.
+	Measured for petitsouris model with 10 nodes and 8 threads.}
+	\label{Mikesformatcon}
+\end{figure}
+
 
 \subsection{Thread scheduling}
 The current implementation uses mutexes to realize a task queue which runs in parallel on four different threads using four different datasets. So each thread handles one dataset. After a task is done on a thread the dataset is send in a round robin fashion to the next thread in the queue (see \ref{sec:currentImpl}). The chosen strategy works fine on the BGQ, but violates the OpenMP standard.
