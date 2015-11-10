@@ -25,6 +25,19 @@
 
 \section{Introduction}
 \subsection{Brain Simulations}
+	\begin{itemize}
+      \item Short introduction to neuroscience 
+      \item Short overview over simulators: NEST, NEURON, STEPS
+      \item Possibilities/limits of simulations
+   \end{itemize}
+   
+\subsection{Virtual mouse}
+	\begin{itemize}
+      \item Available data
+      \item Usability
+      \item 
+   \end{itemize}   
+
 \subsection{Allen Brain Atlas}
    Allen Institute for Brain Science provides a high-resolution map of neural connections in the mouse brain.
    It contains several injection experiments. The provided datasets of the experiments 
@@ -59,9 +72,17 @@ Models of information processing e.g. in the visual or auditory cortex of mammal
 \subsection{Visualization}
 To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed, mostly. Different types of methods allow to extract stochastic characteristics from spike trains. Besides this visualization of the spike trains taking their location into account, allows to create a video, which shows the activity of the neuronal network.
 
+
+\subsection{Available resources}   
+The Blue Brain 4 system is a set of tightly integrated high-performance resources. It is comprised of a four-rack IBM BlueGene/Q system 65 536 PowerPC A2 1.6 GHz cores for computing, providing a peak performance of 839 TFlops 65 TB of RAM, a shared parallel filesystem based on GPFS / GSS of a capacity in excess of 4 petabytes and a bandwidth exceeding 40GB/s A FDR Infiniband network Job scheduling across the system's components is performed by Slurm. 
+
 \section{Methods}
 \subsection{Interfaces}
 \subsection{Circuit generation}
+\begin{itemize}
+      \item Create point circuit from available data
+      \item Fuse data from the Allen Brain Atlas and the BBP recipe
+   \end{itemize}
 
 \subsubsection{Long range connections}
 A set of experiments is used to connect neurons located at the injections
@@ -120,11 +141,37 @@ Hence we have to load the whole circuit from file.
 Build-up a large scale neuronal network from point to point connectivity results in new requirements for data processing and the data format. The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
 Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to the same file.
 
+
+
+\section{Memory consumption of NEST}
+The memory usage of the newest NEST release 2.6.0 can be calculated with following equation. \cite{kunkel2014spiking}
+\begin{equation}
+  \Pi(M,T,N,K) =  \Pi_0 + \Pi_n(M,N)  + \Pi_c(M,T,N,K)
+  \label{eq:NESTmemconsumption}
+\end{equation} 
+\begin{equation}
+  \Pi_n(M,N) = N_M*1100
+\end{equation}
+\begin{equation}
+  \Pi_c(M,T,N,K) = 0.33 * T * N + T * N^1_c * 24 + T*(N-N^1_c)*128 + N_M*K*52
+\end{equation}
+$\Pi$ is the memory consumption. $\Pi_0$ is the initial memory consumption of NEST.
+For the \emph{JUQUEEN} its around 26 MB and for \emph{K} around 260 MB.
+$M$,$T$, $N$, $K$ correspond to number of MPI Nodes, number of threads per node, number of neurons and number of outgoing connection per neuron.
+For the calculation there are some simplifications done.
+The model uses the \emph{iaf\_psc\_alpha} neuron model for all neurons. There are only static synapses.
+The number of incoming connection per neuron $K$ is not known. Only the number of outgoing connections is known.
+To get some results anyway, it is expected that they are similar.
+Furthermore the term of expected number of neurons without any VP-local target is set to zero, which is the worst case for the consumption of memory.
+
+
+
 \section{Results}
 \subsection{Pipeline}
 The requirements for all implementations are the usability for the scientists. Besides efficient implementation the users should be able to manipulate the data on different levels. Creating one simulation from data based on the Allen Brain Institute is not the main goal of this thesis. In fact the implementations should complete the tool chain to run data-driven simulations with NEST and visualize them, based on Allen injection experiments. Therefore the proposed pipeline contains data formats which can be manipulated. Processing the needed amount of data takes time and has to be executed on large compute clusters. Thus an interactive usage of the tools is not reasonable.
 
 \subsection{Data format}
+
 
 
 \subsection{Circuit generation}
@@ -136,5 +183,6 @@ For the random generator Random123 is used, because good performance and easy us
 \section{Discussion}
 \subsection{Parallel Efficiency}
 \subsection{Usability for Scientists}
+\subsection{Spiking activity}
 
 \end{document}
