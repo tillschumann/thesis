@@ -34,9 +34,8 @@
 \subsection{Virtual mouse}
 	\begin{itemize}
       \item Available data
-      \item Usability
-      \item 
-   \end{itemize}   
+      \item Why of interest
+   	\end{itemize}   
 
 \subsection{Allen Brain Atlas}
    Allen Institute for Brain Science provides a high-resolution map of neural connections in the mouse brain.
@@ -73,10 +72,41 @@ Models of information processing e.g. in the visual or auditory cortex of mammal
 To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed, mostly. Different types of methods allow to extract stochastic characteristics from spike trains. Besides this visualization of the spike trains taking their location into account, allows to create a video, which shows the activity of the neuronal network.
 
 
+
+
+\section{Analysis}
+
 \subsection{Available resources}   
 The Blue Brain 4 system is a set of tightly integrated high-performance resources. It is comprised of a four-rack IBM BlueGene/Q system 65 536 PowerPC A2 1.6 GHz cores for computing, providing a peak performance of 839 TFlops 65 TB of RAM, a shared parallel filesystem based on GPFS / GSS of a capacity in excess of 4 petabytes and a bandwidth exceeding 40GB/s A FDR Infiniband network Job scheduling across the system's components is performed by Slurm. 
 
-\section{Methods}
+\subsection{NEST simulations}
+The standard use-case for the NEST simulator is a stochastic-driven simulation. This means
+that the circuit is characterized by stochastic parameters (e.g. number of synapses between neurons).
+The circuit is build-up inside of NEST using only these parameters.
+This means that the amount of need data is small. It allows to build-up large scale simulation
+with a few arguments.
+
+\subsection{Memory consumption of NEST}
+The memory usage of the newest NEST release 2.6.0 can be calculated with following equation. \cite{kunkel2014spiking}
+\begin{equation}
+  \Pi(M,T,N,K) =  \Pi_0 + \Pi_n(M,N)  + \Pi_c(M,T,N,K)
+  \label{eq:NESTmemconsumption}
+\end{equation} 
+\begin{equation}
+  \Pi_n(M,N) = N_M*1100
+\end{equation}
+\begin{equation}
+  \Pi_c(M,T,N,K) = 0.33 * T * N + T * N^1_c * 24 + T*(N-N^1_c)*128 + N_M*K*52
+\end{equation}
+$\Pi$ is the memory consumption. $\Pi_0$ is the initial memory consumption of NEST.
+For the \emph{JUQUEEN} its around 26 MB and for \emph{K} around 260 MB.
+$M$,$T$, $N$, $K$ correspond to number of MPI Nodes, number of threads per node, number of neurons and number of outgoing connection per neuron.
+For the calculation there are some simplifications done.
+The model uses the \emph{iaf\_psc\_alpha} neuron model for all neurons. There are only static synapses.
+The number of incoming connection per neuron $K$ is not known. Only the number of outgoing connections is known.
+To get some results anyway, it is expected that they are similar.
+Furthermore the term of expected number of neurons without any VP-local target is set to zero, which is the worst case for the consumption of memory.
+
 \subsection{Interfaces}
 \subsection{Circuit generation}
 \begin{itemize}
@@ -126,12 +156,13 @@ The neuron types depend on their layer, electrical and morphological type. The r
 which kind of neurons. The generated synapses connect neurons to its neighborhood. The neighborhood is defined as a
 column in the same orientation as the neuron has.
 
-\subsection{Stochastic-driven simulation}
-The standard use-case for the NEST simulator is a stochastic-driven simulation. This means
-that the circuit is characterized by stochastic parameters (e.g. number of synapses between neurons).
-The circuit is build-up inside of NEST using only these parameters.
-This means that the amount of need data is small. It allows to build-up large scale simulation
-with a few arguments.
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=0.4\textwidth]{../connectionBrowser_allinjections.png}
+\end{figure}
+
+
+
 \subsection{Data-driven simulation}
 As we generated the circuit in a preprocessing step. Neuron and point to point synapse information are given.
 Thus we call it a data-driven simulation. We do not use the build-up functionality from NEST.
@@ -141,48 +172,76 @@ Hence we have to load the whole circuit from file.
 Build-up a large scale neuronal network from point to point connectivity results in new requirements for data processing and the data format. The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
 Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to the same file.
 
-
-
-\section{Memory consumption of NEST}
-The memory usage of the newest NEST release 2.6.0 can be calculated with following equation. \cite{kunkel2014spiking}
-\begin{equation}
-  \Pi(M,T,N,K) =  \Pi_0 + \Pi_n(M,N)  + \Pi_c(M,T,N,K)
-  \label{eq:NESTmemconsumption}
-\end{equation} 
-\begin{equation}
-  \Pi_n(M,N) = N_M*1100
-\end{equation}
-\begin{equation}
-  \Pi_c(M,T,N,K) = 0.33 * T * N + T * N^1_c * 24 + T*(N-N^1_c)*128 + N_M*K*52
-\end{equation}
-$\Pi$ is the memory consumption. $\Pi_0$ is the initial memory consumption of NEST.
-For the \emph{JUQUEEN} its around 26 MB and for \emph{K} around 260 MB.
-$M$,$T$, $N$, $K$ correspond to number of MPI Nodes, number of threads per node, number of neurons and number of outgoing connection per neuron.
-For the calculation there are some simplifications done.
-The model uses the \emph{iaf\_psc\_alpha} neuron model for all neurons. There are only static synapses.
-The number of incoming connection per neuron $K$ is not known. Only the number of outgoing connections is known.
-To get some results anyway, it is expected that they are similar.
-Furthermore the term of expected number of neurons without any VP-local target is set to zero, which is the worst case for the consumption of memory.
-
-
-
-\section{Results}
 \subsection{Pipeline}
 The requirements for all implementations are the usability for the scientists. Besides efficient implementation the users should be able to manipulate the data on different levels. Creating one simulation from data based on the Allen Brain Institute is not the main goal of this thesis. In fact the implementations should complete the tool chain to run data-driven simulations with NEST and visualize them, based on Allen injection experiments. Therefore the proposed pipeline contains data formats which can be manipulated. Processing the needed amount of data takes time and has to be executed on large compute clusters. Thus an interactive usage of the tools is not reasonable.
 
+\section{Implementation}
+
 \subsection{Data format}
-
-
+\begin{itemize}
+      \item Synapse data format
+      \item Neuron data format
+\end{itemize}
 
 \subsection{Circuit generation}
 Rewriting the sequential python script to a hybrid C++ application require a parallel implementation of a parallelization strategy and the usage of 
 a parallel random generator. For the parallelization strategy a Master-Slave approach is chosen to distribute the workload dynamically on the nodes.
 Communication between the individual nodes is not necessary. Only the workload management is handled by the master node.
 For the random generator Random123 is used, because good performance and easy usability.
-\subsection{NEST Implementation}
+
+\subsection{Circuit validation}
+\begin{itemize}
+      \item Visual validation of synapses
+      \item Visual validation pf spiking activity
+\end{itemize}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=0.4\textwidth]{../connectionBrowser_allinjections.png}
+\end{figure}
+
+\subsection{NEST import module}
+\subsubsection{Import neurons}
+\begin{itemize}
+      \item Sli command with parameters
+      \item Functionality
+\end{itemize}
+
+\subsubsection{Import synapses}
+\begin{itemize}
+      \item Sli command with parameters
+      \item Functionality
+      \item Explain Communication
+      \item customizable
+\end{itemize}
+
+\subsection{Analysis of simulation results}
+
+
 \section{Discussion}
+\subsection{Circuit properties}
+\begin{itemize}
+      \item Scale of mouse brain
+      \item Contains interpolation data
+      \item Based on measured settings
+      \item Easily adaptable, when more information are available
+\end{itemize}
+\subsection{Data format usability}
+\begin{itemize}
+      \item Synapse data format
+      \item Neuron data format
+\end{itemize}
+
 \subsection{Parallel Efficiency}
+\begin{itemize}
+      \item Strong scaling
+      \item Weak scaling
+\end{itemize}
 \subsection{Usability for Scientists}
-\subsection{Spiking activity}
+\begin{itemize}
+      \item How to perform experiments
+      \item Test different stimuli 
+      \item Compare spiking activity
+\end{itemize}
 
 \end{document}

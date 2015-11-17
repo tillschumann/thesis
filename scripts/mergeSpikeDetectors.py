@@ -5,17 +5,15 @@ from os import listdir
 import glob
 import sys
 
-data=np.array(np.zeros(62160),dtype=object)
-neurons = np.zeros(62160).astype('int32')
+data=np.array(np.zeros(int(sys.argv[2])),dtype=object)
+neurons = np.zeros(int(sys.argv[2])).astype('int32')
 
 
 data_i=0
 
-non=71000000
-MPI_COMM_SIZE=1024
-RANK=872
-
 cn=0
+
+print len(glob.glob(sys.argv[1]))
 
 for f in glob.glob(sys.argv[1]):
   if 'spike' in f:
