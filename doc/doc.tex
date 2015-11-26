@@ -3,6 +3,12 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+
+
+
 \usepackage{subfigure}
 \usepackage{epstopdf}
 \usepackage[ansinew]{inputenc}
@@ -24,6 +30,17 @@
    \maketitle
 
 \section{Introduction}
+In 2014, the Neurorobotics team of the Blue Brain Project (BBP), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
+of a mouse brain from data provided by the Allen Institute for Brain Science (Provide reference of Allen Institute).
+Using NEST software, the BBP Neurorobotics team was then able to simulate a
+scaled-down model of the mouse brain on a laptop computer, paving the way towards
+making a mouse brain interact with an environment. A full-scale implementation of
+the mouse brain model is possible, but requires the of large scale resources with low latency requirements only modern supercomputers can today provide.
+The current functionality of NEST supports  generating large neuronal networks
+on a super computer based an random distributions but not yet from experimental data contained in brain atlases. 
+We suggest as part of this thesis to first develop the means to fully model a mouse brain from experimental data using NEST software on available supercomputing architectures.
+\newpage
+
 \subsection{Brain Simulations}
 	\begin{itemize}
       \item Short introduction to neuroscience 
@@ -149,6 +166,11 @@ from the nearest injection. To map pixels of the 3D pictures to neurons, the neu
    \label{fig:atlas}
    \end{figure}
    
+   \begin{itemize}
+      \item Implementation
+      \item Parallel efficiency, memory consumption and limits
+   \end{itemize}
+   
 \subsubsection{Short range connections}
 The Blue Brain Project has investigated over the last years in experiential work the relation of different synapse types.
 They collected their findings in a recipe which allows to get the synapse type for different neuron types.
@@ -156,12 +178,31 @@ The neuron types depend on their layer, electrical and morphological type. The r
 which kind of neurons. The generated synapses connect neurons to its neighborhood. The neighborhood is defined as a
 column in the same orientation as the neuron has.
 
+
 \begin{figure}[ht!]
-\centering
-\includegraphics[width=0.4\textwidth]{../connectionBrowser_allinjections.png}
-\end{figure}
+   	\begin{center}
+        \subfigure[contain all neuron information]{%
+            \label{fig:shortColumn}
+            \includegraphics[width=0.3\textwidth]{../shortrange/g3111.png}
+        }
+        \hspace{1cm}
+        \subfigure[contain all synapse information]{%
+            \label{fig:shortColumnInCircuit}
+            \includegraphics[width=0.485\textwidth]{../shortrange/column_in_brain_4_edit.png}
+       }
+    	   \end{center}
+    	\caption{%
+        3D visualization of the original Blue Brain Project column (left) and the reconstructed mouse
+isocortical column that has a similar neuron density (right). Layers 1, 2/3, 4, 5 and 6 are
+shown in different colors.
+     }%
+   \label{fig:atlas}
+   \end{figure}
 
-
+\begin{itemize}
+      \item Implementation
+      \item Parallel efficiency, memory consumption and limits
+   \end{itemize}
 
 \subsection{Data-driven simulation}
 As we generated the circuit in a preprocessing step. Neuron and point to point synapse information are given.
@@ -178,6 +219,25 @@ The requirements for all implementations are the usability for the scientists. B
 \section{Implementation}
 
 \subsection{Data format}
+
+\begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[contain all neuron information]{%
+            \label{fig:allInjections}
+            \includegraphics[scale=0.5]{hdf5_neuron_format.eps}
+        }
+        \hspace{1cm}
+        \subfigure[contain all synapse information]{%
+            \label{fig:oneProjection}
+            \includegraphics[scale=0.41]{hdf5_syn_format.eps}
+       }
+    	   \end{center}
+    	\caption{%
+        The HDF5 file formats.
+     }%
+   \label{fig:atlas}
+   \end{figure}
+
 \begin{itemize}
       \item Synapse data format
       \item Neuron data format
@@ -187,27 +247,110 @@ The requirements for all implementations are the usability for the scientists. B
 Rewriting the sequential python script to a hybrid C++ application require a parallel implementation of a parallelization strategy and the usage of 
 a parallel random generator. For the parallelization strategy a Master-Slave approach is chosen to distribute the workload dynamically on the nodes.
 Communication between the individual nodes is not necessary. Only the workload management is handled by the master node.
-For the random generator Random123 is used, because good performance and easy usability.
+For the random generator Random123 is used, because it has good performance and it is easy to use.
+It ensures reproducible results without correlations in the generated values. 
+
+
+\begin{itemize}
+      \item Connection properties affect memory balance
+      \item Balance neurons on nodes to achieve better memory balance
+\end{itemize}
 
 \subsection{Circuit validation}
 \begin{itemize}
       \item Visual validation of synapses
-      \item Visual validation pf spiking activity
+      \item Visual validation of spiking activity
+      \item Statistical properties are not analyzed in this work 
 \end{itemize}
 
 \begin{figure}[ht!]
 \centering
-\includegraphics[width=0.4\textwidth]{../connectionBrowser_allinjections.png}
+\includegraphics[width=0.4\textwidth]{paraview_ex.png}
 \end{figure}
 
 \subsection{NEST import module}
+
+The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
+an user interface based on an own description language \emph{SLI} and  and a Python interface.
+The new use case shall be integrated into the standard work flow of NEST.
+Besides the functionality in \emph{C++} the interfaces have to be extended.
+The difficulties of the network generation is based on a difference in 
+the NEST internal data structure and the data delivered by the Allen Institute.
+Connection information contains target and source neurons besides biochemical
+information of the synapses. Because of the in vitro injection methods the
+connection information maps the synapse from the source to the target neurons.
+For multi process simulations NEST distributes all neurons based on a modulo function 
+to the processes. Because of memory optimizations the synapses are only stored on the
+post synaptic process. This means that the connection information is stored
+on the process, where the target neuron is located. Therefore a transformation of the given data is
+necessary. Preprocessing of the input data should be avoided as far as possible to capture
+future use cases.
+The resulting implementation shall load the connection information efficiently in parallel,
+distribute the synapse information to the post synaptic node and store it in
+the NEST data structure.
+Further requirements of the implementation are an efficient use of the available resources as
+memory and computation power. 
+
+
 \subsubsection{Import neurons}
+
+\emph{H5NeuronCsX\_s\_s\_a\_s} expects 4 input parameters:
+\begin{itemize}
+      \item Name of the a subnet dataset (String).
+The subset has to contain for each neuron an integer value.
+The neurons are grouped together by this subnet value.
+
+      \item A list of all datasets which values are interpreted as list of parameters.
+      
+      \item Name of the used neuron model
+      
+      \item path to the HDF5 file 
+\end{itemize}
+The function returns the neuron id of the first neuron it created.
+
+\begin{lstlisting}[label=sliNeurons,caption=Calling the neuron import module via H5NeuronCsX\_s\_s\_a\_s SLI command ]
+/neuronmodel /aeif_cond_exp def
+/subnet (subnet) def
+/neuronparams [(C_m) (Delta_T) (E_L) (V_reset) (V_th) (a) (b)] def
+/filepath (circuit/ptneu_brain.h5) def
+subnet neuronparams neuronmodel filepath H5NeuronCsX_s_s_a_s /offset Set
+\end{lstlisting}
+
+
+
 \begin{itemize}
       \item Sli command with parameters
       \item Functionality
 \end{itemize}
 
 \subsubsection{Import synapses}
+
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.7]{sort_table_all_alltoall.eps}
+\caption{Distribute synapses to the nodes.}
+\end{figure}
+
+
+\emph{H5SynapseTll\_i\_s\_a\_s} expects 4 input parameters:
+\begin{itemize}
+      \item Offset of the neuron ids. Mostly it is equal to first neuron id returned by \emph{H5NeuronCsX\_s\_s\_a\_s}
+
+      \item A list of all columns which values are interpreted as parameters.
+      
+      \item Name of the used synapse model
+      
+      \item path to the HDF5 file 
+\end{itemize}
+The function returns the neuron id of the first neuron it created.
+
+\begin{lstlisting}[label=sliSynapses,caption=Example importing synapses]
+/synmodel /tsodyks2_synapse def
+/synparams [(delay) (weight) (U0) (TauRec) (TauFac)] def
+/filepath (circuit/syn.h5) def
+offset synparams synmodel filepath H5SynapseTll_i_s_a_s
+\end{lstlisting}
 \begin{itemize}
       \item Sli command with parameters
       \item Functionality
@@ -220,7 +363,14 @@ For the random generator Random123 is used, because good performance and easy us
 
 \section{Discussion}
 \subsection{Circuit properties}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.4]{full_circuit_rack_distribution.eps}
+\end{figure}
+
 \begin{itemize}
+	  \item shuffle neurons on nodes pros and cons
       \item Scale of mouse brain
       \item Contains interpolation data
       \item Based on measured settings
@@ -228,16 +378,18 @@ For the random generator Random123 is used, because good performance and easy us
 \end{itemize}
 \subsection{Data format usability}
 \begin{itemize}
-      \item Synapse data format
-      \item Neuron data format
+      \item Synapse data format - performance vs usability
+      \item Neuron data format - performance vs usability
 \end{itemize}
 
 \subsection{Parallel Efficiency}
 \begin{itemize}
+      \item Tested in Lugano and Juelich
       \item Strong scaling
       \item Weak scaling
 \end{itemize}
 \subsection{Usability for Scientists}
+
 \begin{itemize}
       \item How to perform experiments
       \item Test different stimuli 
