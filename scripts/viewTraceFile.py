@@ -6,7 +6,9 @@ import matplotlib as mpl
 import matplotlib.cm as cm
 from matplotlib.patches import Polygon
 
-traceFile=csv.reader(open("traceFile8.csv","rb"),delimiter=';')
+import sys
+
+traceFile=csv.reader(open(sys.argv[1],"rb"),delimiter=';')
 
 
 x=np.array(list(traceFile))
@@ -64,8 +66,8 @@ lnames = np.unique(name_[r0])
 
 for gname in gnames:
   plt.hold(True)
-  V = np.zeros([1024, 106])
-  for r in range(0,1024):
+  V = np.zeros([2048, 656])
+  for r in range(0,2048):
     rm = rank_==r
     tmp = duration[np.logical_and(rm, name_==gname)]
     
@@ -83,8 +85,8 @@ for gname in gnames:
   print gname, ".. plotted"
  
 plt.hold(True)
-V = np.zeros([1024, 106])
-for r in range(0,1024):
+V = np.zeros([2048, 656])
+for r in range(0,2048):
   rm = rank_==r
   tmp1 = duration[np.logical_and(rm, name_=="communicate")]
   tmp2 = duration[np.logical_and(rm, name_=="mpi wait")]
