@@ -8,7 +8,20 @@ from matplotlib.patches import Polygon
 
 import sys
 
-traceFile=csv.reader(open(sys.argv[1],"rb"),delimiter=';')
+if (len(sys.argv) < 3):
+  print "3 inpurt parameters needed"
+  print "1: path to trace file"
+  print "2: number of nodes"
+  
+  sys.exit()
+
+filename = sys.argv[1]
+
+traceFile=csv.reader(open(filename,"rb"),delimiter=';')
+
+
+#number of nodes
+N = int(sys.argv[2])
 
 
 x=np.array(list(traceFile))
@@ -64,10 +77,14 @@ r0 = rank_==0
 lnames = np.unique(name_[r0])
 
 
+
+
 for gname in gnames:
   plt.hold(True)
-  V = np.zeros([2048, 656])
-  for r in range(0,2048):
+  
+  V_unset = True
+  
+  for r in range(0,N):
     rm = rank_==r
     tmp = duration[np.logical_and(rm, name_==gname)]
     
@@ -76,8 +93,13 @@ for gname in gnames:
     #tmp = np.cumsum(l_con_begin[1:]-l_con_end[:-1])/60.
     #tmp = l_con_begin[1:]-l_con_end[:-1]
     
+    if V_unset:
+      V = np.zeros([N, len(tmp)])
+      V_unset = False
+    
     V[r,:len(tmp)] = tmp/1000./1000.
-  plt.figure()
+  fig = plt.figure()
+  fig.canvas.set_window_title(filename)
   plt.title(gname)
   plt.imshow(V, interpolation='nearest', cmap=plt.cm.ocean, aspect='auto')
   plt.colorbar()
@@ -85,11 +107,17 @@ for gname in gnames:
   print gname, ".. plotted"
  
 plt.hold(True)
-V = np.zeros([2048, 656])
-for r in range(0,2048):
+
+V_unset = True
+#V = np.zeros([N, max_columns])
+for r in range(0,N):
   rm = rank_==r
   tmp1 = duration[np.logical_and(rm, name_=="communicate")]
   tmp2 = duration[np.logical_and(rm, name_=="mpi wait")]
+  
+  if V_unset:
+      V = np.zeros([N, len(tmp1-tmp2)])
+      V_unset = False
   
   #l_con_begin = begin_[np.logical_and(rm, name_=="connect")]
   #l_con_end = end_[np.logical_and(rm, name_=="connect")]
@@ -97,7 +125,8 @@ for r in range(0,2048):
   #tmp = l_con_begin[1:]-l_con_end[:-1]
   
   V[r,:len(tmp1)] = (tmp1-tmp2)/1000./1000.
-plt.figure()
+fig = plt.figure()
+fig.canvas.set_window_title(filename)
 plt.title("communicate-mpi wait")
 plt.imshow(V, interpolation='nearest', cmap=plt.cm.ocean, aspect='auto')
 plt.colorbar()

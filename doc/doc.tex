@@ -21,6 +21,8 @@
 \usepackage[]{algorithm2e}
 
 \usepackage{a4wide}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
 
 \title{ Simulating the mouse brain model constructed from Allen Institute for Brain Science data on the Blue Brain 4 supercomputer }
 \author{Till Schumann}
@@ -42,8 +44,114 @@ We suggest as part of this thesis to first develop the means to fully model a mo
 \newpage
 
 \subsection{Brain Simulations}
+\subsection{Anatomy of the brain}
+ 
+ The human brain is the main part of the central nervous system
+ which consists of the spinal cord, sensory organs
+ and all of the nerves that connect these organs with the rest of the body.
+ These organs are responsible for the control of the body and communication between its parts.
+ The nervous system is the most complex system of our body with respect to functionality.
+ It contains billions of nerve and glia cells. 
+ The nerve cells are connected via synapses to a complex network.
+ Electrical pulses from neuron to neuron transmit information through the network.
+ Glia cells help to maintain the right concentration of chemical substances in the
+ extracellular space around neurons and provide supporting structures for the
+ growth of neurons and for their spatial arrangement.
+  \subsubsection{Macroscopic structure}
+  \label{sec:Macroscopicstructure}
+  The anatomy of the brain as depicted in Figure \ref{Aufbau1}, shows that different parts vary in cell density and functionality.
+ Figure \ref{Aufbau1} shows a cross-section of the human brain. The outer layer is called the gray matter, due to the color caused by the high density of nerve cells.
+ The white matter, which is underneath the gray matter,
+ consists most of connection fibers of the nerve cells.
+ The thalamus is situated in the middle of the brain and functions as a relay station between the sensory system and the cortical systems for cognition and motor control.
+  \begin{figure}[!htbp]
+  \subfigure[A cross-section of the human brain shows different densities of nerve cells \cite{CN}.]{
+  \includegraphics[scale=0.3]{Aufbau1.png}
+  \label{Aufbau1}
+  }
+  \hfill
+  \subfigure[A general map of the human brain assigns parts of the gray matter to fuctionalities \cite{CN}.]{
+  \includegraphics[scale=0.3]{Aufbau2.png}
+  \label{Aufbau2}
+  }
+  \hfill
+  \subfigure[The vertical structure of the gray matter shows six layers \cite{CN}.]{
+  \includegraphics[scale=0.3]{mikro_aufbau.png}
+  \label{mikroaufbau}
+  }
+  \caption{The macroscopic structure of the human brain.}
+  \end{figure}
+  Because of the high density of nerve cells the gray matter is the main part of information processing of the brain.
+  
+  The number of nerve cells (neurons), the number of connections (synapses) and the structure differs from person to person.
+  The connections of each neuron are dynamic and change over time.
+  Some parts of the brain can still be assigned roughly to functionality as shown in Figure \ref{Aufbau2}.\\
+  Having a look at the vertical structure of the cortex,
+  the gray matter can be partitioned in six layers as shown in figure \ref{mikroaufbau}.
+  The cells in each layer have similarities like cell type, connections to other layers and connections to the thalamus and other parts.
+  %-forebrain(anterior part of the brain)
+  %-neocortex(surface of the mammalian brain, gray)
+ 
+ 
+  \newpage
+  \subsubsection{Microscopic structure}
+  The nerve cells are tiny structures which are connected to each other.
+  For an understanding of the brain a deeper look at the nerve cells is necessary.
+  There are different cell types in a brain. They vary in structure and size.
+  Pyramidal, spiny stellate and smooth stellate cells occur most often.
+  For each layer there are types which occur more frequent. 
+  
+  In Figure \ref{Corticalneurons} a typical neuron is depicted.
+  It contains the soma (the cell body) dendrites and axons.
+  Electrical pulses are transported from the dendrites to the soma.
+  In case of a spike an electrical impulse is forwarded through the axon.
+  These axons are connected via synapses to further dendrites.
+  The electrical impulse is transmitted via a chemical reaction in the synapse to the dendrites of connected cells.
+  \begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.65]{Complete_neuron_cell_diagram_en.eps}
+    \caption{Microscopic structure of a neuron. \cite{neuronpic}}
+    \label{Corticalneurons}
+  \end{figure}
+  There are excitatory and inhibitory neurons.
+  The excitatory neurons excite the following neurons, 
+  in contrast the inhibitory neurons inhibit the following neurons.
+  Via electrical currents the connected neurons influence the membrane potential of each neuron.
+  The membrane potential can be measured.
+  As an example the membrane potential is plotted over time in Figure \ref{membrane_potential}.
+  Chemical processes inside the neuron generate a spike if the membrane potential reaches a specific electrical level called the threshold.  
+  As shown in Figure \ref{membrane_potential} spikes are peaks in the membrane potential.  
+  
+  %-cortical neurons
+  %-different cells: pyramidal, spiny stellate, smooth stellate
+  %-cortical layers
+  %-synapses
+  
+  %-10e12 neurons in the human brain
+  \newpage
+  \begin{figure}[!htbp]
+  \subfigure[The plot shows the membrane potential of a neuron over the time.
+  The peaks are called spikes.
+  There are four spikes in the time span shown.
+  The firing threshold of the cell is at about 58 mV \cite{CN}.]{
+  \includegraphics[scale=0.36]{membrane_potential.png}
+  \label{membrane_potential}
+  }
+  \hfill
+  \subfigure[The dot plot shows spikes of each neuron over time. On the y-axis there are the neurons number.
+  The histogram in the lower panel sums up all spikes for each time bin. \cite{CN}]{
+  \includegraphics[scale=0.36]{spike_plot.png}
+  \label{spikeplot}
+  }
+  \caption{The activity of a single neurons is displayed using its membrane potential. For multiple neurons the information is reduced to spike timings.}
+  \end{figure}
+  
+  In order to analyze the membrane potential more objectively it is reduced to timings of the spikes.
+  For multiple neuron the spike timings in a dot plot can be visualized as in Figure \ref{spikeplot}.
+  One can get an overview of the activity in a whole neuronal network if the spike sums are
+  plotted (summed up spikes for each time bin) in a so-called histogram.
+
 	\begin{itemize}
-      \item Short introduction to neuroscience 
       \item Short overview over simulators: NEST, NEURON, STEPS
       \item Possibilities/limits of simulations
    \end{itemize}
@@ -53,7 +161,7 @@ We suggest as part of this thesis to first develop the means to fully model a mo
       \item Available data
       \item Why of interest
    	\end{itemize}   
-
+\newpage
 \subsection{Allen Brain Atlas}
    Allen Institute for Brain Science provides a high-resolution map of neural connections in the mouse brain.
    It contains several injection experiments. The provided datasets of the experiments 
@@ -78,8 +186,19 @@ We suggest as part of this thesis to first develop the means to fully model a mo
    \label{fig:atlas}
    \end{figure}
    
+   \begin{itemize}
+      \item description
+\end{itemize}
+   
 \subsection{BBP recipe}
-	The Blue Brain project   
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.9]{BBPconnectionPropasMatrix.eps}
+\end{figure}
+
+\begin{itemize}
+      \item description
+\end{itemize}
 
 \subsection{NEST}
 NEST is a simulator for spiking neural network models that focuses on the dynamics, size and structure of neural systems rather than on the exact morphology of individual neurons. The development of NEST is coordinated by the NEST Initiative. NEST is ideal for networks of spiking neurons of any size, for example:
@@ -96,6 +215,11 @@ To interpret the output of a neuronal simulation the spiking activity of the neu
 \subsection{Available resources}   
 The Blue Brain 4 system is a set of tightly integrated high-performance resources. It is comprised of a four-rack IBM BlueGene/Q system 65 536 PowerPC A2 1.6 GHz cores for computing, providing a peak performance of 839 TFlops 65 TB of RAM, a shared parallel filesystem based on GPFS / GSS of a capacity in excess of 4 petabytes and a bandwidth exceeding 40GB/s A FDR Infiniband network Job scheduling across the system's components is performed by Slurm. 
 
+\begin{itemize}
+      \item Juelich
+\end{itemize}
+
+
 \subsection{NEST simulations}
 The standard use-case for the NEST simulator is a stochastic-driven simulation. This means
 that the circuit is characterized by stochastic parameters (e.g. number of synapses between neurons).
@@ -103,7 +227,13 @@ The circuit is build-up inside of NEST using only these parameters.
 This means that the amount of need data is small. It allows to build-up large scale simulation
 with a few arguments.
 
-\subsection{Memory consumption of NEST}
+\begin{itemize}
+      \item What is simulated
+      \item Which is the result of a simulation
+      \item Which resources are necessary and limiting factor memory
+\end{itemize}
+
+\subsubsection{Memory consumption of NEST}
 The memory usage of the newest NEST release 2.6.0 can be calculated with following equation. \cite{kunkel2014spiking}
 \begin{equation}
   \Pi(M,T,N,K) =  \Pi_0 + \Pi_n(M,N)  + \Pi_c(M,T,N,K)
@@ -125,6 +255,15 @@ To get some results anyway, it is expected that they are similar.
 Furthermore the term of expected number of neurons without any VP-local target is set to zero, which is the worst case for the consumption of memory.
 
 \subsection{Interfaces}
+\begin{itemize}
+      \item How to set up a simulation
+\end{itemize}
+
+\subsection{Data-driven simulation}
+As we generated the circuit in a preprocessing step. Neuron and point to point synapse information are given.
+Thus we call it a data-driven simulation. We do not use the build-up functionality from NEST.
+Hence we have to load the whole circuit from file.
+
 \subsection{Circuit generation}
 \begin{itemize}
       \item Create point circuit from available data
@@ -204,11 +343,6 @@ shown in different colors.
       \item Parallel efficiency, memory consumption and limits
    \end{itemize}
 
-\subsection{Data-driven simulation}
-As we generated the circuit in a preprocessing step. Neuron and point to point synapse information are given.
-Thus we call it a data-driven simulation. We do not use the build-up functionality from NEST.
-Hence we have to load the whole circuit from file.
-
 \subsection{Parallel IO}
 Build-up a large scale neuronal network from point to point connectivity results in new requirements for data processing and the data format. The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
 Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to the same file.
@@ -216,6 +350,7 @@ Thus the distribution of the parallel loading has to be carefully chosen. HDF5 a
 \subsection{Pipeline}
 The requirements for all implementations are the usability for the scientists. Besides efficient implementation the users should be able to manipulate the data on different levels. Creating one simulation from data based on the Allen Brain Institute is not the main goal of this thesis. In fact the implementations should complete the tool chain to run data-driven simulations with NEST and visualize them, based on Allen injection experiments. Therefore the proposed pipeline contains data formats which can be manipulated. Processing the needed amount of data takes time and has to be executed on large compute clusters. Thus an interactive usage of the tools is not reasonable.
 
+\newpage
 \section{Implementation}
 
 \subsection{Data format}
@@ -251,10 +386,20 @@ For the random generator Random123 is used, because it has good performance and 
 It ensures reproducible results without correlations in the generated values. 
 
 
+\subsubsection{Long range connections}
 \begin{itemize}
-      \item Connection properties affect memory balance
-      \item Balance neurons on nodes to achieve better memory balance
+      \item parallelization strategy and implementation
+      \item workflow diagram
+      \item requirements 
 \end{itemize}
+
+\subsubsection{Short range connections}
+\begin{itemize}
+      \item parallelization strategy implementation
+      \item workflow diagram
+      \item requirements
+\end{itemize}
+
 
 \subsection{Circuit validation}
 \begin{itemize}
@@ -291,9 +436,213 @@ the NEST data structure.
 Further requirements of the implementation are an efficient use of the available resources as
 memory and computation power. 
 
+\subsubsection{Algorithm}
+The group data before send algorithm reads the the HDF5 file chunk wise.
+Additionally the source neurons for each datasets (first row) are stored in a list.
+So for all iterations the source neuron list is available in memory.
+This source neuron list and the target neurons from each chunk are used to create a connection table.
+It contains per connection one row with the source neuron in the first column and the target neuron in the second column.
+The table will be sorted by the target nodes.
+Using the \emph{MPI\_Alltoall} function this table can be distributed directly to the corresponding nodes.
+Afterwards each node contains its connection table and calls the \emph{NEST} connection function.
+\begin{algorithm}
+	\KwData{List of HDF5 files for each node, chunk size}
+	\KwResult{Connected NEST network}
+	\While{Chunk to read in HDF5 files}{
+		Read chunk and store in memory \hspace{45px}(1)\; 
+		Create connection table [[$S_1$, $T_1$],[$S_2$, $T_2$],..] (1,2) \hspace{36px}$\mathcal{O}(n)$\; 
+		Map target neurons to nodes \hspace{63px}(2,3) \hspace{36px}$\mathcal{O}(n)$\;
+		Sort table by target neurons \hspace{66px}(2,3,*) \hspace{28px}$\mathcal{O}(n^2)$\;
+		MPI\_Alltoall sorted data \hspace{76px}(2,3,4,5)\;
+		Connect own connections in NEST \hspace{36px}(5) \hspace{45px}$\mathcal{O}(n)$\;
+	}
+\label{alg2}
+\caption{Distribute connection information without transposing, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
+	set in brackets contains current needed variables}
+\end{algorithm}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.7]{sort_table_all_alltoall.eps}
+\caption{Distribute synapses to the nodes.}
+\end{figure}
+
+\subsection{Memory consumption}
+\begin{figure}[ht!]
+\begin{tabular}{| l | l | l | l |}
+    \hline
+    (id) & data structures & memory consumption \\ \hline
+    (1) & chunk in memory & $L_0 + h*(L_0 + L_S*w)$ \\ \hline
+    (2) & connection table & $2*(L_0+L_S*w*s)$ \\ \hline
+    (3) & target neuron node map & $L_0+L_S*w*s$ \\ \hline
+    (4) & MPI send vectors & $L_0+L_S*2*w*s+2*(L_0+L_S*N)$ \\ \hline
+    (5) & MPI recv vectors & $L_0+L_S*2*\frac{w*s}{\nu}+2*(L_0+L_S*N)$ \\ \hline
+    \end{tabular}
+\caption{$L_0$: constant memory overhead of list; $L_S$: memory consumption of entry type; $N$: number of nodes $w$: 1 dim of chunk; $h$: 2 dim of chunk; $DNC(w)$: replication of target neurons in chunk; $\nu$: distribution coefficient of data}
+\end{figure}
+The maximum memory consumption is:
+\begin{equation}
+  M = 9*L_0 + 4*L_S*N+L_S*w*s*(4+\frac{1}{\nu})
+  \label{eq:maxmemoryconsumption}
+\end{equation}
+
+\newpage
+\section{Discussion}
+\subsection{Circuit properties}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.4]{full_circuit_rack_distribution.eps}
+\caption{Synapse inbalance for using NEST standard configuration on different number ob nodes. The values are normalized by its mean value.}
+\end{figure}
+
+\begin{itemize}
+	  \item shuffle neurons on nodes pros and cons
+      \item Scale of mouse brain
+      \item Based on measured settings
+      \item Contains interpolation data
+      \item Easily adaptable, when more information are available
+\end{itemize}
+
+
+\subsection{Data format usability}
+\begin{itemize}
+      \item Synapse data format - performance vs usability
+      \item Neuron data format - performance vs usability
+\end{itemize}
+
+\subsection{Parallel Efficiency}
+
+\begin{figure}[!h] \centering
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM CONNECT MODULE,
+		legend style={at={(0.5,-0.20)},
+		anchor=north,legend columns=-1},
+		xlabel=number of racks,
+		ylabel=Parallel efficiency (\% of linear scaling),
+		width=8.5cm
+		]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,100)
+		(2,110)
+		(4,30)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,100)
+		(2,114)
+		(4,117)
+	};
+	\addplot[color=green,mark=*] coordinates {
+		(1,100)
+		(2,84)
+		(4,54)
+	};
+	\addplot[color=yellow,mark=*] coordinates {
+		(1,100)
+		(2,91)
+		(4,110)
+	};
+	\legend{io,sort,mpi,connect}
+	\end{axis}%
+\end{tikzpicture}%
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM CONNECT MODULE,
+		legend style={at={(0.5,-0.20)},
+		anchor=north,legend columns=-1},
+		xlabel=number of racks,
+		ylabel=wall clock in seconds,
+		width=8.5cm
+		]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,73)
+		(2,33)
+		(4,60)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,85)
+		(2,37)
+		(4,12)
+	};
+	\addplot[color=green,mark=*] coordinates {
+		(1,278)
+		(2,163)
+		(4,132)
+	};
+	\addplot[color=yellow,mark=*] coordinates {
+		(1,171)
+		(2,93)
+		(4,38)
+	};
+	\legend{io,sort,mpi,connect}
+	\end{axis}%
+\end{tikzpicture}%
+\end{figure}
+\begin{figure}[!h] \centering
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
+		xlabel=number of racks,ylabel=Parallel efficiency (\% of linear scaling),width=8.5cm]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,100)
+		(2,93)
+		(4,72)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,100)
+		(2,94)
+	};
+	\addplot[color=red,mark=o] coordinates {
+		(1,100)
+		(2,94)
+		(4,101)
+	};
+	\legend{mod,slisim, slisim estimated}
+	\end{axis}%
+\end{tikzpicture}%
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
+		xlabel=number of racks,ylabel=wall clock in seconds,width=8.5cm]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,640)
+		(2,344)
+		(4,220)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,1208)
+		(2,637)
+	};
+	\addplot[color=red,mark=o] coordinates {
+		(1,1208)
+		(2,637)
+		(4,299)
+	};
+	\legend{mod,slisim, slisim estimated}
+	\end{axis}%
+\end{tikzpicture}%
+\end{figure}
+
+\begin{itemize}
+      \item Tested in Lugano and Juelich
+      \item Strong scaling
+      \item Weak scaling
+\end{itemize}
+
+\subsection{Measured memory consumption}
+
+\newpage
+\subsection{Usability for Scientists}
+
+\subsubsection{Manipulation of circuit}
+
+\begin{itemize}
+      \item control circuit generation / possibilities
+      \item  manipulate circuit
+\end{itemize}
 
 \subsubsection{Import neurons}
-
 \emph{H5NeuronCsX\_s\_s\_a\_s} expects 4 input parameters:
 \begin{itemize}
       \item Name of the a subnet dataset (String).
@@ -320,19 +669,10 @@ subnet neuronparams neuronmodel filepath H5NeuronCsX_s_s_a_s /offset Set
 
 \begin{itemize}
       \item Sli command with parameters
-      \item Functionality
+      \item How can it be used
 \end{itemize}
 
 \subsubsection{Import synapses}
-
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[scale=0.7]{sort_table_all_alltoall.eps}
-\caption{Distribute synapses to the nodes.}
-\end{figure}
-
-
 \emph{H5SynapseTll\_i\_s\_a\_s} expects 4 input parameters:
 \begin{itemize}
       \item Offset of the neuron ids. Mostly it is equal to first neuron id returned by \emph{H5NeuronCsX\_s\_s\_a\_s}
@@ -353,47 +693,20 @@ offset synparams synmodel filepath H5SynapseTll_i_s_a_s
 \end{lstlisting}
 \begin{itemize}
       \item Sli command with parameters
-      \item Functionality
-      \item Explain Communication
-      \item customizable
+      \item How can it be used
 \end{itemize}
 
-\subsection{Analysis of simulation results}
-
-
-\section{Discussion}
-\subsection{Circuit properties}
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[scale=0.4]{full_circuit_rack_distribution.eps}
-\end{figure}
-
+\subsubsection{NEST simulation options}
 \begin{itemize}
-	  \item shuffle neurons on nodes pros and cons
-      \item Scale of mouse brain
-      \item Contains interpolation data
-      \item Based on measured settings
-      \item Easily adaptable, when more information are available
-\end{itemize}
-\subsection{Data format usability}
-\begin{itemize}
-      \item Synapse data format - performance vs usability
-      \item Neuron data format - performance vs usability
-\end{itemize}
-
-\subsection{Parallel Efficiency}
-\begin{itemize}
-      \item Tested in Lugano and Juelich
-      \item Strong scaling
-      \item Weak scaling
-\end{itemize}
-\subsection{Usability for Scientists}
-
-\begin{itemize}
-      \item How to perform experiments
+	  \item How to perform experiments
+      \item Access neurons from imported circuit
       \item Test different stimuli 
-      \item Compare spiking activity
+\end{itemize}
+
+\subsubsection{Analysis}
+\begin{itemize}
+	  \item Visualize spiking activity with Brion/Paraview
+      \item Visualize spiking activity with ViSNEST
 \end{itemize}
 
 \end{document}
