@@ -264,6 +264,11 @@ As we generated the circuit in a preprocessing step. Neuron and point to point s
 Thus we call it a data-driven simulation. We do not use the build-up functionality from NEST.
 Hence we have to load the whole circuit from file.
 
+\begin{itemize}
+      \item parameters for each neuron
+      \item in point to point connection information with parameters
+   \end{itemize}
+
 \newpage
 \subsection{Circuit generation}
 \begin{itemize}
@@ -390,7 +395,35 @@ shown in different colors.
 
 \subsection{Parallel IO}
 Build-up a large scale neuronal network from point to point connectivity results in new requirements for data processing and the data format. The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
-Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to the same file.
+Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to one file.
+It uses MPI-IO to manage parallel read and write operations. Further HDF5 is a self descriptive format and therefore easy to handle
+and exchanged between different platforms. Already given reduced circuits are stored in HDF5 file format by the neurorobotics team, 
+because of its easy to use Python interface. On a personal computer a light weight python implementation allows to load a given
+circuit from HDF5 to NEST, using HDF5 Python interface with the NEST python interface. Therefore selecting the same or similar data 
+format is preferred to reduce the number of needed adaptions of scripts.
+
+
+\subsubsection{HDF5}
+
+\begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[Hyperslab selection of HDF5 in a single dataset]{%
+            \label{fig:shortColumn}
+            \includegraphics[scale=0.8]{HDF5Hyperslab.eps}
+        }
+        \hspace{0.5cm}
+        \subfigure[Using hyperslab functionality to read or write dataset in parallel]{%
+            \label{fig:shortColumnInCircuit}
+            \includegraphics[scale=0.8]{HDF5Parallel.eps}
+       }
+  
+    	   \end{center}
+    	\caption{%
+        Using HDF5 in parallel 
+     }%
+   \label{fig:atlas}
+   \end{figure}
+
 
 \subsection{Pipeline}
 The requirements for all implementations are the usability for the scientists. Besides efficient implementation the users should be able to manipulate the data on different levels. Creating one simulation from data based on the Allen Brain Institute is not the main goal of this thesis. In fact the implementations should complete the tool chain to run data-driven simulations with NEST and visualize them, based on Allen injection experiments. Therefore the proposed pipeline contains data formats which can be manipulated. Processing the needed amount of data takes time and has to be executed on large compute clusters. Thus an interactive usage of the tools is not reasonable.
@@ -506,7 +539,7 @@ For the short range connectivity all post-synaptic neurons of synapses having th
 lay inside a cylinder in layer 1 to 6. For the validation. 
  
 \begin{itemize}
-      \item Visual validation of synapses
+      \item Visual validation of synapses to identify neuron id miss interpretation
       \item Visual validation of spiking activity
       \item Statistical properties are not analyzed in this work 
 \end{itemize}
@@ -825,5 +858,8 @@ offset synparams synmodel filepath H5SynapseTll_i_s_a_s
 	  \item Visualize spiking activity with Brion/Paraview
       \item Visualize spiking activity with ViSNEST
 \end{itemize}
+
+
+
 
 \end{document}
