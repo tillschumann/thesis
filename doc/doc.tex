@@ -264,6 +264,7 @@ As we generated the circuit in a preprocessing step. Neuron and point to point s
 Thus we call it a data-driven simulation. We do not use the build-up functionality from NEST.
 Hence we have to load the whole circuit from file.
 
+\newpage
 \subsection{Circuit generation}
 \begin{itemize}
       \item Create point circuit from available data
@@ -305,6 +306,25 @@ from the nearest injection. To map pixels of the 3D pictures to neurons, the neu
    \label{fig:atlas}
    \end{figure}
    
+   \begin{algorithm}
+	\KwData{Injection experiments}
+	\KwResult{Long range synapses}
+	\For{each neuron n , identify the corresponding rAAV injection experiments}{
+		Keep the experiment with the lowest injection volume; \\
+		Select all neurons in the projection area; \\
+		Assign each of them the normalized intensity value $D_i$ of the voxel they are situated in \\
+		Generate a random number P between 0 and 1; \\
+		Pick randomly a neuron i; \\
+		\If{$P < D_i$}{
+			Create an efferent synapse from the selected neuron to neuron $i$; \\
+			Assign synaptic parameters; \\
+		}
+		Repeat from step 4) until Nsy=10000 efferent synapses are created;
+	}
+\label{alg2}
+\caption{Generate long range connectivity}
+\end{algorithm}
+   
    \begin{itemize}
       \item Implementation
       \item Parallel efficiency, memory consumption and limits
@@ -322,13 +342,19 @@ column in the same orientation as the neuron has.
    	\begin{center}
         \subfigure[contain all neuron information]{%
             \label{fig:shortColumn}
-            \includegraphics[width=0.3\textwidth]{../shortrange/g3111.png}
+            \includegraphics[width=0.22\textwidth]{../shortrange/g3111.png}
         }
-        \hspace{1cm}
+        \hspace{0.5cm}
         \subfigure[contain all synapse information]{%
             \label{fig:shortColumnInCircuit}
-            \includegraphics[width=0.485\textwidth]{../shortrange/column_in_brain_4_edit.png}
+            \includegraphics[width=0.34\textwidth]{../shortrange/column_in_brain_4_edit.png}
        }
+        \hspace{0.5cm}
+        \subfigure[illustration of neurons on grid]{%
+            \label{fig:shortColumnInCircuit}
+            \includegraphics[scale=2.5]{illustration_shortrange_select.eps}
+       }
+  
     	   \end{center}
     	\caption{%
         3D visualization of the original Blue Brain Project column (left) and the reconstructed mouse
@@ -337,6 +363,25 @@ shown in different colors.
      }%
    \label{fig:atlas}
    \end{figure}
+   
+   \begin{algorithm}
+	\KwData{BBP matrices}
+	\KwResult{Short range synapses}
+	\For{each neuron n}{
+		Select all neurons in neuron $i$ column area; \\
+		Generate a random number P between 0 and 1; \\
+		Pick randomly a neuron j from selected area; \\
+		Determine $D_i$ based on BBP matrices (neuron i properties, neuron j properties); \\
+		\If{$P < D_i$}{
+			Create an efferent synapse from neuron $i$ to neuron $j$; \\
+			Assign synaptic parameters; \\
+		}
+	}
+	\label{algshort}
+	
+	
+\caption{Generate short range connectivity}
+\end{algorithm}
 
 \begin{itemize}
       \item Implementation
@@ -387,13 +432,38 @@ It ensures reproducible results without correlations in the generated values.
 
 
 \subsubsection{Long range connections}
+
+
 \begin{itemize}
       \item parallelization strategy and implementation
       \item workflow diagram
       \item requirements 
 \end{itemize}
 
+\begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[All nodes are equal and process the work based on a static distribution]{%
+            \label{fig:shortColumn}
+            \includegraphics[scale=0.5]{All_Worker_Collective.eps}
+        }
+        \hspace{1cm}
+        \subfigure[The 0 node is assigned as the master node and handles from this on the management of the work distribution.]{%
+            \label{fig:shortColumnInCircuit}
+            \includegraphics[scale=0.5]{MasterWorker.eps}
+       }
+    	   \end{center}
+    	\caption{%
+        The figure illustrates the work distribution and communication between the nodes.
+     }%
+   \label{fig:atlas}
+   \end{figure}
+
 \subsubsection{Short range connections}
+
+The algorithm presented in the analysis section can be parallelized straight forward.
+Each iteration is independent. The challenging part is the distribution of the iterations and
+the writing to disk. The number ob synapses which are created is not know. It is only available
+at the end.
 \begin{itemize}
       \item parallelization strategy implementation
       \item workflow diagram
@@ -401,7 +471,40 @@ It ensures reproducible results without correlations in the generated values.
 \end{itemize}
 
 
+
+
+\begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[Master-worker strategy to get good balance properties]{%
+            \label{fig:shortColumn}
+            \includegraphics[scale=0.5]{MasterWorker.eps}
+        }
+        \hspace{1cm}
+        \subfigure[Collective write operation to maximize used bandwidth]{%
+            \label{fig:shortColumnInCircuit}
+            \includegraphics[scale=0.5]{Worker_Collective.eps}
+       }
+    	   \end{center}
+    	\caption{%
+        The figure illustrates the work distribution and communication between the nodes.
+     }%
+   \label{fig:atlas}
+   \end{figure}
+
+
 \subsection{Circuit validation}
+
+In the context of this thesis the circuit is validated in terms of geometrical correct placement of
+the synapses. So the position of the source and target can be visualized and be compared to a 
+reference system. For the long and the short range connectivity the geometrical shape is know.
+In particular the long range connectivity should connect neurons from the injected regions to neurons
+in the projected region for every selected experiment. Therefore a circuit for a single experiment is 
+generated, the target and source neurons are visualized in a 3D coordinate system and the the injection
+and projection is used as the reference system. If source neurons are inside the injection space and all
+target neurons are in the projection space, the implementation works fine.
+For the short range connectivity all post-synaptic neurons of synapses having the same pre-synaptic neuron should
+lay inside a cylinder in layer 1 to 6. For the validation. 
+ 
 \begin{itemize}
       \item Visual validation of synapses
       \item Visual validation of spiking activity
@@ -496,19 +599,33 @@ The maximum memory consumption is:
 \caption{Synapse inbalance for using NEST standard configuration on different number ob nodes. The values are normalized by its mean value.}
 \end{figure}
 
+Memory imbalance resulting from an imbalance of number of synapses per neuron can be compressed by shuffling neurons on the nodes.
+NEST distributes neurons based of the modulo of their ids. This results in a nearly equal number of neurons per node.
+But it does not take the number of synapses per neuron into account. The distribution of ids can not be affected, but the assignment of the
+neuron ids can be adjusted. Such a assignment implicate a memory overhead. The mapping has to be stored in memory and to disk for post processing.
+If the memory overhead is bigger than the memory imbalance, there is no meaning in its implementation.
+
 \begin{itemize}
-	  \item shuffle neurons on nodes pros and cons
       \item Scale of mouse brain
       \item Based on measured settings
       \item Contains interpolation data
       \item Easily adaptable, when more information are available
 \end{itemize}
 
+The 
+
 
 \subsection{Data format usability}
+
+The HDF5 data format for neuron parameters is used as given from the Neurorobotics team.
+Because of its small size (9 GB) in comparison to the synapse dataset (15 TB) the performance improvement by changing
+to a transposed data format can be neglected. Thus the usability of having different datasets and being able
+to add new datasets can be kept. It also implies that the generation script does not have to be converted or no 
+conversion scripts are needed.
+
 \begin{itemize}
+	  \item Neuron data format - performance vs usability
       \item Synapse data format - performance vs usability
-      \item Neuron data format - performance vs usability
 \end{itemize}
 
 \subsection{Parallel Efficiency}
