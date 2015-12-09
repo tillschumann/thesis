@@ -1,0 +1,245 @@
+% Zusammenfassung und Ausblick
+%
+
+\chapter{Discussion}
+
+
+\section{Circuit properties}
+
+
+The generated full mouse brain circuit contains around 74 million neurons and 660 billion synapses.
+From the neuron HDF5 file 12 parameters are used by the simulation.
+It contains further parameters which are used for the connection generation and the visualization,
+like coordinates. In total the neuron HDF5 file is of the size of around 9 GB.
+The synapse HDF5 file only contains needed parameters for the simulation.
+There are 5 synapse parameter per connection. This results in 15 TB of data.
+
+So the generated circuit contains around 15 TB and is splitted in three HDF5 files (Neuron file, long range synapses file and short range synapses file). The interpolation which are added to the circuit generation introduces new errors, but allow
+a first simulation of a full circuit model. Thus is allows to run and test is full pipeline from Allen Brain data to a NEST simulation. If there are more experiments available they can be included into
+the circuit generation easily. The size of the circuit wont change. Thus no changes are needed anywhere else.
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.5]{pictures/distance_x_y_70.eps}
+\caption{Plotted values from the nearest neighbor algorithm. You can see the distance to the next injected voxel.}
+\end{figure}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.4]{pictures/full_circuit_rack_distribution.eps}
+\caption{Synapse inbalance for using NEST standard configuration on different number ob nodes. The values are normalized by its mean value.}
+\end{figure}
+
+Memory imbalance resulting from an imbalance of number of synapses per neuron can be compressed by shuffling neurons on the nodes.
+NEST distributes neurons based of the modulo of their ids. This results in a nearly equal number of neurons per node.
+But it does not take the number of synapses per neuron into account. The distribution of ids can not be affected, but the assignment of the
+neuron ids can be adjusted. Such a assignment implicate a memory overhead. The mapping has to be stored in memory and to disk for post processing.
+If the memory overhead is bigger than the memory imbalance, there is no meaning in its implementation.
+
+
+\section{Data format usability}
+
+The HDF5 data format for neuron parameters is used as given from the Neurorobotics team.
+Because of its small size (9 GB) in comparison to the synapse dataset (15 TB) the performance improvement by changing
+to a transposed data format can be neglected. Thus the usability of having different datasets and being able
+to add new datasets can be kept. It also implies that the generation script does not have to be converted or no 
+conversion scripts are needed.
+
+\newpage
+\section{Parallel Efficiency}
+
+\begin{itemize}
+      \item Tested in Lugano BGQ and Juelich BGQ
+      \item Strong scaling
+      \item Weak scaling
+\end{itemize}
+
+\begin{figure}[!h] \centering
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM CONNECT MODULE,
+		legend style={at={(0.5,-0.20)},
+		anchor=north,legend columns=-1},
+		xlabel=number of racks,
+		ylabel=Parallel efficiency (\% of linear scaling),
+		width=8.5cm
+		]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,100)
+		(2,110)
+		(4,30)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,100)
+		(2,114)
+		(4,117)
+	};
+	\addplot[color=green,mark=*] coordinates {
+		(1,100)
+		(2,84)
+		(4,54)
+	};
+	\addplot[color=yellow,mark=*] coordinates {
+		(1,100)
+		(2,91)
+		(4,110)
+	};
+	\legend{io,sort,mpi,connect}
+	\end{axis}%
+\end{tikzpicture}%
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM CONNECT MODULE,
+		legend style={at={(0.5,-0.20)},
+		anchor=north,legend columns=-1},
+		xlabel=number of racks,
+		ylabel=wall clock in seconds,
+		width=8.5cm
+		]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,73)
+		(2,33)
+		(4,60)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,85)
+		(2,37)
+		(4,12)
+	};
+	\addplot[color=green,mark=*] coordinates {
+		(1,278)
+		(2,163)
+		(4,132)
+	};
+	\addplot[color=yellow,mark=*] coordinates {
+		(1,171)
+		(2,93)
+		(4,38)
+	};
+	\legend{io,sort,mpi,connect}
+	\end{axis}%
+\end{tikzpicture}%
+\end{figure}
+\begin{figure}[!h] \centering
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
+		xlabel=number of racks,ylabel=Parallel efficiency (\% of linear scaling),width=8.5cm]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,100)
+		(2,93)
+		(4,72)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,100)
+		(2,94)
+	};
+	\addplot[color=red,mark=o] coordinates {
+		(1,100)
+		(2,94)
+		(4,101)
+	};
+	\legend{mod,slisim, slisim estimated}
+	\end{axis}%
+\end{tikzpicture}%
+\begin{tikzpicture}
+	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
+		xlabel=number of racks,ylabel=wall clock in seconds,width=8.5cm]
+
+	\addplot[color=blue,mark=*] coordinates {
+		(1,640)
+		(2,344)
+		(4,220)
+	};
+	\addplot[color=red,mark=*] coordinates {
+		(1,1208)
+		(2,637)
+	};
+	\addplot[color=red,mark=o] coordinates {
+		(1,1208)
+		(2,637)
+		(4,299)
+	};
+	\legend{mod,slisim, slisim estimated}
+	\end{axis}%
+\end{tikzpicture}%
+\end{figure}
+
+\section{Measured memory consumption}
+
+\newpage
+\section{Usability for Scientists}
+
+\subsection{Manipulation of circuit}
+
+\begin{itemize}
+      \item control circuit generation / possibilities
+      \item  manipulate circuit
+\end{itemize}
+
+\subsection{Import neurons}
+\emph{H5NeuronCsX\_s\_s\_a\_s} expects 4 input parameters:
+\begin{itemize}
+      \item Name of the a subnet dataset (String).
+The subset has to contain for each neuron an integer value.
+The neurons are grouped together by this subnet value.
+
+      \item A list of all datasets which values are interpreted as list of parameters.
+      
+      \item Name of the used neuron model
+      
+      \item path to the HDF5 file 
+\end{itemize}
+The function returns the neuron id of the first neuron it created.
+
+\begin{lstlisting}[label=sliNeurons,caption=Calling the neuron import module via H5NeuronCsX\_s\_s\_a\_s SLI command ]
+/neuronmodel /aeif_cond_exp def
+/subnet (subnet) def
+/neuronparams [(C_m) (Delta_T) (E_L) (V_reset) (V_th) (a) (b)] def
+/filepath (circuit/ptneu_brain.h5) def
+subnet neuronparams neuronmodel filepath H5NeuronCsX_s_s_a_s /offset Set
+\end{lstlisting}
+
+
+
+\begin{itemize}
+      \item Sli command with parameters
+      \item How can it be used
+\end{itemize}
+
+\subsection{Import synapses}
+\emph{H5SynapseTll\_i\_s\_a\_s} expects 4 input parameters:
+\begin{itemize}
+      \item Offset of the neuron ids. Mostly it is equal to first neuron id returned by \emph{H5NeuronCsX\_s\_s\_a\_s}
+
+      \item A list of all columns which values are interpreted as parameters.
+      
+      \item Name of the used synapse model
+      
+      \item path to the HDF5 file 
+\end{itemize}
+The function returns the neuron id of the first neuron it created.
+
+\begin{lstlisting}[label=sliSynapses,caption=Example importing synapses]
+/synmodel /tsodyks2_synapse def
+/synparams [(delay) (weight) (U0) (TauRec) (TauFac)] def
+/filepath (circuit/syn.h5) def
+offset synparams synmodel filepath H5SynapseTll_i_s_a_s
+\end{lstlisting}
+\begin{itemize}
+      \item How can it be used
+\end{itemize}
+
+\subsection{NEST simulation options}
+
+\begin{itemize}
+	  \item How to perform experiments
+      \item Access neurons from imported circuit
+      \item Test different stimuli 
+\end{itemize}
+
+\subsection{Analysis}
+\begin{itemize}
+	  \item Visualize spiking activity with Brion/Paraview
+      \item Visualize spiking activity with ViSNEST
+\end{itemize}
