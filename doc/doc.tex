@@ -205,9 +205,16 @@ NEST is a simulator for spiking neural network models that focuses on the dynami
 Models of information processing e.g. in the visual or auditory cortex of mammals, models of network activity dynamics, e.g. laminar cortical networks or balanced random networks and models of learning and plasticity. A NEST simulation tries to follow the logic of an electrophysiological experiment that takes place inside a computer with the difference, that the neural system to be investigated must be defined by the experimenter. The definition is based on number of neurons with parameters and connections between these neurons. NEST supports the generation based on probabilistic values. The stochastic settings of a neuronal network can be used to create its artificial copy inside of NEST. To manipulate or observe the network dynamics, the experimenter can define so-called devices which represent the various instruments (for measuring and stimulation) found in an experiment. These devices write their data either to memory or to file. 
 
 \subsection{Visualization}
-To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed, mostly. Different types of methods allow to extract stochastic characteristics from spike trains. Besides this visualization of the spike trains taking their location into account, allows to create a video, which shows the activity of the neuronal network.
+To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed, mostly. 
+Different types of methods allow to extract stochastic characteristics from spike trains.
+Besides this visualization of the spike trains taking their location into account,
+can give an impression of the activity.
 
-
+\begin{itemize}
+      \item Visualization tools available
+      \item BBP
+      \item ViSNEST
+\end{itemize}
 
 
 \section{Analysis}
@@ -234,7 +241,7 @@ with a few arguments.
 \end{itemize}
 
 \subsubsection{Memory consumption of NEST}
-The memory usage of the newest NEST release 2.6.0 can be calculated with following equation. \cite{kunkel2014spiking}
+The memory usage of the NEST release 2.6.0 can be calculated with following equation. \cite{kunkel2014spiking}
 \begin{equation}
   \Pi(M,T,N,K) =  \Pi_0 + \Pi_n(M,N)  + \Pi_c(M,T,N,K)
   \label{eq:NESTmemconsumption}
@@ -254,9 +261,10 @@ The number of incoming connection per neuron $K$ is not known. Only the number o
 To get some results anyway, it is expected that they are similar.
 Furthermore the term of expected number of neurons without any VP-local target is set to zero, which is the worst case for the consumption of memory.
 
-\subsection{Interfaces}
+\subsubsection{Interfaces}
 \begin{itemize}
-      \item How to set up a simulation
+      \item SLI
+      \item Python
 \end{itemize}
 
 \subsection{Data-driven simulation}
@@ -266,7 +274,7 @@ Hence we have to load the whole circuit from file.
 
 \begin{itemize}
       \item parameters for each neuron
-      \item in point to point connection information with parameters
+      \item point to point connection information with parameters
    \end{itemize}
 
 \newpage
@@ -330,10 +338,6 @@ from the nearest injection. To map pixels of the 3D pictures to neurons, the neu
 \caption{Generate long range connectivity}
 \end{algorithm}
    
-   \begin{itemize}
-      \item Implementation
-      \item Parallel efficiency, memory consumption and limits
-   \end{itemize}
    
 \subsubsection{Short range connections}
 The Blue Brain Project has investigated over the last years in experiential work the relation of different synapse types.
@@ -388,11 +392,6 @@ shown in different colors.
 \caption{Generate short range connectivity}
 \end{algorithm}
 
-\begin{itemize}
-      \item Implementation
-      \item Parallel efficiency, memory consumption and limits
-   \end{itemize}
-
 \subsection{Parallel IO}
 Build-up a large scale neuronal network from point to point connectivity results in new requirements for data processing and the data format. The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
 Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to one file.
@@ -404,6 +403,10 @@ format is preferred to reduce the number of needed adaptions of scripts.
 
 
 \subsubsection{HDF5}
+
+\begin{itemize}
+      \item Description of HDF5
+\end{itemize}
 
 \begin{figure}[ht!]
    	\begin{center}
@@ -423,10 +426,13 @@ format is preferred to reduce the number of needed adaptions of scripts.
      }%
    \label{fig:atlas}
    \end{figure}
+\begin{itemize}
+      \item Description of parallel HDF5
+\end{itemize}
 
 
 \subsection{Pipeline}
-The requirements for all implementations are the usability for the scientists. Besides efficient implementation the users should be able to manipulate the data on different levels. Creating one simulation from data based on the Allen Brain Institute is not the main goal of this thesis. In fact the implementations should complete the tool chain to run data-driven simulations with NEST and visualize them, based on Allen injection experiments. Therefore the proposed pipeline contains data formats which can be manipulated. Processing the needed amount of data takes time and has to be executed on large compute clusters. Thus an interactive usage of the tools is not reasonable.
+The requirements for all implementations are the usability for the scientists. Besides efficient implementation the users should be able to manipulate the data on different levels. Creating one simulation from data based on the Allen Brain Institute is not the main goal of this thesis. In fact the implementations should complete the tool chain to run data-driven simulations with NEST and visualize them, based on the BBP recipe and  Allen injection experiments. Therefore the proposed pipeline contains data formats which can be manipulated. Processing the needed amount of data takes time and has to be executed on large compute clusters. Thus an interactive usage of the tools is not reasonable.
 
 \newpage
 \section{Implementation}
@@ -456,22 +462,42 @@ The requirements for all implementations are the usability for the scientists. B
       \item Neuron data format
 \end{itemize}
 
+\newpage
 \subsection{Circuit generation}
 Rewriting the sequential python script to a hybrid C++ application require a parallel implementation of a parallelization strategy and the usage of 
 a parallel random generator. For the parallelization strategy a Master-Slave approach is chosen to distribute the workload dynamically on the nodes.
 Communication between the individual nodes is not necessary. Only the workload management is handled by the master node.
-For the random generator Random123 is used, because it has good performance and it is easy to use.
+For the random generator Random123 is used, because it has good performance and it is easy to use \cite{salmon2011parallel}.
 It ensures reproducible results without correlations in the generated values. 
 
 
 \subsubsection{Long range connections}
 
+The long range generation algorithm is adapted so it can be parallelized.
+The problem with the sequential algorithm, that is iterates through all experiments
+and generates all connections for all the voxels inside its injection regions, if 
+all experiments before have not touched the voxels are have only higher total injection
+value. This means it generates connections which might be overwritten and each iteration depends 
+on all already completed iterations. To overcome this problem the best chosen injection is calculated before hand.
+After that all voxels are distributed to the nodes and inside the iteration over all neurons
+inside the given voxel, the sequential algorithm can be applied on each node.
+Because the computation time needed by each voxel iteration varies a lot. Only the first third
+of the voxels are distributed statically to the worker nodes.
+All the other voxels are distributed dynamically by the master node.
+The number of written entires can be calculated before hand. This allows to create
+the HDF5 dataset before and assign a writing position to each voxel.
+Thus all nodes can write independent to the file system.
 
 \begin{itemize}
       \item parallelization strategy and implementation
-      \item workflow diagram
       \item requirements 
 \end{itemize}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.5]{longRange_parallelAlg.eps}
+\caption{Task distribution between the nodes for the long range connections generation. It illustrates which tasks are distributed between which nodes.}
+\end{figure}
 
 \begin{figure}[ht!]
    	\begin{center}
@@ -491,19 +517,35 @@ It ensures reproducible results without correlations in the generated values.
    \label{fig:atlas}
    \end{figure}
 
+\newpage
 \subsubsection{Short range connections}
 
 The algorithm presented in the analysis section can be parallelized straight forward.
 Each iteration is independent. The challenging part is the distribution of the iterations and
 the writing to disk. The number ob synapses which are created is not know. It is only available
 at the end.
+
+
 \begin{itemize}
       \item parallelization strategy implementation
-      \item workflow diagram
-      \item requirements
 \end{itemize}
 
 
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.5]{shortRange_parallelAlg.eps}
+\end{figure}
+
+The short range algorithm is parallelized using a master-worker strategy to achieve a good load balancing.
+The master node manages the distribution of the neurons, which can be seen as task units. For each neuron 
+is synapses have to be created. The workers load in the first step all needed matrices from the file system.
+Then each node request a set of neurons from the master node. Over this set it iterates and creates resulting
+synapses. For \emph{Generate P} Random123 as a random number generator is used. Therefore a parallel usage of 
+the given sequential algorithm is possible. Only the storage of the generated synapse list, has to be done 
+after all iterations. So in each loop the synapse list is stored in a buffer.
+If all neurons are distributed and processed all nodes, including the master node, calculate the position in 
+the HDF5 dataset where each node is allowed to write. After that all workers write theirs synapse lists to
+the HDF5 dataset.
 
 
 \begin{figure}[ht!]
@@ -523,8 +565,15 @@ at the end.
      }%
    \label{fig:atlas}
    \end{figure}
+   
+\begin{itemize}
+      \item memory and computation requirements
+\end{itemize}
 
 
+
+
+\newpage
 \subsection{Circuit validation}
 
 In the context of this thesis the circuit is validated in terms of geometrical correct placement of
@@ -549,7 +598,7 @@ lay inside a cylinder in layer 1 to 6. For the validation.
 \includegraphics[width=0.4\textwidth]{paraview_ex.png}
 \end{figure}
 
-\subsection{NEST import modules}
+\subsection{NEST import module}
 
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
 an user interface based on an own description language \emph{SLI} and  and a Python interface.
@@ -572,33 +621,11 @@ the NEST data structure.
 Further requirements of the implementation are an efficient use of the available resources as
 memory and computation power. 
 
-\subsubsection{Import neurons}
-To import neurons into NEST using the internal C++ API NEST has to create the requested number of neurons and
-assign their parameters afterwards. In an distributed environment the create function has to be called on all nodes. But assigning the parameters has only be done on the nodes, where the neurons are assigned to.
-Thus only a set of the parameter datasets is needed on each node.
-To group neurons together to subnets, subnets has to be created before the neurons are created.
-This follows in the following algorithm.
-
-\begin{algorithm}
-	\KwData{HDF5 neuron dataset}
-	\KwResult{Created neurons inside NEST data structure}
-	Find unique values in subnet dataset; \\
-	Create subnet for each unique entry; \\
-	Create neurons based on length of HDF5 datasets with given neuron type inside specified subnets; \\
-	Read parameter datasets collectively; \\
-	Assign parameters to neurons; 
-\label{alg2}
-\caption{}
-\end{algorithm}
-
-The distribution of the neurons to the nodes is known. NEST distributes the neurons based on the modulo of their ids. Neuron $i$ is placed on node $i mod number\_of\_nodes$. Each node has to load all needed parameter entries
-from the datasets. Derived from the distribution function each node has to load each number\_of\_nodesths entry
-starting from its node id.
-
-\subsubsection{Import synapses}
-Synapse import module reads the the synapse dataset block wise. Using hyperslabs each node selects a block from the
-dataset and copy it to memory with all the specified parameters.
-This source neuron list and the target neurons from each chunk are used to create a connection table.
+\subsubsection{Algorithm}
+The group data before send algorithm reads the the HDF5 file block wise.
+Additionally the source neurons for each datasets (first row) are stored in a list.
+So for all iterations the source neuron list is available in memory.
+This source neuron list and the target neurons from each block are used to create a connection table.
 It contains per connection one row with the source neuron in the first column and the target neuron in the second column.
 The table will be sorted by the target nodes.
 Using the \emph{MPI\_Alltoall} function this table can be distributed directly to the corresponding nodes.
@@ -607,12 +634,12 @@ Afterwards each node contains its connection table and calls the \emph{NEST} con
 	\KwData{List of HDF5 files for each node, chunk size}
 	\KwResult{Connected NEST network}
 	\While{Chunk to read in HDF5 files}{
-		Read block and store in memory \hspace{45px}(1)\; 
-		Create list of synapses [[$S_1$, $T_1$, $P_{1,1}$, $P_{2,1}$, ..,$P_{m,1}$],[$S_2$, $T_2$, $P_{1,1}$, $P_{2,2}$, ..,$P_{m,2}$],..] (1,2) \hspace{36px}$\mathcal{O}(n)$\; 
-		Determine target node for each synapse \hspace{63px}(2,3) \hspace{36px}$\mathcal{O}(n)$\;
-		Sort synapses by target nodes \hspace{66px}(2,3,*) \hspace{28px}$\mathcal{O}(n^2)$\;
-		MPI\_Alltoall using sorted list \hspace{76px}(2,3,4,5)\;
-		Connect all synapses using NEST function \hspace{36px}(5) \hspace{45px}$\mathcal{O}(n)$\;
+		Read chunk and store in memory \hspace{45px}(1)\; 
+		Create connection table [[$S_1$, $T_1$],[$S_2$, $T_2$],..] (1,2) \hspace{36px}$\mathcal{O}(n)$\; 
+		Map target neurons to nodes \hspace{63px}(2,3) \hspace{36px}$\mathcal{O}(n)$\;
+		Sort table by target neurons \hspace{66px}(2,3,*) \hspace{28px}$\mathcal{O}(n^2)$\;
+		MPI\_Alltoall sorted data \hspace{76px}(2,3,4,5)\;
+		Connect own connections in NEST \hspace{36px}(5) \hspace{45px}$\mathcal{O}(n)$\;
 	}
 \label{alg2}
 \caption{Distribute connection information without transposing, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
@@ -648,6 +675,13 @@ The maximum memory consumption is:
 \section{Discussion}
 \subsection{Circuit properties}
 
+\begin{itemize}
+      \item Scale of mouse brain
+      \item Based on measured settings
+      \item Contains interpolation data
+      \item Easily adaptable, when more information are available
+\end{itemize}
+
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.4]{full_circuit_rack_distribution.eps}
@@ -660,15 +694,6 @@ But it does not take the number of synapses per neuron into account. The distrib
 neuron ids can be adjusted. Such a assignment implicate a memory overhead. The mapping has to be stored in memory and to disk for post processing.
 If the memory overhead is bigger than the memory imbalance, there is no meaning in its implementation.
 
-\begin{itemize}
-      \item Scale of mouse brain
-      \item Based on measured settings
-      \item Contains interpolation data
-      \item Easily adaptable, when more information are available
-\end{itemize}
-
-The 
-
 
 \subsection{Data format usability}
 
@@ -678,12 +703,14 @@ to a transposed data format can be neglected. Thus the usability of having diffe
 to add new datasets can be kept. It also implies that the generation script does not have to be converted or no 
 conversion scripts are needed.
 
-\begin{itemize}
-	  \item Neuron data format - performance vs usability
-      \item Synapse data format - performance vs usability
-\end{itemize}
-
+\newpage
 \subsection{Parallel Efficiency}
+
+\begin{itemize}
+      \item Tested in Lugano BGQ and Juelich BGQ
+      \item Strong scaling
+      \item Weak scaling
+\end{itemize}
 
 \begin{figure}[!h] \centering
 \begin{tikzpicture}
@@ -796,12 +823,6 @@ conversion scripts are needed.
 \end{tikzpicture}%
 \end{figure}
 
-\begin{itemize}
-      \item Tested in Lugano and Juelich
-      \item Strong scaling
-      \item Weak scaling
-\end{itemize}
-
 \subsection{Measured memory consumption}
 
 \newpage
@@ -864,11 +885,11 @@ The function returns the neuron id of the first neuron it created.
 offset synparams synmodel filepath H5SynapseTll_i_s_a_s
 \end{lstlisting}
 \begin{itemize}
-      \item Sli command with parameters
       \item How can it be used
 \end{itemize}
 
 \subsubsection{NEST simulation options}
+
 \begin{itemize}
 	  \item How to perform experiments
       \item Access neurons from imported circuit
@@ -881,7 +902,10 @@ offset synparams synmodel filepath H5SynapseTll_i_s_a_s
       \item Visualize spiking activity with ViSNEST
 \end{itemize}
 
+\newpage
+\bibliographystyle{plain}
 
+\bibliography{./doc}
 
 
 \end{document}

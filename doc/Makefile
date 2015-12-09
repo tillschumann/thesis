@@ -4,6 +4,7 @@ MFILE=doc
 
 all:
 	pdflatex $(MFILE).tex
+	bibtex $(MFILE)
 	pdflatex $(MFILE).tex
 	pdflatex $(MFILE).tex
 
