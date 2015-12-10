@@ -136,8 +136,10 @@ We suggest as part of this thesis to first develop the means to fully model a mo
 \section{Allen Brain Atlas}
    Allen Institute for Brain Science provides a high-resolution map of neural connections in the mouse brain.
    It contains several injection experiments. The provided datasets of the experiments 
-   contain a 3D image of the injection and a 3D image of its axonal projection labeled by viral
-   tracers.
+   contain a 3D image of cell injection and a 3D image of its axonal projection labeled by viral
+   tracers. So the images provide connection information between neurons all over the brain.
+   The extracted connectivity information is used to build of long range connectivity inside
+   the mouse brain model.
    
    \begin{figure}[ht!]
    	\begin{center}
@@ -156,20 +158,34 @@ We suggest as part of this thesis to first develop the means to fully model a mo
      }%
    \label{fig:atlas}
    \end{figure}
+   The figure \ref{fig:atlas} illustrate the given experiments and the projection image of an example experiment.
+   They give an inside into the synaptic structure of the whole brain.
    
    \begin{itemize}
       \item description
 \end{itemize}
    
+   \newpage
 \section{BBP recipe}
+
+The BBP was able to reconstruct a microcircuit of somatosensory cortex of juvenile rat.
+They presented a complementary algorithmic approach that reconstructs neuronal microcircuitry
+across all layers using available sparse data and that leverages biological principles and
+interdependencies between datasets to predict missing biological data.
+The algorithm with the available data forms a recipe which is applied the the mouse
+brain model to estimate the short range connectivity inside the mouse isocortex.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.9]{pictures/BBPconnectionPropasMatrix.eps}
+\caption{(Left) Synapses per connection. A matrix of the average synapses per connection for multi-synapse connections formed between the 55 m-types.
+(Right) Connection probabilities. A matrix of average connection probabilities within 100 mm.}
+\label{BBPconnectionPropasMatrix}
 \end{figure}
-
-\begin{itemize}
-      \item description
-\end{itemize}
+The recipe is mainly based on probabilities of neuron types inside the somatosenory cortex.
+The matrices in figure \ref{BBPconnectionPropasMatrix} shows the used matrices for \emph{m-type} for the neurons. 
+To a given point neuron cloud with neuron type information the recipe returns synaptic
+connections, which are used to extent the long range connectivity from the Allen Brain Atlas
+by short range connectivity.
 
 \section{NEST}
 NEST is a simulator for spiking neural network models that focuses on the dynamics, size and structure of neural systems rather than on the exact morphology of individual neurons. The development of NEST is coordinated by the NEST Initiative. NEST is ideal for networks of spiking neurons of any size, for example:
