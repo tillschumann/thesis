@@ -81,12 +81,12 @@ Thus all nodes can write independent to the file system.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=2.5]{pictures/longRange_Nearest_parallelAlg.eps}
-\label{longRangeNearestparallelAlg}
 \caption{Find nearest neighbor loop}
+\label{longrange}
 \end{figure}
 
 The given algorithm was extended by a interpolation. There are voxels for which there is no injection of any experiment
-available. To be able to generate connections for each neuron anyway. Voxels which are affected take the injection and projection from the nearest voxel with an injection. The strategy to find the nearest neighbor is an iteration around the neighborhood of each empty voxel. The figure \ref{longRangeNearestparallelAlg} shows an illustration of the search algorithm
+available. To be able to generate connections for each neuron anyway. Voxels which are affected take the injection and projection from the nearest voxel with an injection. The strategy to find the nearest neighbor is an iteration around the neighborhood of each empty voxel. The Figure \ref{longrange} shows an illustration of the search algorithm
 projected in a 2D plane. The first voxel along the search direction which is found is declared as ne nearest neighbor.
 
 
