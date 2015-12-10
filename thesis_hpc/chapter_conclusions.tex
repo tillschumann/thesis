@@ -18,6 +18,13 @@ So the generated circuit contains around 15 TB and is splitted in three HDF5 fil
 a first simulation of a full circuit model. Thus is allows to run and test is full pipeline from Allen Brain data to a NEST simulation. If there are more experiments available they can be included into
 the circuit generation easily. The size of the circuit wont change. Thus no changes are needed anywhere else.
 
+Three different circuits are generated: The full mouse brain circuit,
+a smaller circuit, which contains 25 percent of the full mouse brain circuit and
+1 300st of the full circuit. The percentage is related to the number of neurons inside
+the circuit. Based on the neurons the connections are generated. In principle the
+number of connections should be of the same proportion, but can deviate, because of 
+discrete picking based on probabilities.
+
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.5]{pictures/distance_x_y_70.eps}
@@ -48,9 +55,7 @@ conversion scripts are needed.
 \section{Performance}
 Runtime measurements of the import module are performed on different scale.
 Therefore IBM Blue Gene Q systems in Lugano and Juelich are used.
-Three different circuits are currently available. The full mouse brain circuit,
-a smaller circuit, which contains 25 percent of the full mouse brain circuit and
-1 of 
+
 
 
 \newpage
