@@ -247,7 +247,6 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
 	\KwResult{Connected NEST network}
 	\While{Chunk to read in HDF5 files}{
 		Read block and store in memory \hspace{45px}(1)\;
- Create list of synapses (1,2) \hspace{36px}$\mathcal{O}(n)$\;
  Determine target node for each synapse \hspace{63px}(2,3) \hspace{36px}$\mathcal{O}(n)$\;
  Sort synapses by target nodes \hspace{66px}(2,3,*) \hspace{28px}$\mathcal{O}(n^2)$\;
  MPI\_Alltoallv using sorted list \hspace{76px}(2,3,4,5)\;
@@ -258,10 +257,70 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
 	set in brackets contains current needed variables}
 \end{algorithm}
 
+
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.4]{pictures/Connect_inside_iteration.eps}
+\caption{Inside iteration parallel workflow}
+\end{figure}
+
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.7]{pictures/sort_table_all_alltoall.eps}
 \caption{Distribute synapses to the nodes.}
+\end{figure}
+
+
+\lstdefinestyle{cppcode} {language=C++,
+                basicstyle=\ttfamily,
+                keywordstyle=\color{blue}\ttfamily,
+                stringstyle=\color{red}\ttfamily,
+                commentstyle=\color{green}\ttfamily,
+                morecomment=[l][\color{magenta}]{\#}
+                numbers=left,
+  				stepnumber=5,    
+  				firstnumber=1,
+ 				numberfirstline=true
+}
+\begin{figure}
+\begin{lstlisting}[style=cppcode]
+    void H5Synapses::singleConnect(NESTNodeSynapse& synapse,
+    	nest::index synmodel_id,
+    	nest::Node* const target_node,
+    	const nest::thread target_thread,
+    	uint64_t& n_conSynapses)
+{
+  nest::index source = synapse.source_neuron_;
+  
+  // check whether the target is on this process
+  if (nest::NestModule::get_network().is_local_node(target_node)) {
+    // use region to allow setting lock for creating/destroying token
+    {     
+      DictionaryDatum d( new Dictionary );
+      
+      //new/delete Token is not thread-safe
+      omp_set_lock(&tokenLock);
+      for (int i=0; i<synapses_.prop_names.size(); i++)
+	def< double_t >( d, synapses_.prop_names[i], synapses_.prop_facts[i] * synapse.prop_values_ [i] + param_offset[i]);
+      omp_unset_lock(&tokenLock);
+
+      bool success = nest::NestModule::get_network().connect(source, target_node->get_gid(), d, synmodel_id);
+ 
+      if (success)
+	n_conSynapses++;
+      
+      omp_set_lock(&tokenLock);
+    }
+    omp_unset_lock(&tokenLock);
+  }
+  else
+  {
+    throw nest::IllegalConnection("H5Synapses::singleConnect(): synapse is on wrong node");
+  }
+}
+\end{lstlisting}
+\caption{Code copied from the import module, showing the used NEST c++ api.}
 \end{figure}
 
 \section{Memory consumption}
