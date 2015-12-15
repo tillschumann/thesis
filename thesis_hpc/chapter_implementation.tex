@@ -8,12 +8,20 @@ Therefore a efficient data format is defined, the circuit generation scripts are
 run on a bigger scale and the NEST simulator is extended to load the new data format.
 
 \section{Data formats}
+A point neuron circuit contains point neurons and connections (synapses) between the point neurons.
+The same point neuron model and synapse model are used for all neurons and synapses respectively.
+The neurons and synapses are characterized by parameters.
+Each neuron is defined by a given set of parameters.
+The synapses contain besides the parameters the source and target neuron id, which the synapses connects.
+To store the circuit in files two different data formats are defined.
+The first data format defines the storage for all neuron parameters.
+The second data format defines the storage for the synapse parameters and source and target neuron ids.
 
 The data format for the neurons and the synapses follow two different concepts.
-The neuron data format contains different datasets with the neuron parameters.
-All datasets have to have the same length, which also defines the number of neurons.
+The neuron data format contains multiple datasets containing the neuron parameters.
+All datasets have by definition the same length. This length defines the number of neurons.
 The neuron parameters of neuron $i$ are stored in the i-th line of each data set.
-Besides the data format contains attributes for storing meta data of the circuit.
+Besides the neuron parameters the file contains attributes for storing meta data of the circuit.
 \begin{figure}[ht!]
    	\begin{center}
         \subfigure[HDF5 file format for the neurons]{%
@@ -43,7 +51,7 @@ Both datasets use a compound data type to store different data types in the same
 
 \newpage
 \section{Circuit generation}
-Rewriting the sequential python script to a hybrid C++ application require a parallel implementation of a parallelization strategy and the usage of 
+Rewriting the sequential python script to a hybrid C++ application require a parallel implementation of the algorithm and the usage of 
 a parallel random generator. For the parallelization strategy a Master-Slave approach is chosen to distribute the workload dynamically on the nodes.
 Communication between the individual nodes is not necessary. Only the workload management is handled by the master node.
 For the random generator Random123 is used, because it has good performance and it is easy to use \cite{salmon2011parallel}.
@@ -53,11 +61,11 @@ It ensures reproducible results without correlations in the generated values, wh
 \subsection{Long range connections}
 
 The long range generation algorithm is adapted so it can be parallelized.
-The problem with the sequential algorithm, that is iterates through all experiments
+The problem with the sequential algorithm is, that it iterates through all experiments
 and generates all connections for all the voxels inside its injection regions, if 
-all experiments before have not touched the voxels are have only higher total injection
-value. This means it generates connections which might be overwritten and each iteration depends 
-on all already completed iterations. To overcome this problem the best chosen injection is calculated before hand.
+all experiments before have not touched the voxels or have higher total injection
+value. This means it generates connections which might be overwritten and each iteration might depend
+on all previous iterations. To overcome this problem the best chosen injection is calculated before hand.
 After that all voxels are distributed to the nodes and inside the iteration over all neurons
 inside the given voxel, the sequential algorithm can be applied on each node.
 Because the computation time needed by each voxel iteration varies a lot. Only the first third
@@ -172,12 +180,13 @@ In particular the long range connectivity should connect neurons from the inject
 in the projected region for each used experiment. Therefore a circuit for a single experiment is 
 generated, the target and source neurons are visualized in a 3D coordinate system and the the injection
 and projection is used as the reference system. If source neurons are inside the injection space and all
-target neurons are in the projection space, the implementation works fine.
+target neurons are in the projection space, the implementation is correct.
 For the short range connectivity all post-synaptic neurons of synapses having the same pre-synaptic neuron should
-lay inside a cylinder in layer 1 to 6. For the validation. 
+lay inside a cylinder in layer 1 to 6. Visualising the post-synaptic neurons geometrical on top of the contour of layer 1 to 6 allows to review if the shape matches with a cylinder.
+To perform the visual validation the renderer voxalize \ref{voxelize} is used with the visualization tool Paraview \ref{paraview}.
  
 \begin{itemize}
-      \item Visual validation of synapses to identify neuron id miss interpretation
+      \item Pictures of both validation
       \item Visual validation of spiking activity
       \item Statistical properties are not analyzed in this work 
 \end{itemize}
@@ -234,6 +243,7 @@ The distribution of the neurons to the nodes is known. NEST distributes the neur
 from the datasets. Derived from the distribution function each node has to load each number\_of\_nodesths entry
 starting from its node id.
 
+\newpage
 \subsubsection{Import synapses}
 Synapse import module reads the the synapse dataset block wise. Using hyperslabs each node selects a block from the
 dataset and copy it to memory with all the specified parameters.
@@ -247,10 +257,10 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
 	\KwResult{Connected NEST network}
 	\While{Chunk to read in HDF5 files}{
 		Read block and store in memory \hspace{45px}(1)\;
- Determine target node for each synapse \hspace{63px}(2,3) \hspace{36px}$\mathcal{O}(n)$\;
- Sort synapses by target nodes \hspace{66px}(2,3,*) \hspace{28px}$\mathcal{O}(n^2)$\;
- MPI\_Alltoallv using sorted list \hspace{76px}(2,3,4,5)\;
- Connect all synapses using NEST function \hspace{36px}(5) \hspace{45px}$\mathcal{O}(n)$\;
+ Determine target node for each synapse \hspace{63px}(1,2) \hspace{36px}$\mathcal{O}(n)$\;
+ Sort synapses by target nodes \hspace{66px}(1,2) \hspace{28px}$\mathcal{O}(n^2)$\;
+ MPI\_Alltoallv using sorted list \hspace{76px}(1,2,3,4)\;
+ Connect all synapses using NEST function \hspace{36px}(1,2) \hspace{45px}$\mathcal{O}(n)$\;
 	}
 \label{alg2}
 \caption{Distribute connection information without transposing, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
@@ -273,7 +283,7 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
 
 
 \lstdefinestyle{cppcode} {language=C++,
-                basicstyle=\ttfamily,
+                basicstyle=\tiny\ttfamily,
                 keywordstyle=\color{blue}\ttfamily,
                 stringstyle=\color{red}\ttfamily,
                 commentstyle=\color{green}\ttfamily,
@@ -283,7 +293,7 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
   				firstnumber=1,
  				numberfirstline=true
 }
-\begin{figure}
+\begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
     void H5Synapses::singleConnect(NESTNodeSynapse& synapse,
     	nest::index synmodel_id,
@@ -320,24 +330,28 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
   }
 }
 \end{lstlisting}
-\caption{Code copied from the import module, showing the used NEST c++ api.}
+\caption{Code copied from the import module, showing the used NEST c++ api. Appropriate size seems hard to find }
 \end{figure}
 
+\begin{itemize}
+      \item describe use of NEST c++ api, lock has to be used
+\end{itemize}
+
+\newpage
 \section{Memory consumption}
 \begin{figure}[ht!]
 \begin{tabular}{| l | l | l | l |}
     \hline
     (id) & data structures & memory consumption \\ \hline
-    (1) & chunk in memory & $L_0 + h*(L_0 + L_S*w)$ \\ \hline
-    (2) & connection table & $2*(L_0+L_S*w*s)$ \\ \hline
-    (3) & target neuron node map & $L_0+L_S*w*s$ \\ \hline
-    (4) & MPI send vectors & $L_0+L_S*2*w*s+2*(L_0+L_S*N)$ \\ \hline
-    (5) & MPI recv vectors & $L_0+L_S*2*\frac{w*s}{\nu}+2*(L_0+L_S*N)$ \\ \hline
+    (1) & block in memory & $sizeof(float)*h*p$ \\ \hline
+    (2) & target neuron node list & $sizeof(int)*h$ \\ \hline
+    (3) & MPI send vectors & $(sizeof(float)*p + sizeof(int)) * h$ \\ \hline
+    (4) & MPI recv vectors & $(sizeof(float)*p + sizeof(int)) * \frac{h}{\nu(N)}$ \\ \hline
     \end{tabular}
-\caption{$L_0$: constant memory overhead of list; $L_S$: memory consumption of entry type; $N$: number of nodes $w$: 1 dim of chunk; $h$: 2 dim of chunk; $DNC(w)$: replication of target neurons in chunk; $\nu$: distribution coefficient of data}
+\caption{$N$: number of nodes; $h$: size of block; $p$: number of parameters; $\nu(N)$: distribution coefficient of data}
 \end{figure}
 The maximum memory consumption is:
 \begin{equation}
-  M = 9*L_0 + 4*L_S*N+L_S*w*s*(4+\frac{1}{\nu})
+  M = (sizeof(float)*p + sizeof(int)) * 2h * (1 + \frac{1}{\nu(N)})
   \label{eq:maxmemoryconsumption}
 \end{equation}

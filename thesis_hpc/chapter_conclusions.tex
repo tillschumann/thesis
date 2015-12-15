@@ -79,6 +79,40 @@ a buffer can be used (already for a small number of nodes the all created connec
 
 \subsection{Load circuit}
 
+\begin{itemize}
+	\item how good is the performance of the tasks
+      \item problems with lock in connect function
+\end{itemize}
+
+\begin{figure}[ht!]
+     \begin{center}
+        \subfigure[Load hdf5 files]{%
+            \label{fig:first}
+            \includegraphics[width=0.45\textwidth]{pictures/V03_loadSynapses.eps}
+        }
+        \subfigure[Sort connection information data by target node]{%
+           \label{fig:second}
+           \includegraphics[width=0.45\textwidth]{pictures/V03_sort.eps}
+        }\\ %  ------- End of the first row ----------------------%
+        \subfigure[Send data to all target nodes using AlltoAllv]{%
+            \label{fig:third}
+            \includegraphics[width=0.45\textwidth]{pictures/V03_communicate.eps}
+        }
+        \subfigure[Connect function which calculated delay and calls NEST connect]{%
+            \label{fig:fourth}
+            \includegraphics[width=0.45\textwidth]{pictures/V03_connect.eps}
+        }
+    \end{center}
+    \caption{%
+        The the plots show the the execution time for node per iteration.
+        The y-axes corresponds to the node id and the x-axes corresponds to the iteration number.
+        The color scale is in seconds.
+        In each iteration loadSynapses loads max $1e6$ synapses from hdf5 file.
+     }%
+   \label{fig:implV03}
+\end{figure}
+
+
 \newpage
 \section{Parallel Efficiency}
 

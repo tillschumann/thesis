@@ -45,3 +45,39 @@ To get an overview the numbers are plotted in a raster plot.
 \includegraphics[scale=0.4]{pictures/1per300_tracefile_connect.png}
 \caption{Visualized trace file}
 \end{figure}
+
+\chapter{Measure memory consumption}
+
+\begin{lstlisting}
+
+
+#include <stdio.h>
+#include <spi/include/kernel/memory.h>
+
+int getMemoryInformation(..)
+{
+  uint64_t shared, persist, heapavail, stackavail, stack, heap, guard, mmap;
+
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_SHARED, &shared);
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_PERSIST, &persist);
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_HEAPAVAIL, &heapavail);
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_STACKAVAIL, &stackavail);
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_STACK, &stack);
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_HEAP, &heap);
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_GUARD, &guard);
+  Kernel_GetMemorySize(KERNEL_MEMSIZE_MMAP, &mmap);
+
+  ..
+}
+
+\end{lstlisting}
+
+\chapter{Tools}
+
+\section{h5py}
+\section{numpy}
+\section{matplotlib}
+\section{Voxelize}
+\section{Livre}
+\section{Paraview}
+
