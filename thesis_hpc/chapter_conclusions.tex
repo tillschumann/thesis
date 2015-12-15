@@ -44,7 +44,6 @@ If the memory overhead is bigger than the memory imbalance, there is no meaning 
 
 
 \section{Data format usability}
-
 The HDF5 data format for neuron parameters is used as given from the Neurorobotics team.
 Because of its small size (9 GB) in comparison to the synapse dataset (15 TB) the performance improvement by changing
 to a transposed data format can be neglected. Thus the usability of having different datasets and being able
@@ -52,8 +51,6 @@ to add new datasets can be kept. It also implies that the generation script does
 conversion scripts are needed.
 
 \section{Performance}
-
-
 Runtime measurements of the import module are performed on different scale.
 Therefore IBM Blue Gene Q systems in Lugano and Juelich are used.
 
@@ -81,7 +78,7 @@ a buffer can be used (already for a small number of nodes the all created connec
 
 \begin{itemize}
 	\item how good is the performance of the tasks
-      \item problems with lock in connect function
+    \item problems with lock in connect function
 \end{itemize}
 
 \begin{figure}[ht!]
