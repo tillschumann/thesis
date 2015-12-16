@@ -184,17 +184,23 @@ target neurons are in the projection space, the implementation is correct.
 For the short range connectivity all post-synaptic neurons of synapses having the same pre-synaptic neuron should
 lay inside a cylinder in layer 1 to 6. Visualising the post-synaptic neurons geometrical on top of the contour of layer 1 to 6 allows to review if the shape matches with a cylinder.
 To perform the visual validation the renderer voxalize \ref{voxelize} is used with the visualization tool Paraview \ref{paraview}.
+ \begin{figure}[ht!]
+\centering
+\includegraphics[width=0.4\textwidth]{pictures/paraview_ex.png}
+\end{figure}
+For the validation the BBP visualization team offered a rendering pipeline to visualize the placement of target neurons for each synapse file. Therefore the neuron and synapse HDF5 can be imported into 
+Voxelize \ref{voxelize}. Voxelize creates a voxelized dataset out of the target neuron positions, which can be exported into
+a MetaImage \ref{MetaImage} file or directly viewed with Livre \ref{Livre}.
+The MetaImage files can be viewed with Paraview \ref{Paraview}.
+Injection and projection images are also given in the MetaImage format.
+A direct comparison inside of Paraview is possible.
+Loading the projection inside of Paraview and applying the contour filter on it with a threshold of $0.01$ (threshold is also applied to the same data in the long range connectivity generation) allows to visualize the valid boundaries for all target neurons for this particular experiment.
  
 \begin{itemize}
       \item Pictures of both validation
       \item Visual validation of spiking activity
       \item Statistical properties are not analyzed in this work 
 \end{itemize}
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=0.4\textwidth]{pictures/paraview_ex.png}
-\end{figure}
 
 \section{NEST import modules}
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
@@ -221,11 +227,10 @@ memory and computation power.
 
 \subsubsection{Import neurons}
 To import neurons into NEST using the internal C++ API NEST has to create the requested number of neurons and
-assign their parameters afterwards. In an distributed environment the create function has to be called on all nodes. But assigning the parameters has only be done on the nodes, where the neurons are assigned to.
+assign their parameters afterwards. In an distributed environment the create function has to be called on all nodes. But assigning the parameters has only be done on the nodes, where the neurons are placed on.
 Thus only a set of the parameter datasets is needed on each node.
-To group neurons together to subnets, subnets has to be created before the neurons are created.
-This follows in the following algorithm.
-
+To group neurons together to subnets, neurons can be created inside of virtual subnets.
+This subnets have to be created before hand.
 \begin{algorithm}
  \KwData{HDF5 neuron dataset}
  \KwResult{Created neurons inside NEST data structure}
@@ -237,10 +242,15 @@ This follows in the following algorithm.
 \label{alg2}
 \caption{}
 \end{algorithm}
-
-The distribution of the neurons to the nodes is known. NEST distributes the neurons based on the modulo of their ids. Neuron $i$ is placed on node $i mod number\_of\_nodes$. Each node has to load all needed parameter entries
-from the datasets. Derived from the distribution function each node has to load each number\_of\_nodesths entry
-starting from its node id.
+Therefore the implemented algorithm sorts out the needed subnets in its first step.
+Unique values are extracted from the subnet dataset.
+After that for each unique value a subnet is created.
+In the next step the neurons are iteratively created inside the specified subnet.
+Then the parameter values are loaded from the HDF5 datasets and committed to the neurons.
+The neurons are stored distributed on the nodes.
+So the neuron parameters are only needed on the node, where the neuron is placed.
+The distribution is known. NEST distributes the neurons based on the modulo of their ids. Neuron $i$ is placed on node $i mod number\_of\_nodes$. Each node has to load all needed parameter entries
+from the datasets. Derived from the distribution function each node has to load each number\_of\_nodesths entry starting from its node id.
 
 \newpage
 \subsubsection{Import synapses}
