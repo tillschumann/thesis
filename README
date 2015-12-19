@@ -1,0 +1,128 @@
+NEST:
+
+- Install NEST with hdf5 load module implementation
+	- Checkout Mike2 branch from nest repo
+		https://github.com/tillschumann/nest-simulator.git
+	- Adapt library pathes in the first lines in build-nest.sh (inside) the set ones are valid for bbpbg1.cscs.ch
+	- Adapt NEST file path and build folder
+	- Build NEST using script: build-nest.sh
+	- NEST is installation is now placed in INSTALL_PATH (from build-nest.sh script)
+	- To use NEST, all necessary paths can be loaded via: 'source INSTALL_PATH/bin/nest_vars.sh'
+
+How to run a nest simulation:
+
+	nest script.sli (resp. srun nest script.sli)
+
+	script.sli contains the full simulatoin workflow. (http://www.nest-simulator.org/neural_simulations/)
+	
+	How to use neuron and synapse load module see thesis.
+	
+
+NEST Models:
+	https://github.com/tillschumann/models
+
+	Needed changes: Adapt nest install path in slurm scripts (eventually adapt batch script to given cluster)
+
+	Info: Sli script and execute script is nessecary.
+		Because nest parameter is still changing, look at newest update. to adapt script to it.
+		Currently it is 1per300mouse
+	     In the sli file the location of the circuit has to be adapted if it changes.
+	     Further the number of neurons is hardcoded inside.
+	     Before running make sure specified output folder is existing.
+
+
+GenBrain:
+	 Info: Generate Ciruit with long range and short range connectivity
+
+	- See manual for Csaba
+
+Tools:
+
+- Paraview
+	
+	Used to visulize voxelized densities in 3D space
+	The data can be loaded from MHD files.
+	MHD files can be generated via BBP viz tools are my python scripts
+	
+	
+
+Python scripts for analysis during thesis:
+	https://github.com/tillschumann/thesis.git
+	
+	located in subfolder: scripts:
+
+
+
+	Merging of gdf spike files written by nest spikedetector
+	- mergeSpikeDetectors.py
+	  Input: path, number of spiking neurons
+	  Output: neurons.npy spikes.npy
+
+	  Info: Set number of spiking neurons too high and run the script. The last number which is displayed is the correct one.
+		 If the number is too low the run aboards.
+
+	Visualize own written trace files (ex. traceFile_000.csv)
+	- viewTraceFile.py
+	  Input: path to file, number of shown ranks
+	  Output: matplotlib windows
+
+	  Info: You can see scatter plots, showing the ranks on the y axis and iterations on the x axis. The color shows the measured timing in seconds
+
+
+	Plotting nest memory consumption based on "Spiking network simulation code for petascale computers"
+	- calc_Mem_consumption_Circuit.py
+	- calc_Mem_consumption_Nest.py
+
+
+	Easy voxelizing scripts to visualize point neurons with paraview.
+	Scripts only creates raw data. mhd has to be added by hand.
+	- voxelizeSpikingNeurons.py
+	- voxelizeTargetNeurons.py
+
+	Info: ex. mhd file content: 	ObjectType = Image
+					NDims = 3
+					BinaryData = True
+					BinaryDataByteOrderMSB = False
+					CompressedData = False
+					TransformMatrix = 1 0 0 0 1 0 0 0 1
+					Offset = 0 0 0
+					CenterOfRotation = 0 0 0
+					AnatomicalOrientation = RAI
+					ElementSpacing = 100 100 100
+					DimSize = 133 81 115
+					ElementType = MET_INT
+					ElementDataFile = filename.raw
+
+
+
+	Create spiking plots from neurons.npy spikes.npy files
+	- spiking.py
+	  
+	  Info: Specify input path on line 82 and 83.
+		Included functions like cut, sort, compare, dotplot can be used to interact with data
+
+
+Visualizing tools from bbp viz team:
+	 git: ssh://schumann@bbpcode.epfl.ch/viz/Fivox
+	      branch: origin/allen_loader
+
+	      Example usage written in doc/UserGuide.md in repo 
+
+
+Circuit analysis repo (an example):
+
+	Used to perform easy statistical analysis on the big dataset
+	- https://github.com/tillschumann/STATS_SYN.git
+		 H5SynapseLoader.h Class to load synapses (extracted from NEST synapse load module)
+		 NESTNodeSynapse.* Class to store synapse information in memory
+		 main.cpp Applying easy math operation to all synapses iterativly	 
+
+
+
+Used Cluster:
+
+- bbplviz  bbpviz1.cscs.ch
+- BGQ      bbpbg1.cscs.ch
+- bbpviz   bbplviz1.cscs.ch 
+- juqueen  juqueen.fz-juelich.de
+
