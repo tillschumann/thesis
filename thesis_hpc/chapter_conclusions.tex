@@ -110,6 +110,32 @@ a buffer can be used (already for a small number of nodes the all created connec
 \end{figure}
 
 
+\subsubsection{Connect step}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.5]{pictures/boxplot_new_con_dt_1_300.eps}
+\caption{Comparison of mean of single connect duration across one iteration on one node.}
+\label{boxplotnewcon}
+\end{figure}
+
+\begin{figure}[ht!]
+     \begin{center}
+        \subfigure[Load hdf5 files]{%
+            \label{detailnewcon:first}
+            \includegraphics[scale=0.45]{pictures/histogram_new_const_1_300.eps}
+        }
+        \subfigure[Sort connection information data by target node]{%
+           \label{detailnewcon:second}
+           \includegraphics[scale=0.45]{pictures/t8_duration_per_con_1_300.eps}
+		}
+    \end{center}
+    \caption{%
+        Measured details of connect step.
+     }%
+   \label{detailnewcon}
+\end{figure}
+
 \newpage
 \section{Parallel Efficiency}
 
