@@ -13,7 +13,7 @@ like coordinates. In total the neuron HDF5 file is of the size of around 9 GB.
 The synapse HDF5 file only contains needed parameters for the simulation.
 There are 5 synapse parameter per connection. This results in 15 TB of data.
 
-So the generated circuit contains around 15 TB and is splitted in three HDF5 files (Neuron file, long range synapses file and short range synapses file). The interpolation which are added to the circuit generation introduces new errors, but allow
+So the generated circuit contains around 15 TB and is spitted in three HDF5 files (Neuron file, long range synapses file and short range synapses file). The interpolation which are added to the circuit generation introduces new errors, but allow
 a first simulation of a full circuit model. Thus is allows to run and test is full pipeline from Allen Brain data to a NEST simulation. If there are more experiments available they can be included into
 the circuit generation easily. The size of the circuit wont change. Thus no changes are needed anywhere else.
 
@@ -28,12 +28,14 @@ discrete picking based on probabilities.
 \centering
 \includegraphics[scale=0.5]{pictures/distance_x_y_70.eps}
 \caption{Plotted values from the nearest neighbor algorithm. You can see the distance to the next injected voxel.}
+\label{interpolationdistance}
 \end{figure}
 
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.4]{pictures/full_circuit_rack_distribution.eps}
 \caption{Synapse inbalance for using NEST standard configuration on different number ob nodes. The values are normalized by its mean value.}
+\label{fullcircuitdist}
 \end{figure}
 
 Memory imbalance resulting from an imbalance of number of synapses per neuron can be compressed by shuffling neurons on the nodes.
@@ -75,12 +77,13 @@ Because of the given resources (IBM Blue Gene Q) and the high parallel efficienc
 a buffer can be used (already for a small number of nodes the all created connections fit in memory).
 
 \subsection{Load circuit}
-
-\begin{itemize}
-	\item how good is the performance of the tasks
-    \item problems with lock in connect function
-\end{itemize}
-
+Four parts of the synapse loading algorithm are instrumented to get wall clock timings.
+\emph{Read}, \emph{Sort}, \emph{Alltoall} and \emph{Connect} are considered to be the mots time
+consuming parts of the algorithm. The parts relate to figure \ref{Algparts}.
+\emph{Def. Node} is negligible (It takes less than 1 percent computation time of an iteration and scales constant with the number of nodes.).
+The following figures \ref{fig:implV03} give an overview of the measured wall-clock timings.
+The timings are shown per node and iteration number. They give an idea how the timings are distributed.
+The performance of the different parts can be compared and bottlenecks can be found.
 \begin{figure}[ht!]
      \begin{center}
         \subfigure[Load hdf5 files]{%
@@ -108,26 +111,53 @@ a buffer can be used (already for a small number of nodes the all created connec
      }%
    \label{fig:implV03}
 \end{figure}
+One can see that \emph{Read} and \emph{Connect} are the critical parts.
+For the interpretations of the plots one has to take into account that different parts of the algorithm
+(\emph{Read} and \emph{Alltoall}) contain mpi collective operations and contain therefor mpi waits.
+Thus the wall-clock timings do not satisfy the pure step functionality but also the imbalance from its previous step.
+Therefore a showcase run with 
 
 
 \subsubsection{Connect step}
 
+Thread parallelization of the connect step allows to store the synapses efficiently in the NEST data structure.
+The pure connect functionality of NEST is thread-safe. But creating and destroying SLI data objects is not and can result
+in data-races. To overcome this limitation the creation and destroying of the objects is serialized. Before iterating over all synapses one SLI object is created and destroyed afterwards for each thread. A single connect function
+call of the NEST api expects the synapse parameters stored in a SLI object. In each iteration the current
+parameters are assigned to the values inside the already created SLI object. This SLI object is passed to the function call.
+Thus a small overhead for the creation and destroying of the object is perceived.
 \begin{figure}[ht!]
 \centering
-\includegraphics[scale=0.5]{pictures/boxplot_new_con_dt_1_300.eps}
+\includegraphics[scale=0.3]{pictures/boxplot_new_con_dt_1_300.eps}
 \caption{Comparison of mean of single connect duration across one iteration on one node.}
 \label{boxplotnewcon}
 \end{figure}
+Because each thread iterates over all synapses, but only stores the connection if the target neuron is located on
+the thread, the connection calls per thread varies.
+As for nodes the neurons are distributed in the modules fashion on the threads for one node.
+The distribution properties are the same. Thus there is a larger variation on a larger number of threads.
+Figure \ref{boxplotnewcon} shows wall-clock time measurements for the connect step. The measurements are
+extracted from the execution of the 1per300 circuit. It is executed on 128 nodes, which varing number of
+threads. The circuit plus fixed number of nodes specify the distribution of neurons per node.
+The variations of the timings correlates with the distribution of synapses per node (figure \ref{fullcircuitdist}).
+To look into detail, figure \ref{detailnewcon:second} shows the measured wall-clock time for each node
+plotted over the maximum number of new connections per thread. It shows a strong correlation between the variable and
+the duration. Thus the increasing variations of timings can be explained by the variations of synapses per thread.
+The figure indicates two different timings per connection. There is an offset of regression between the purple
+and the red dots. Purple an red dots represent all measurements with less than 40,000 and more than new synapses per
+node respectively. Figure \ref{detailnewcon:first} shows the density of number of new synapses per node.
+Less synapses results in a smaller vector size. There seems to be a loss of efficiency, which properly result from
+the use of different cache levels. 
 
 \begin{figure}[ht!]
      \begin{center}
         \subfigure[Load hdf5 files]{%
             \label{detailnewcon:first}
-            \includegraphics[scale=0.45]{pictures/histogram_new_const_1_300.eps}
+            \includegraphics[scale=0.41]{pictures/histogram_new_const_1_300.eps}
         }
         \subfigure[Sort connection information data by target node]{%
            \label{detailnewcon:second}
-           \includegraphics[scale=0.45]{pictures/t8_duration_per_con_1_300.eps}
+           \includegraphics[scale=0.41]{pictures/t8_duration_per_con_1_300.eps}
 		}
     \end{center}
     \caption{%
@@ -135,6 +165,8 @@ a buffer can be used (already for a small number of nodes the all created connec
      }%
    \label{detailnewcon}
 \end{figure}
+
+
 
 \newpage
 \section{Parallel Efficiency}
@@ -334,10 +366,21 @@ offset synparams synmodel filepath H5SynapseTll_i_s_a_s
 
 \subsection{NEST simulation options}
 
+Only one use-case (\ref{s}) of the mouse brain model is used in this thesis for performance evaluations.
+Never the less more use-cases are realizable with the given implementations.
+In general the neuron load module can be used equivalent to the neuron create function
+and the synapses load module can be used equivalent to the neuron connect function.
+Further a given circuit can be loaded and adapted (use offset or scaling factor for parameters).
+Load neurons can be divided into subsets. The SLI functionality allow to access neuron sets
+from the subnets. Thus the grouping performed with the subnet dataset is available for all SLI functions.
+Stimulus generator and \emph{Spikedetector} or \emph{Multimeter} can be used to stimulate
+and observe specific neurons respectively.
+Furthermore SLI connect functions can be used to strengthening or weakening the connections between to
+parts of the circuit.
+
 \begin{itemize}
-	  \item How to perform experiments
-      \item Access neurons from imported circuit
-      \item Test different stimuli 
+	  \item Test different stimuli
+	  \item how to get results
 \end{itemize}
 
 \subsection{Analysis}

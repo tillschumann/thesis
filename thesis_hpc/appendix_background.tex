@@ -27,6 +27,14 @@ uint64_t get_timestamp ()
 }
 \end{lstlisting}
 
+TraceLogger class handles the the measurements.
+It generates buffers in the initialization and writes the measurements to file in the destruction.
+For instrument a specific block or function in the algorithm \emph{start} and \emph{stop} function
+\begin{lstlisting}
+tracelogger.begin(0,"sort");
+sort_function();
+tracelogger.end(0,"sort");
+\end{lstlisting}
 
 The measured timings are written to an csv file, which has e.g. the following content:
 \begin{lstlisting}
@@ -35,7 +43,9 @@ The measured timings are written to an csv file, which has e.g. the following co
 0;0;sort;0;4519751;5770458;
 0;0;communicate;0;5770465;6366961;
 \end{lstlisting}
-Each row specifies one measurement the columns contain the rank number, thread number, function name,
+
+
+Each row specifies one measurement. The columns contain the rank number, thread number, function name,
 iteration number, start time and finish time respectively.
 
 To get an overview the numbers are plotted in a raster plot.
@@ -71,6 +81,17 @@ int getMemoryInformation(..)
 }
 
 \end{lstlisting}
+
+\chapter{Mouse brain model standard use-case}
+\label{ambmusecase}
+In the thesis one virtual experiment is applied to the circuit inside of NEST.
+It stimulates neurons which are related to the left whiskers.
+Therefore the neuron hdf5 file contain a subnet dataset which contain a zero
+for all neurons except of the related neurons. The related neurons have the entry 1.
+A constant input current of 2500pA is set for these neurons.
+A multimeter and spikedetector observes all neurons.
+The circuit is simulated for 1000ms.
+
 
 \chapter{Tools}
 
