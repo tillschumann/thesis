@@ -3,13 +3,16 @@
 
 \chapter{Implementation}
 
-The implementation which are done in this thesis enable to run the full mouse brain circuit.
-Therefore a efficient data format is defined, the circuit generation scripts are adapted to
+The implementation which are done in this thesis aim at enabling the building and simulation
+of a full mouse brain model relaying on point neuron model. Such a model must be build by
+reconstructing parts of the model from experimental data provided by both the Allen Institute for
+Brain for Science and the Blue Brain Project
+To this aim, an efficient data format is defined, the circuit generation scripts are adapted to
 run on a bigger scale and the NEST simulator is extended to load the new data format.
 
 \section{Data formats}
-A point neuron circuit contains point neurons and connections (synapses) between the point neurons.
-The same point neuron model and synapse model are used for all neurons and synapses respectively.
+A point neuron model contains point neurons and connections (synapses) between the point neurons.
+The same point neuron model (conductance based exponential integrate-and-fire neuron model \cite{brette2005adaptive}) and synapse model (Tsodyks synapse model containing synaptic short-term depression and short-term facilitation \cite{tsodyks1997neural, fuhrmann2002coding}) are used for all neurons and synapses respectively.
 The neurons and synapses are characterized by parameters.
 Each neuron is defined by a given set of parameters.
 The synapses contain besides the parameters the source and target neuron id, which the synapses connects.
@@ -43,9 +46,9 @@ Besides the neuron parameters the file contains attributes for storing meta data
 The synapse data format contains only two datasets. In general the datasets contain for each synapse
 a source neuron id, a target neuron id and a set of parameters. To reduce the amount of data.
 The source neuron ids are grouped together in the \emph{neuron} dataset. This is feasible, because
-the number of synapses is way bigger than the number of source neurons. The \emph{syn\_ptr} value 
-defines the related starting index in the \emph{syn} dataset, respectively \emph{syn\_n} defines the
-number of related following entries.
+the number of synapses is way bigger than the number of source neurons ($~11,000$ synapses per source neuron).
+The \emph{syn\_ptr} value defines the related starting index in the \emph{syn} dataset,
+respectively \emph{syn\_n} defines the number of related following entries.
 The \emph{syn} dataset contains the target neuron id and a set of parameters.
 Both datasets use a compound data type to store different data types in the same dataset.
 
@@ -58,9 +61,16 @@ For the random generator Random123 is used, because it has good performance and 
 It ensures reproducible results without correlations in the generated values, which is essential.
 
 
+%%insert somewhere
+Unfortunately all injections from these experiments do not
+cover the whole brain. So there are neurons which are not injected
+by any experiment. Therefore all neurons which are not injected should use the projection
+from the nearest injection.
+
+
 \subsection{Long range connections}
 
-The long range generation algorithm is adapted so it can be parallelized.
+The long range generation algorithm is adapted to be parallelizable efficiently.
 The problem with the sequential algorithm is, that it iterates through all experiments
 and generates all connections for all the voxels inside its injection regions, if 
 all experiments before have not touched the voxels or have higher total injection
@@ -240,7 +250,7 @@ This subnets have to be created before hand.
  Read parameter datasets collectively; \\
  Assign parameters to neurons;
 \label{alg2}
-\caption{}
+\caption{Implemented import neurons algorithm}
 \end{algorithm}
 Therefore the implemented algorithm sorts out the needed subnets in its first step.
 Unique values are extracted from the subnet dataset.
@@ -271,9 +281,10 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
  MPI\_Alltoallv using sorted list \hspace{76px}(1,2,3,4)\;
  Connect all synapses using NEST function \hspace{36px}(1,2) \hspace{45px}$\mathcal{O}(n)$\;
 	}
-\label{alg2}
-\caption{Distribute connection information without transposing, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
+
+\caption{Implemented import synapses algorithm, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
 	set in brackets contains current needed variables}
+\label{alg2}
 \end{algorithm}
 
 
@@ -288,7 +299,7 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.7]{pictures/sort_table_all_alltoall.eps}
-\caption{Distribute synapses to the nodes.}
+\caption{Distribute synapses to nodes.}
 \end{figure}
 
 
@@ -340,11 +351,11 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
   }
 }
 \end{lstlisting}
-\caption{Code copied from the import module, showing the used NEST c++ api. Appropriate size seems hard to find }
+\caption{Code copied from the import module, showing the used NEST c++ api.}
 \end{figure}
 
 \begin{itemize}
-      \item describe use of NEST c++ api, lock has to be used
+      \item describe use of NEST c++ api
 \end{itemize}
 
 \newpage
@@ -365,3 +376,7 @@ The maximum memory consumption is:
   M = (sizeof(float)*p + sizeof(int)) * 2h * (1 + \frac{1}{\nu(N)})
   \label{eq:maxmemoryconsumption}
 \end{equation}
+The block size $p$ is set to $1e6$ for the run on the BG/Q.
+It affects the memory consumption and performance loading data from disk.
+The implementation could handle different values per node.
+But a block size adoption based on memory bottlenecks, is not implemented (see discussion \ref{pAdaption}).
