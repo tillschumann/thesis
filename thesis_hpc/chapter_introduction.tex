@@ -236,7 +236,7 @@ For each neuron $10,000$ (source neuron) connections are generated to neurons (t
    \newpage
 \section{Blue Brain Project recipe}
 
-The Blue Brain Project was able to reconstruct a microcircuit of part of somatosensory cortex of juvenile rat \cite{bbpcell}.
+The Blue Brain Project was able to reconstruct a microcircuit of part of somatosensory cortex of juvenile rat \cite{markram2015reconstruction}.
 They presented a complementary algorithmic approach that reconstructs neuronal microcircuitry
 across all layers using available sparse data and that leverages biological principles and
 interdependencies between datasets to predict missing biological data.
@@ -250,9 +250,8 @@ brain model to estimate the short range connectivity inside the mouse neocortex.
 \label{BBPconnectionPropasMatrix}
 \end{figure}
 The recipe is mainly based on connection probabilities of different neuron types inside the somatosenory cortex.
-The matrices in Figure \ref{BBPconnectionPropasMatrix} shows the number of connections and connection probability between two neurons concerning their \emph{m-type}.
 To a given point neuron cloud with neuron type information the recipe returns synaptic
-connection details, which are used to extent the long range connectivity from the Allen Brain Atlas by short range connectivity.
+connection details (e.g matrices in Figure \ref{BBPconnectionPropasMatrix} shows the number of connections and connection probability between two neurons concerning their \emph{m-type}), which are used to extent the long range connectivity from the Allen Brain Atlas by short range connectivity. 
 \begin{figure}[ht!]
    	\begin{center}
         \subfigure[contain all neuron information]{%
@@ -273,8 +272,13 @@ shown in different colors.
    \label{fig:atlas}
    \label{fig:shortColumnInCircuit}
 \end{figure}
-The short range connection generation algorithm iterates over all neurons inside the neocortex region.
-For each neuron (source neuron) all neurons (target neurons) inside its surrounded column (see Figure \ref{illcolumn}) are selected.
+The given generation script loads needed neuron parameters (layer, m-type,
+e-type, coordinates,..) from the HDF5 file\ref{fig:allInjections}.
+After that it iterates over all neurons inside the neocortex region
+(neurons which are in layer 1 to 6 specified with the parameter layer).
+For each neuron (source neuron) all neurons (target neurons) inside its surrounded column
+(see geometrical illustration in Figure \ref{fig:shortColumn} and voxelized 2D illustration in
+Figure \ref{illcolumn}) are selected.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=2.5]{pictures/illustration_shortrange_select.eps}

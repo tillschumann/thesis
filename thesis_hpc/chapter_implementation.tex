@@ -57,15 +57,15 @@ Both datasets use a compound data type to store different data types in the same
 Rewriting the sequential python script to a hybrid C++ application require a parallel implementation of the algorithm and the usage of 
 a parallel random generator. For the parallelization strategy a Master-Slave approach is chosen to distribute the workload dynamically on the nodes.
 Communication between the individual nodes is not necessary. Only the workload management is handled by the master node.
-For the random generator Random123 is used, because it has good performance and it is easy to use \cite{salmon2011parallel}.
+For the random generator Random123\cite{salmon2011parallel} is used.
 It ensures reproducible results without correlations in the generated values, which is essential.
 
 
 %%insert somewhere
-Unfortunately all injections from these experiments do not
-cover the whole brain. So there are neurons which are not injected
-by any experiment. Therefore all neurons which are not injected should use the projection
-from the nearest injection.
+%Unfortunately all injections from these experiments do not
+%cover the whole brain. So there are neurons which are not injected
+%by any experiment. Therefore all neurons which are not injected should use the projection
+%from the nearest injection.
 
 
 \subsection{Long range connections}
@@ -75,64 +75,106 @@ The problem with the sequential algorithm is, that it iterates through all exper
 and generates all connections for all the voxels inside its injection regions, if 
 all experiments before have not touched the voxels or have higher total injection
 value. This means it generates connections which might be overwritten and each iteration might depend
-on all previous iterations. To overcome this problem the best chosen injection is calculated before hand.
-After that all voxels are distributed to the nodes and inside the iteration over all neurons
-inside the given voxel, the sequential algorithm can be applied on each node.
-Because the computation time needed by each voxel iteration varies a lot. Only the first third
-of the voxels are distributed statically to the worker nodes.
-All the other voxels are distributed dynamically by the master node.
-The number of written entires can be calculated before hand. This allows to create
+on all previous iterations. To overcome the dependency the best chosen injection per voxel is calculated before hand.
+The number of written entries can be calculated before hand. This allows to create
 the HDF5 dataset before and assign a writing position to each voxel.
 Thus all nodes can write independent to the file system.
-
-\begin{itemize}
-      \item parallelization strategy and implementation
-      \item requirements 
-\end{itemize}
-
+After that all voxels are distributed to the nodes and inside the iteration over all neurons
+inside the given voxel, the sequential algorithm can be applied on each node.
+An efficient parallel implementation depends on the distribution of the voxels, which are
+work packages for each node. The work load has to be distributed equally on all nodes.
+Therefore the determination of the wall-clock time needed for each voxel is necessary.
+But it \ref{eq:L} is not constant.
+So the algorithm can be partitioned into five parts: linear rejection (\emph{linear}), storing to disk \emph{store}(),
+loading experiment data (\emph{load}), select neurons in injection (\emph{selI}), select neurons in projection (\emph{selP}).
+\begin{equation} \label{eq:L}
+	L \approx L_{linear}(n,m,M) + L_{store}(n,\omega) + L_{load}(\nu) + L_{selI}(n) + L_{selP}(m,\nu)
+\end{equation}
+$L_{load}(\nu)$, $L_{selI}(n)$ and $L_{selP}(m,\nu)$ are neglectable.
+$\Omega$ and $\frac{\partial L_{linear}(n,m,M)}{\partial M}$  can not be estimated satisfyingly.
+$\Omega$ represents waiting times, which occur from independent parallel write operations.
+$M$ represents the distribution of probability values.
+The distribution effects the number rejections inside the linear rejection method.
+Therefore it has a significant impact on the wall-clock time.
+Thus there is only a rough estimation of the wall-clock time per voxel iteration possible.
+\begin{equation} \label{eq:Lapprox}
+	L_{estimate} = L_{linear}(n,m) + L_{store}(n)
+\end{equation}
+Therefore a statically and dynamically voxel distribution is implemented.
+At first a third of all voxels are distributed based on $L_{estimate}$ \ref{eq:Lapprox}.
+After that the master node distributes further voxels in sets on request from the other nodes.
+Figure \ref{fig:longrangParallel} illustrates the workflow of all nodes.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.5]{pictures/longRange_parallelAlg.eps}
 \caption{Task distribution between the nodes for the long range connections generation. It illustrates which tasks are distributed between which nodes.}
+\label{fig:longrangParallel}
 \end{figure}
-
+\emph{Node 0} is selected as the master node. It does not participate on the iterations.
+It manages the dynamic distribution of the voxels to the other nodes and 
+assigns write positions to each voxels. Thus each node receives besides the 
+voxel information the positions,
+where it has to write its data to the HDF5 datasets.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.5]{pictures/longRange_BestExp_parallelAlg.eps}
+\caption{Subtasks of the above listed \emph{Load experiment per voxel} task}
+\label{fig:longrangeLEPV}
+\end{figure}
+Task \emph{Load experiment per voxel} from Figure \ref{fig:longrangParallel} contain several subtasks.
+It generates the voxel datasets, which are distributed afterwards.
+Manipulations of the generation effect mostly this part.
+So the part allows modifications of the applied functionalities. 
+Further the whole function can be skipped by loading the voxel information from file \ref{file:voxelinfo}.
+Figure \ref{fig:longrangeLEPV} shows the subtasks.
+The red tasks are optional and can be activated via command line arguments.
+In the first task \emph{Find best experiment per voxel} each node loads a set of experiments.
+Iteratively the experiment with the smallest total injection density is assigned to each voxel
+on each node. Afterwards a MPI reduction function returns the smallest value for each voxel on
+each node.
+But there are regions which were not injected by any experiment available.
+So there is no connection information available for the internal neurons.
+To overcome the missing data a piecewise constant interpolation is applied to the chosen experiment per voxel
+in \emph{Interpolate values for empty voxels}.
+It is realised with an distributed iteratively nearest neighbour search algorithm for each missing voxel.
+Figure \ref{longrange} shows an illustration of the search algorithm
+projected in a 2D plane. 
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=2.5]{pictures/longRange_Nearest_parallelAlg.eps}
 \caption{Find nearest neighbor loop}
 \label{longrange}
 \end{figure}
+The first voxel along the search direction which is found is declared as the nearest neighbour.
+The chosen experiment from the nearest neighbour is adopted.
 
-The given algorithm was extended by a interpolation. There are voxels for which there is no injection of any experiment
-available. To be able to generate connections for each neuron anyway. Voxels which are affected take the injection and projection from the nearest voxel with an injection. The strategy to find the nearest neighbor is an iteration around the neighborhood of each empty voxel. The Figure \ref{longrange} shows an illustration of the search algorithm
-projected in a 2D plane. The first voxel along the search direction which is found is declared as ne nearest neighbor.
+Afterwards the voxels are mirrored from the right to the left hemisphere, because the
+Allen Brain Atlas mostly delivers injection sites for the right hemisphere and
+the mouse brain model is assumed to be symmetric.
+
+Finally all voxel information are gathered to all nodes.
+For debugging or manipulating purposes function \emph{Save voxel properties to HDF5 file} can be used
+to save the generated voxel information to file \ref{file:voxelinfo}.
+
+%\begin{figure}[ht!]
+%   	\begin{center}
+%        \subfigure[All nodes are equal and process the work based on a static distribution]{%
+%            \label{fig:shortColumn}
+%            \includegraphics[scale=0.5]{pictures/All_Worker_Collective.eps}
+%        }
+%        \hspace{1cm}
+%        \subfigure[The 0 node is assigned as the master node and handles from this on the management of the work distribution.]{%
+%            \label{fig:shortColumnInCircuit}
+%            \includegraphics[scale=0.5]{pictures/MasterWorker.eps}
+%       }
+%    	   \end{center}
+%    	\caption{%
+%        The figure illustrates the work distribution and communication between the nodes.
+%     }%
+%   \label{fig:atlas}
+%   \end{figure}
 
 
-\begin{figure}[ht!]
-\centering
-\includegraphics[scale=0.5]{pictures/longRange_BestExp_parallelAlg.eps}
-\caption{Subtasks of the above listed \emph{Load experiment per voxel} task}
-\end{figure}
-
-\begin{figure}[ht!]
-   	\begin{center}
-        \subfigure[All nodes are equal and process the work based on a static distribution]{%
-            \label{fig:shortColumn}
-            \includegraphics[scale=0.5]{pictures/All_Worker_Collective.eps}
-        }
-        \hspace{1cm}
-        \subfigure[The 0 node is assigned as the master node and handles from this on the management of the work distribution.]{%
-            \label{fig:shortColumnInCircuit}
-            \includegraphics[scale=0.5]{pictures/MasterWorker.eps}
-       }
-    	   \end{center}
-    	\caption{%
-        The figure illustrates the work distribution and communication between the nodes.
-     }%
-   \label{fig:atlas}
-   \end{figure}
-
-\newpage
 \subsection{Short range connections}
 
 The algorithm presented in the analysis section can be parallelized straight forward.
