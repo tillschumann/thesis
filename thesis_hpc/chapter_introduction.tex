@@ -100,7 +100,6 @@ We suggest as part of this thesis to first develop the means to fully model a mo
   %-synapses
   
   %-10e12 neurons in the human brain
-  \newpage
   \begin{figure}[!htbp]
   \subfigure[Membrane potential of a neuron over the time.
   The peaks are called spikes.
@@ -302,13 +301,19 @@ Therefore all synaptic parameters are determined from the BBP matrices.
 			Assign synaptic parameters; \\
 		}
 	}
-	\label{algshort}
+\caption{Short range generation algorithm}
+\label{alg:BBP}
 \end{algorithm}
 \newpage
 \section{NEST}
 \label{NEST}
 NEST is a simulator for spiking neural network models that focuses on the dynamics, size and structure of neural systems rather than on the exact morphology of individual neurons. The development of NEST is coordinated by the NEST Initiative. NEST is used to model networks with simplified morphologies of spiking neurons of any size, for example:
 Models of information processing e.g. in the visual or auditory cortex of mammals, models of network activity dynamics, e.g. laminar cortical networks or balanced random networks and models of learning and plasticity. A NEST simulation tries to follow the logic of an electrophysiological experiment that takes place inside a computer with the difference, that the neural system to be investigated must be defined by the experimenter. The definition is based on number of neurons with parameters and connections between these neurons. NEST supports the generation based on probabilistic values. The stochastic settings of a neuronal network can be used to create its artificial copy inside of NEST. To manipulate or observe the network dynamics, the experimenter can define so-called devices which represent the various instruments (for measuring and stimulation) found in an experiment. These devices write their data either to memory or to file. 
+
+\subsection{Using on super computers}
+
+\subsection{Data structure}
+
 
 \section{Visualization}
 To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed, mostly. 

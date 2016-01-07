@@ -55,8 +55,8 @@ Both datasets use a compound data type to store different data types in the same
 \newpage
 \section{Circuit generation}
 Rewriting the sequential python script to a hybrid C++ application require a parallel implementation of the algorithm and the usage of 
-a parallel random generator. For the parallelization strategy a Master-Slave approach is chosen to distribute the workload dynamically on the nodes.
-Communication between the individual nodes is not necessary. Only the workload management is handled by the master node.
+a parallel random generator. For the parallelization strategy a Master-Slave approach is chosen to distribute the workload dynamically on the processes.
+Communication between the individual processes is not necessary. Only the workload management is handled by the master process.
 For the random generator Random123\cite{salmon2011parallel} is used.
 It ensures reproducible results without correlations in the generated values, which is essential.
 
@@ -78,11 +78,11 @@ value. This means it generates connections which might be overwritten and each i
 on all previous iterations. To overcome the dependency the best chosen injection per voxel is calculated before hand.
 The number of written entries can be calculated before hand. This allows to create
 the HDF5 dataset before and assign a writing position to each voxel.
-Thus all nodes can write independent to the file system.
-After that all voxels are distributed to the nodes and inside the iteration over all neurons
-inside the given voxel, the sequential algorithm can be applied on each node.
+Thus all processes can write independent to the file system.
+After that all voxels are distributed to the processes and inside the iteration over all neurons
+inside the given voxel, the sequential algorithm can be applied on each process.
 An efficient parallel implementation depends on the distribution of the voxels, which are
-work packages for each node. The work load has to be distributed equally on all nodes.
+work packages for each process. The work load has to be distributed equally on all processes.
 Therefore the determination of the wall-clock time needed for each voxel is necessary.
 But it \ref{eq:L} is not constant.
 So the algorithm can be partitioned into five parts: linear rejection (\emph{linear}), storing to disk \emph{store}(),
@@ -101,18 +101,31 @@ Thus there is only a rough estimation of the wall-clock time per voxel iteration
 	L_{estimate} = L_{linear}(n,m) + L_{store}(n)
 \end{equation}
 Therefore a statically and dynamically voxel distribution is implemented.
-At first a third of all voxels are distributed based on $L_{estimate}$ \ref{eq:Lapprox}.
-After that the master node distributes further voxels in sets on request from the other nodes.
-Figure \ref{fig:longrangParallel} illustrates the workflow of all nodes.
+At first a third of all voxels are distributed (using algorithm \ref{alg:distributeWeightedVoxels}) based on the weight $L_{estimate}$ \ref{eq:Lapprox}  per voxel.
+\begin{algorithm}[ht!]
+\KwData{List of all voxels with weights}
+\KwResult{List of private voxels and sum of weights per process}
+\For{voxel n}{
+	Find Process with smallest sum of weights \\
+	Add weight to sum of weights of Process \\
+	\If{Process is me}{
+		Add voxel to private voxel list
+	}
+}
+\caption{Algorithm to distribute weighted voxels to processes}
+\label{alg:distributeWeightedVoxels}
+\end{algorithm}
+After that the master process distributes further voxels in sets on request from the other processes.
+Figure \ref{fig:longrangParallel} illustrates the workflow of all processes.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.5]{pictures/longRange_parallelAlg.eps}
-\caption{Task distribution between the nodes for the long range connections generation. It illustrates which tasks are distributed between which nodes.}
+\caption{Task distribution between the processes for the long range connections generation. It illustrates which tasks are distributed between which processes.}
 \label{fig:longrangParallel}
 \end{figure}
-\emph{Node 0} is selected as the master node. It does not participate on the iterations.
-It manages the dynamic distribution of the voxels to the other nodes and 
-assigns write positions to each voxels. Thus each node receives besides the 
+\emph{Process 0} is selected as the master process. It does not participate on the iterations.
+It manages the dynamic distribution of the voxels to the other processes and 
+assigns write positions to each voxels. Thus each process receives besides the 
 voxel information the positions,
 where it has to write its data to the HDF5 datasets.
 \begin{figure}[ht!]
@@ -128,10 +141,10 @@ So the part allows modifications of the applied functionalities.
 Further the whole function can be skipped by loading the voxel information from file \ref{file:voxelinfo}.
 Figure \ref{fig:longrangeLEPV} shows the subtasks.
 The red tasks are optional and can be activated via command line arguments.
-In the first task \emph{Find best experiment per voxel} each node loads a set of experiments.
+In the first task \emph{Find best experiment per voxel} each process loads a set of experiments.
 Iteratively the experiment with the smallest total injection density is assigned to each voxel
-on each node. Afterwards a MPI reduction function returns the smallest value for each voxel on
-each node.
+on each process. Afterwards a MPI reduction function returns the smallest value for each voxel on
+each process.
 But there are regions which were not injected by any experiment available.
 So there is no connection information available for the internal neurons.
 To overcome the missing data a piecewise constant interpolation is applied to the chosen experiment per voxel
@@ -152,7 +165,7 @@ Afterwards the voxels are mirrored from the right to the left hemisphere, becaus
 Allen Brain Atlas mostly delivers injection sites for the right hemisphere and
 the mouse brain model is assumed to be symmetric.
 
-Finally all voxel information are gathered to all nodes.
+Finally all voxel information are gathered to all processes.
 For debugging or manipulating purposes function \emph{Save voxel properties to HDF5 file} can be used
 to save the generated voxel information to file \ref{file:voxelinfo}.
 
@@ -177,9 +190,10 @@ to save the generated voxel information to file \ref{file:voxelinfo}.
 
 \subsection{Short range connections}
 
-The algorithm presented in the analysis section can be parallelized straight forward.
+The algorithm \ref{alg:BBP} presented in the analysis section can be parallelized straight forward.
 Each iteration is independent. The challenging part is the distribution of the iterations and
-the writing to disk. The number ob synapses which are created is not know. It is only available
+the writing to disk. The number of synapses which are created is not know. It is only available
+at the end. Therefore all synpases are stored inside memory during the iterations and only written to disk 
 at the end.
 
 \begin{figure}[ht!]
@@ -187,44 +201,59 @@ at the end.
 \includegraphics[scale=0.5]{pictures/shortRange_parallelAlg.eps}
 \end{figure}
 
-The short range algorithm is parallelized using a master-worker strategy to achieve a good load balancing.
-The master node manages the distribution of the neurons, which can be seen as task units. For each neuron 
-is synapses have to be created. The workers load in the first step all needed matrices from the file system.
-Then each node request a set of neurons from the master node. Over this set it iterates and creates resulting
-synapses. For \emph{Generate P} Random123 as a random number generator is used. Therefore a parallel usage of 
+The iterations from the main loop from the sequential algorithm \ref{alg:BBP} are distributed between the processes.
+The short range algorithm follows the same concepts as the long range generation parallelization.
+The iterations are distributed first statically and afterwards dynamically.
+The master process\emph{Process 0} handles the dynamic distribution management.
+To overcome that the dynamical distribution becomes a bottleneck in the beginning a third of the iterations are distributed
+statically between the working processes beforehand.
+The work-load per neuron is not estimated in advance.
+The iterations are partitioned continuously without weights.
+Each process of the workes (all processes expect of \emph{Process 0}) receives the neurons with the ids $x_{process_id-1}$
+to $x_{process_id}$ (\emph{Process 0} is not part of distribution. It is skipped.).
+$x_i$ relates to equation \ref{eq:process2id}.
+\begin{equation}
+	x_i = round(i * \frac{N_{neurons}}{N_{processes}-1})
+	\label{eq:process2id}
+\end{equation}
+During runtime the master process manages the distribution of the neurons. For each neuron 
+its synapses have to be created. The workers load in the first step all needed matrices from the file system.
+Then each process request a set of neurons from the master process. Over this set it iterates and creates resulting
+synapses. The library Random123 is used to get values for the random variable. Therefore a parallel usage of 
 the given sequential algorithm is possible. Only the storage of the generated synapse list, has to be done 
 after all iterations. So in each loop the synapse list is stored in a buffer.
-If all neurons are distributed and processed all nodes, including the master node, calculate the position in 
-the HDF5 dataset where each node is allowed to write. After that all workers write theirs synapse lists to
-the HDF5 dataset.
+The buffer is based on an own implemented queue class. It nests standard vectors.
+It contains one vector of fixed size vectors, which contain the synapse objects.
+It allows to increase the buffer size efficiently. The buffer size is adapted to 
+the memory available on the used Blue Gene Q systems.
+Also the buffer can be written to disk efficiently, because the sub vectors are
+accessible and can be written as chunks to file.
+If all neurons are distributed and processed, all processes, including the master process, calculate the writing position
+in the HDF5 datasets where each process has to write its data to. After that all workers write theirs synapse lists to
+disk.
 
 
-\begin{figure}[ht!]
-   	\begin{center}
-        \subfigure[Master-worker strategy to get good balance properties]{%
-            \label{fig:shortColumn}
-            \includegraphics[scale=0.5]{pictures/MasterWorker.eps}
-        }
-        \hspace{1cm}
-        \subfigure[Collective write operation to maximize used bandwidth]{%
-            \label{fig:shortColumnInCircuit}
-            \includegraphics[scale=0.5]{pictures/Worker_Collective.eps}
-       }
-    	   \end{center}
-    	\caption{%
-        The figure illustrates the work distribution and communication between the nodes.
-     }%
-   \label{fig:atlas}
-   \end{figure}
-   
-\begin{itemize}
-      \item memory and computation requirements
-\end{itemize}
+%\begin{figure}[ht!]
+%   	\begin{center}
+%        \subfigure[Master-worker strategy to get good balance properties]{%
+%            \label{fig:shortColumn}
+%            \includegraphics[scale=0.5]{pictures/MasterWorker.eps}
+%        }
+%        \hspace{1cm}
+%        \subfigure[Collective write operation to maximize used bandwidth]{%
+%            \label{fig:shortColumnInCircuit}
+%            \includegraphics[scale=0.5]{pictures/Worker_Collective.eps}
+%       }
+%    	   \end{center}
+%    	\caption{%
+%        The figure illustrates the work distribution and communication between the nodes.
+%     }%
+%   \label{fig:atlas}
+%   \end{figure}
 
 
 \newpage
 \section{Circuit validation}
-
 In the context of this thesis the circuit is validated in terms of geometrical correct placement of
 the synapses. So the position of the source and target can be visualized and be compared to a 
 reference system. For the long and the short range connectivity the geometrical shape is know.
@@ -258,7 +287,7 @@ Loading the projection inside of Paraview and applying the contour filter on it 
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
 an user interface based on an own description language \emph{SLI} and  and a Python interface.
 The new use case shall be integrated into the standard work flow of NEST.
-Besides the functionality in \emph{C++} the interfaces have to be extended.
+To this end, the functionality in \emph{C++} the interfaces have to be extended.
 The difficulties of the network generation is based on a difference in 
 the NEST internal data structure and the data delivered by the Allen Institute.
 Connection information contains target and source neurons besides biochemical
@@ -271,18 +300,82 @@ on the process, where the target neuron is located. Therefore a transformation o
 necessary. Preprocessing of the input data should be avoided as far as possible to capture
 future use cases.
 The resulting implementation shall load the connection information efficiently in parallel,
-distribute the synapse information to the post synaptic node and store it in
+distribute the synapse information to the post synaptic process and store it in
 the NEST data structure.
 Further requirements of the implementation are an efficient use of the available resources as
 memory and computation power. 
 
 
+\lstdefinestyle{cppcode} {language=C++,
+                basicstyle=\small\ttfamily,
+                keywordstyle=\color{blue}\ttfamily,
+                stringstyle=\color{red}\ttfamily,
+                commentstyle=\color{green}\ttfamily,
+                morecomment=[l][\color{magenta}]{\#}
+                numbers=left,
+  				stepnumber=5,    
+  				firstnumber=1,
+ 				numberfirstline=true
+}
+
 \subsubsection{Import neurons}
-To import neurons into NEST using the internal C++ API NEST has to create the requested number of neurons and
-assign their parameters afterwards. In an distributed environment the create function has to be called on all nodes. But assigning the parameters has only be done on the nodes, where the neurons are placed on.
-Thus only a set of the parameter datasets is needed on each node.
+The internal c++ API of NEST allows creation and manipulation of the circuit.
+The API is mainly developed to be an interface between the internal structure
+and the SLI interface. But my implementation accesses the c++ functions directly,
+to avoid the SLI layer. To access the API in between the internal NEST classes
+have to be analysed. Because I am facing the execution on large scale machines,
+I focus on thread-safty and locality of internal circuit generation functions.
+Which means, I focus on how NEST internally distribute the data and on which processes, which
+function have to be called.
+NEST does not support information exchange during the internal circuit generation. 
+To create neurons inside the circuit the equal function call has to be
+performed on all processes. NEST itself sorts out, which information is needed on which process.
+But by analysing the NEST code I found out that not all function calls are necessary on all processes.
+The creation of objects (\ref{code:addnode}) has to performed on all processes.
+\begin{figure}[ht!]
+\begin{lstlisting}[style=cppcode]
+/*** Add a number of nodes to the network.
+   * This function creates n Node objects of Model m and adds them
+   * to the Network at the current position.
+   * @param m valid Model ID.
+   * @param n Number of Nodes to be created. Defaults to 1 if not
+   * specified.*/
+  index add_node( index m, long_t n = 1 );
+\end{lstlisting}
+\caption{NEST internal add\_{}node function to create neurons and subnets.}
+\label{code:addnode}
+\end{figure}
+Thus the number of subnets and neurons have to be known on all processes.
+The neurons are created inside of the current subnet.
+By default this is the root node of NEST.
+The current subnet can be changed by calling the function beforehand.
+\begin{figure}[ht!]
+\begin{lstlisting}[style=cppcode]
+/** Change current working node. The specified node must
+   * exist and be a subnet. */
+  void go_to( index );
+\end{lstlisting}
+\caption{NEST internal go\_{}to function to change the subnet.}
+\label{code:addnode}
+\end{figure}
+But the assignment(\ref{code:setstatus}) of model parameters can be performed only on the processes,
+where the object is stored.
+\begin{figure}[ht!]
+\begin{lstlisting}[style=cppcode]
+/*** Set properties of a Node. The specified node must exist.
+  void set_status( index, const DictionaryDatum& );
+\end{lstlisting}
+\caption{NEST internal set\_{}status function to set model parameters of neurons.}
+\label{code:setstatus}
+\end{figure}
+This allows to only load and assign the parameters on the corresponding process.
+Therefore knowing the distribution of neurons on the processes is essential.
+It is based on the modulus function \ref{NEST}.
+Process with id $i$ is stored on process $i mod N_{processes}$.
+
 To group neurons together to subnets, neurons can be created inside of virtual subnets.
 This subnets have to be created before hand.
+Therefore the implemented algorithm sorts out the needed subnets in its first step.
 \begin{algorithm}
  \KwData{HDF5 neuron dataset}
  \KwResult{Created neurons inside NEST data structure}
@@ -294,32 +387,60 @@ This subnets have to be created before hand.
 \label{alg2}
 \caption{Implemented import neurons algorithm}
 \end{algorithm}
-Therefore the implemented algorithm sorts out the needed subnets in its first step.
 Unique values are extracted from the subnet dataset.
 After that for each unique value a subnet is created.
 In the next step the neurons are iteratively created inside the specified subnet.
-Then the parameter values are loaded from the HDF5 datasets and committed to the neurons.
-The neurons are stored distributed on the nodes.
-So the neuron parameters are only needed on the node, where the neuron is placed.
-The distribution is known. NEST distributes the neurons based on the modulo of their ids. Neuron $i$ is placed on node $i mod number\_of\_nodes$. Each node has to load all needed parameter entries
-from the datasets. Derived from the distribution function each node has to load each number\_of\_nodesths entry starting from its node id.
+Then needed parameter values are loaded from the HDF5 datasets and assigned to the neurons.
+Derived from the distribution function (see \ref{}) each process has to load each number\_of\_nodesths entry starting from its process id.
 
 \newpage
 \subsubsection{Import synapses}
-Synapse import module reads the the synapse dataset block wise. Using hyperslabs each node selects a block from the
+Synapse import module reads the the synapse dataset block wise. Using hyperslabs each process selects a block from the
 dataset and copy it to memory with all the specified parameters.
 The source neuron list and the target neurons and their parameters from each block are used to create a list of all synapses.
-For each entry the target node is determined.
-The list is sorted by the target nodes.
-Using \emph{MPI\_Alltoall} the list can be distributed directly to the corresponding nodes.
-Afterwards each node contains its list of synapses and can use the \emph{NEST} connect function, to copy it to its internal data structure.
+For each entry the target process is determined.
+The list is sorted by the target processes.
+Using \emph{MPI\_Alltoall} the list can be distributed directly to the corresponding processes.
+Afterwards each process contains its list of synapses and can use the \emph{NEST} connect function, to copy it to its internal data structure.
+
+\begin{figure}[ht!]
+\begin{lstlisting}[style=cppcode]
+/*** Connect two nodes. The source node is defined by its global ID.
+   * The target node is defined by the node. The connection is
+   * established on the thread/process that owns the target node.
+   *
+   * The parameters delay and weight have the default value NAN.
+   * NAN is a special value in cmath, which describes double values that
+   * are not a number. If delay or weight is omitted in an connect call,
+   * NAN indicates this and weight/delay are set only, if they are valid.
+   *
+   * \param s GID of the sending Node.
+   * \param target Pointer to target Node.
+   * \param target_thread Thread that hosts the target node.
+   * \param syn The synapse model to use.
+   * \param params parameter dict to configure the synapse
+   * \param d Delay of the connection (in ms).
+   * \param w Weight of the connection. */
+  void connect( index s,
+    Node* target,
+    thread target_thread,
+    index syn,
+    DictionaryDatum& params,
+    double_t d = NAN,
+    double_t w = NAN );
+\end{lstlisting}
+\caption{NEST internal connect function to create a synapse.}
+\label{code:addnode}
+\end{figure}
+
+
 \begin{algorithm}
-	\KwData{List of HDF5 files for each node, chunk size}
+	\KwData{List of HDF5 files for each process, chunk size}
 	\KwResult{Connected NEST network}
 	\While{Chunk to read in HDF5 files}{
 		Read block and store in memory \hspace{45px}(1)\;
- Determine target node for each synapse \hspace{63px}(1,2) \hspace{36px}$\mathcal{O}(n)$\;
- Sort synapses by target nodes \hspace{66px}(1,2) \hspace{28px}$\mathcal{O}(n^2)$\;
+ Determine target process for each synapse \hspace{63px}(1,2) \hspace{36px}$\mathcal{O}(n)$\;
+ Sort synapses by target processes \hspace{66px}(1,2) \hspace{28px}$\mathcal{O}(n^2)$\;
  MPI\_Alltoallv using sorted list \hspace{76px}(1,2,3,4)\;
  Connect all synapses using NEST function \hspace{36px}(1,2) \hspace{45px}$\mathcal{O}(n)$\;
 	}
@@ -329,6 +450,14 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
 \label{alg2}
 \end{algorithm}
 
+
+Further the function call set\_{}status is thread-safe, because each
+thread stores its neuron parameters in an own object.
+But creating a \emph{DictionaryDatum} object is not thread-safe.
+The emph{DictionaryDatum} object is necessary to pass the model
+parameters to the neuron nodes. The creation and destruction of this
+object refers to a memory stack object for SLI objects, which is an static object,
+without thread-safety precautions. 
 
 
 \begin{figure}[ht!]
@@ -341,21 +470,9 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.7]{pictures/sort_table_all_alltoall.eps}
-\caption{Distribute synapses to nodes.}
+\caption{Distribute synapses to processes.}
 \end{figure}
 
-
-\lstdefinestyle{cppcode} {language=C++,
-                basicstyle=\tiny\ttfamily,
-                keywordstyle=\color{blue}\ttfamily,
-                stringstyle=\color{red}\ttfamily,
-                commentstyle=\color{green}\ttfamily,
-                morecomment=[l][\color{magenta}]{\#}
-                numbers=left,
-  				stepnumber=5,    
-  				firstnumber=1,
- 				numberfirstline=true
-}
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
     void H5Synapses::singleConnect(NESTNodeSynapse& synapse,
@@ -411,7 +528,7 @@ Afterwards each node contains its list of synapses and can use the \emph{NEST} c
     (3) & MPI send vectors & $(sizeof(float)*p + sizeof(int)) * h$ \\ \hline
     (4) & MPI recv vectors & $(sizeof(float)*p + sizeof(int)) * \frac{h}{\nu(N)}$ \\ \hline
     \end{tabular}
-\caption{$N$: number of nodes; $h$: size of block; $p$: number of parameters; $\nu(N)$: distribution coefficient of data}
+\caption{$N$: number of processes; $h$: size of block; $p$: number of parameters; $\nu(N)$: distribution coefficient of data}
 \end{figure}
 The maximum memory consumption is:
 \begin{equation}
@@ -420,5 +537,5 @@ The maximum memory consumption is:
 \end{equation}
 The block size $p$ is set to $1e6$ for the run on the BG/Q.
 It affects the memory consumption and performance loading data from disk.
-The implementation could handle different values per node.
+The implementation could handle different values per process.
 But a block size adoption based on memory bottlenecks, is not implemented (see discussion \ref{pAdaption}).

@@ -76,7 +76,7 @@ Using a buffer or temporary files is necessary to return a non chunk based HDF5 
 Because of the given resources (IBM Blue Gene Q) and the high parallel efficiency (see later section)
 a buffer can be used (already for a small number of nodes the all created connections fit in memory).
 
-\subsection{Load circuit}
+\subsection{Import circuit}
 Four parts of the synapse loading algorithm are instrumented to get wall clock timings.
 \emph{Read}, \emph{Sort}, \emph{Alltoall} and \emph{Connect} are considered to be the mots time
 consuming parts of the algorithm. The parts relate to figure \ref{Algparts}.
@@ -173,7 +173,7 @@ the use of different cache levels.
 
 \subsection{Long range connections generation}
 \subsection{Short range connections generation}
-\subsection{Load circuit}
+\subsection{Import circuit}
 
 \begin{itemize}
       \item Tested in Lugano BGQ and Juelich BGQ
