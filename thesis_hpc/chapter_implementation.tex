@@ -155,7 +155,7 @@ projected in a 2D plane.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=2.5]{pictures/longRange_Nearest_parallelAlg.eps}
-\caption{Find nearest neighbor loop}
+\caption{Find nearest neighbour loop}
 \label{longrange}
 \end{figure}
 The first voxel along the search direction which is found is declared as the nearest neighbour.
@@ -167,7 +167,7 @@ the mouse brain model is assumed to be symmetric.
 
 Finally all voxel information are gathered to all processes.
 For debugging or manipulating purposes function \emph{Save voxel properties to HDF5 file} can be used
-to save the generated voxel information to file \ref{file:voxelinfo}.
+to save the generated voxel information to file (see chapter \ref{file:voxelinfo}).
 
 %\begin{figure}[ht!]
 %   	\begin{center}
@@ -327,6 +327,7 @@ have to be analysed. Because I am facing the execution on large scale machines,
 I focus on thread-safty and locality of internal circuit generation functions.
 Which means, I focus on how NEST internally distribute the data and on which processes, which
 function have to be called.
+
 NEST does not support information exchange during the internal circuit generation. 
 To create neurons inside the circuit the equal function call has to be
 performed on all processes. NEST itself sorts out, which information is needed on which process.
@@ -362,7 +363,7 @@ But the assignment(\ref{code:setstatus}) of model parameters can be performed on
 where the object is stored.
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
-/*** Set properties of a Node. The specified node must exist.
+/*** Set properties of a Node. The specified node must exist. */
   void set_status( index, const DictionaryDatum& );
 \end{lstlisting}
 \caption{NEST internal set\_{}status function to set model parameters of neurons.}
@@ -391,18 +392,21 @@ Unique values are extracted from the subnet dataset.
 After that for each unique value a subnet is created.
 In the next step the neurons are iteratively created inside the specified subnet.
 Then needed parameter values are loaded from the HDF5 datasets and assigned to the neurons.
-Derived from the distribution function (see \ref{}) each process has to load each number\_of\_nodesths entry starting from its process id.
+Derived from the distribution function (see \ref{}) each process has to load $N_{processes}$
+entries starting from its process id.
 
 \newpage
 \subsubsection{Import synapses}
-Synapse import module reads the the synapse dataset block wise. Using hyperslabs each process selects a block from the
-dataset and copy it to memory with all the specified parameters.
-The source neuron list and the target neurons and their parameters from each block are used to create a list of all synapses.
-For each entry the target process is determined.
-The list is sorted by the target processes.
-Using \emph{MPI\_Alltoall} the list can be distributed directly to the corresponding processes.
-Afterwards each process contains its list of synapses and can use the \emph{NEST} connect function, to copy it to its internal data structure.
+The synapse import module is based on the same concept as the import neuron module.
+The synapse creation functionality of NEST is analysed.
+Needed functions are reviewed for thread-safeness and locality.
 
+Further an algorithm is implemented which arranges the given data on disk into
+the needed structure.
+
+To store a given synapse into the NEST data structure,
+the \emph{connect} function \ref{code:connect} is used.
+It supports the passing of synapse parameters and is thread-safe.
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
 /*** Connect two nodes. The source node is defined by its global ID.
@@ -430,26 +434,40 @@ Afterwards each process contains its list of synapses and can use the \emph{NEST
     double_t w = NAN );
 \end{lstlisting}
 \caption{NEST internal connect function to create a synapse.}
-\label{code:addnode}
+\label{code:connect}
 \end{figure}
+It has to be called on the node where the post-synaptic neuron is located.
+The synapses are grouped by pre-synaptic neurons.
+Therefore the synapses have to be rearranged before they can be connected efficiently.
 
-
+The developed algorithm \ref{alg2} loads the synapses from file, rearranges the order
+among nodes and calls the connect function for each synapse on the correct process.
 \begin{algorithm}
-	\KwData{List of HDF5 files for each process, chunk size}
+	\KwData{List of HDF5 files for each process, block size}
 	\KwResult{Connected NEST network}
-	\While{Chunk to read in HDF5 files}{
+	\While{Block to read in HDF5 files}{
 		Read block and store in memory \hspace{45px}(1)\;
  Determine target process for each synapse \hspace{63px}(1,2) \hspace{36px}$\mathcal{O}(n)$\;
  Sort synapses by target processes \hspace{66px}(1,2) \hspace{28px}$\mathcal{O}(n^2)$\;
  MPI\_Alltoallv using sorted list \hspace{76px}(1,2,3,4)\;
  Connect all synapses using NEST function \hspace{36px}(1,2) \hspace{45px}$\mathcal{O}(n)$\;
 	}
-
-\caption{Implemented import synapses algorithm, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
+	\caption{Implemented import synapses algorithm, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
 	set in brackets contains current needed variables}
 \label{alg2}
 \end{algorithm}
 
+At first the each node loads the pre-synaptic neuron ids from \emph{neuron} dataset to memory.
+After that each iteration reads block-wise a set of synapses from \emph{syn} dataset and
+stores them inside a vector of synapse objects.
+Then the pre-synaptic neuron ids are integrated into each synapse object.
+Each process contains a set of synapses now.
+But most of synapses have to be transferred to different nodes.
+Therefore the process (target process) where the post-synaptic neuron is located is determined (using equation \ref{eq:processfromid}).
+To transfer it to the target process, all synapse vectors have to be sorted by the target vector.
+After that \emph{MPI\_Alltoallv} is used to send the synapses from all to all processes.
+Afterwards each process receives its list of synapses and can use the \emph{NEST} connect function, to copy it to its internal data structure.
+The last step of the algorithm is 
 
 Further the function call set\_{}status is thread-safe, because each
 thread stores its neuron parameters in an own object.
@@ -469,53 +487,43 @@ without thread-safety precautions.
 
 \begin{figure}[ht!]
 \centering
-\includegraphics[scale=0.7]{pictures/sort_table_all_alltoall.eps}
+\includegraphics[scale=2.0]{pictures/import_syn_vis.eps}
+\caption{Distribute synapses to processes.}
+\end{figure}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=2.0]{pictures/import_syn_vis_second_it.eps}
 \caption{Distribute synapses to processes.}
 \end{figure}
 
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
-    void H5Synapses::singleConnect(NESTNodeSynapse& synapse,
-    	nest::index synmodel_id,
-    	nest::Node* const target_node,
-    	const nest::thread target_thread,
-    	uint64_t& n_conSynapses)
+void H5Synapses::singleConnect(NESTNodeSynapse& syn, 
+    		index synmodel_id,
+    		Node* const node,
+    		const nest::thread thread,
+    		DictionaryDatum& d, 
+    		std::vector<const Token*> v_ptr)
 {
-  nest::index source = synapse.source_neuron_;
-  
-  // check whether the target is on this process
-  if (nest::NestModule::get_network().is_local_node(target_node)) {
-    // use region to allow setting lock for creating/destroying token
-    {     
-      DictionaryDatum d( new Dictionary );
-      
-      //new/delete Token is not thread-safe
-      omp_set_lock(&tokenLock);
-      for (int i=0; i<synapses_.prop_names.size(); i++)
-	def< double_t >( d, synapses_.prop_names[i], synapses_.prop_facts[i] * synapse.prop_values_ [i] + param_offset[i]);
-      omp_unset_lock(&tokenLock);
-
-      bool success = nest::NestModule::get_network().connect(source, target_node->get_gid(), d, synmodel_id);
- 
-      if (success)
-	n_conSynapses++;
-      
-      omp_set_lock(&tokenLock);
+  index source = synapse.source_neuron_;
+  if (NestModule::get_network().is_local_node(target_node)) { 
+    for (int i=2; i<prop_names.size(); i++) {
+      double value = syn.prop_values_[i] * facts[i] + offsets[i];
+      setValue<double_t>( *v_ptr[i], value );
     }
-    omp_unset_lock(&tokenLock);
+    NestModule::get_network().connect(source, node, thread,
+                                      synmodel_id, d,
+                                      syn.weight,
+                                      syn.delay);
   }
-  else
-  {
-    throw nest::IllegalConnection("H5Synapses::singleConnect(): synapse is on wrong node");
+  else {
+    throw nest::IllegalConnection(..);
   }
 }
 \end{lstlisting}
-\caption{Code copied from the import module, showing the used NEST c++ api.}
+\caption{}
 \end{figure}
-
-\begin{itemize}
-      \item describe use of NEST c++ api
-\end{itemize}
 
 \newpage
 \section{Memory consumption}

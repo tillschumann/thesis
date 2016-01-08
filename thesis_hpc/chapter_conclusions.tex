@@ -74,7 +74,7 @@ Using a Master-Slave approach also reduced the complexity of the distribution of
 The only issue is the writing of the file, because the number of created synapses is not know in the beginning.
 Using a buffer or temporary files is necessary to return a non chunk based HDF5 file.
 Because of the given resources (IBM Blue Gene Q) and the high parallel efficiency (see later section)
-a buffer can be used (already for a small number of nodes the all created connections fit in memory).
+wirting all synapses to memory is feasible (already for a small number of nodes the created connections fit in memory).
 
 \subsection{Import circuit}
 Four parts of the synapse loading algorithm are instrumented to get wall clock timings.

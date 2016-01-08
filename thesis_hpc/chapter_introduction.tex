@@ -116,7 +116,7 @@ We suggest as part of this thesis to first develop the means to fully model a mo
   }
   \end{figure}
   
-  In order to analyze the membrane potential more objectively it is reduced to timings of the spikes.
+  In order to analyse the membrane potential more objectively it is reduced to timings of the spikes.
   For multiple neuron the spike timings in a dot plot can be visualized as in Figure \ref{spikeplot}.
   One can get an overview of the activity in a whole neuronal network if the spike sums are
   plotted (summed up spikes for each time bin) in a so-called histogram (bottom row of figure \ref{spikeplot}).
@@ -310,13 +310,69 @@ Therefore all synaptic parameters are determined from the BBP matrices.
 NEST is a simulator for spiking neural network models that focuses on the dynamics, size and structure of neural systems rather than on the exact morphology of individual neurons. The development of NEST is coordinated by the NEST Initiative. NEST is used to model networks with simplified morphologies of spiking neurons of any size, for example:
 Models of information processing e.g. in the visual or auditory cortex of mammals, models of network activity dynamics, e.g. laminar cortical networks or balanced random networks and models of learning and plasticity. A NEST simulation tries to follow the logic of an electrophysiological experiment that takes place inside a computer with the difference, that the neural system to be investigated must be defined by the experimenter. The definition is based on number of neurons with parameters and connections between these neurons. NEST supports the generation based on probabilistic values. The stochastic settings of a neuronal network can be used to create its artificial copy inside of NEST. To manipulate or observe the network dynamics, the experimenter can define so-called devices which represent the various instruments (for measuring and stimulation) found in an experiment. These devices write their data either to memory or to file. 
 
-\subsection{Using on super computers}
+NEST features the execution on parallel environments (e.g. super computers as JUQUEEN).
+Therefore it uses the MPI (Message Passing Interface \cite{MPI}) standard for interprocess communication.
+For thread parallelism it supports PThreads\cite{pthread} and OpenMP\cite{openmp}.
 
+
+\newpage
 \subsection{Data structure}
+NEST keeps the full neuronal network model in memory.
+Therefore it distinguishes between nodes and connections.
+Nodes and connections represent mostly neurons and synapses, respectively.
+Nodes hold model parameters.
+However synapses hold besides model parameters the pre-synaptic and post-synaptic neuron information.
+
+In multi process environments nodes are distributed on the processes.
+For multi threaded environments each thread processes a subset of nodes.
+Each process holds a list of meta information of all neurons.
+However the model objects are only stored on one process.
+Node $i$ is stored on process $p_i$ (\ref{eq:processfromid}) and is processed by thread $t_i$ (\ref{eq:threadfromid}).
+\begin{equation}
+ 	p_i = i \bmod N_{processes}
+ 	\label{eq:processfromid}
+\end{equation}
+\begin{equation}
+ 	t_i = \frac{i}{N_{processes}} \bmod N_{threads}
+ 	\label{eq:threadfromid}
+\end{equation}
+$N_{processes}$ and $N_{threads}$ corresponds to the number of processes and number of threads, respectively.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.3]{pictures/NeuronsOnNodes.png}
+\caption{Illustration how NEST distributes nodes on processes based on their id}
+\label{fig:NeuronsOnNodes}
+\end{figure}
+Figure \ref{fig:NeuronsOnNodes} illustrate the distribution of node model objects on
+the different processes.
+Synapses are stored on the thread (or process for environments without thread parallelisms) where the post-synaptic node is placed.
+Each thread holds a sparse table \ref{fig:NESTsynstorage} containing all
+local synapses.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.9]{pictures/NEST_syn_storage.eps}
+\caption{A sparse table
+(dark orange structure and attached light orange boxes with arrows) holds the
+thread-local connection objects (pink squares) sorted according to the global
+index of the associated pre-synaptic node. The sparse table consists of $n_{gr}$
+equally-sized groups, where each group maintains a bit field (tiny squares)
+with one bit for each global node index in the group indicating the presence
+or absence of local targets. If a particular node has local targets, the sparse
+table stores a pointer to an additional inner data structure (light orange)
+Auto-adjusting connection infrastructure of NEST.
+Case 1: A particular node has less than $K_{cutoff}$
+local connections and all are of the same type. A lightweight inner structure
+(HomConnector) stores the connection objects in a fixed-size array.
+A particular node has at least $K_{cutoff}$
+local connections and all are of the same type. A HomConnector stores the
+connection objects in a dynamically-sized vector (copied and simplified from \cite{kunkel2014spiking}).
+}
+\label{fig:NESTsynstorage}
+\end{figure}
 
 
 \section{Visualization}
-To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed, mostly. 
+To interpret the output of a neuronal simulation the spiking activity of the neurons is analysed, mostly. 
 Different types of methods allow to extract stochastic characteristics from spike trains.
 Besides this visualization of the spike trains taking their location into account,
 it can give an impression of the activity.
@@ -334,15 +390,17 @@ It uses MPI-IO to manage parallel read and write operations. Further HDF5 is a s
 and exchanged between different platforms. Already given reduced circuits are stored in HDF5 file format by the neurorobotics team, 
 because of its easy to use Python interface. On a personal computer a light weight python implementation allows to load a given
 circuit from HDF5 to NEST, using HDF5 Python interface with the NEST python interface. Therefore selecting the same or similar data 
-format is preferred to reduce the number of needed adaptions of scripts.
+format is preferred to reduce the number of needed adaptations of scripts.
 
 
 \subsection{HDF5}
-
-\begin{itemize}
-      \item Description of HDF5
-\end{itemize}
-
+The Hierarchical Data Format (HDF) implements a model for managing and storing data. The model includes an abstract data model and an abstract storage model (the data format), and libraries to implement the abstract model and to map the storage model to different storage mechanisms. The HDF5 Library provides a programming interface to a concrete implementation of the abstract models.
+The main entities of data models are datasets.
+A dataset is a multidimensional (rectangular) array of data elements.
+The data elements have to be from the same data format.
+The data formats can be a native format as INT, DOUBLE,.. or a compound of data formats.
+To map the storage model of a dataset to memory, hyperslab selections \ref{fig:hdf5hyperslabs} provide access to subsets of the multidimensional 
+array.
 \begin{figure}[ht!]
    	\begin{center}
         \subfigure[Hyperslab selection of HDF5 in a single dataset]{%
@@ -353,17 +411,17 @@ format is preferred to reduce the number of needed adaptions of scripts.
         \subfigure[Using hyperslab functionality to read or write dataset in parallel]{%
             \label{fig:shortColumnInCircuit}
             \includegraphics[scale=0.8]{pictures/HDF5Parallel.eps}
+            \label{fig:hdf5hyperslabs:parallel}
        }
   
     	   \end{center}
     	\caption{%
         Using HDF5 in parallel 
      }%
-   \label{fig:atlas}
+   \label{fig:hdf5hyperslabs}
    \end{figure}
-\begin{itemize}
-      \item Description of parallel HDF5
-\end{itemize}
+Parallel HDF5 is a configuration of the HDF5 library which lets you share open files across multiple parallel processes. It uses the MPI (Message Passing Interface) standard for interprocess communication. The parallel HDF5 library offers functionality to read and write from file collectively and independently.
+Using hyperslab selections each process can access separate parts of a dataset \ref{fig:hdf5hyperslabs:parallel}.
 
 \section{Task description}
 In the second chapter,.. 
