@@ -11,6 +11,7 @@ To this aim, an efficient data format is defined, the circuit generation scripts
 run on a bigger scale and the NEST simulator is extended to load the new data format.
 
 \section{Data formats}
+\label{sec:dataformats}
 A point neuron model contains point neurons and connections (synapses) between the point neurons.
 The same point neuron model (conductance based exponential integrate-and-fire neuron model \cite{brette2005adaptive}) and synapse model (Tsodyks synapse model containing synaptic short-term depression and short-term facilitation \cite{tsodyks1997neural, fuhrmann2002coding}) are used for all neurons and synapses respectively.
 The neurons and synapses are characterized by parameters.
@@ -377,7 +378,7 @@ Process with id $i$ is stored on process $i mod N_{processes}$.
 To group neurons together to subnets, neurons can be created inside of virtual subnets.
 This subnets have to be created before hand.
 Therefore the implemented algorithm sorts out the needed subnets in its first step.
-\begin{algorithm}
+\begin{algorithm}[ht!]
  \KwData{HDF5 neuron dataset}
  \KwResult{Created neurons inside NEST data structure}
  Find unique values in subnet dataset; \\
@@ -400,23 +401,31 @@ entries starting from its process id.
 The synapse import module is based on the same concept as the import neuron module.
 The synapse creation functionality of NEST is analysed.
 Needed functions are reviewed for thread-safeness and locality.
+The generated synapse files, which have to be loaded, have a size in total of around $~15$ TB .
+The total size to store the synapses in memory is of the same order (see \ref{sec:NEST:Datastructure}).
+To reduce the required memory size the import synapse module should use as less memory
+as possible by being still efficient.
+To realise it, the import module cannot load all synapses at once.
+So it has to load the synapses in parts.
 
-Further an algorithm is implemented which arranges the given data on disk into
-the needed structure.
+In the following an algorithm is developed which loads block-wise the given data on disk and rearranges it into
+the needed structure in memory. I start with the required result.
 
 To store a given synapse into the NEST data structure,
-the \emph{connect} function \ref{code:connect} is used.
-It supports the passing of synapse parameters and is thread-safe.
+the NEST API function \emph{connect} has to be called.  
+Different versions are available which vary in the passed arguments.
+For the given use-case we want to pass all synaptic model parameters at once and
+avoid internal checks, because the implementation should cover necessary error handling by 
+itself. Double checks should be avoided.
+The \emph{connect} function \ref{code:connect} offers both.
+It supports passing of synapse parameters.
+Further it accesses only objects which are owned by the executing thread. 
+Therefore it is thread-safe and can be run multi threaded.
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
 /*** Connect two nodes. The source node is defined by its global ID.
    * The target node is defined by the node. The connection is
    * established on the thread/process that owns the target node.
-   *
-   * The parameters delay and weight have the default value NAN.
-   * NAN is a special value in cmath, which describes double values that
-   * are not a number. If delay or weight is omitted in an connect call,
-   * NAN indicates this and weight/delay are set only, if they are valid.
    *
    * \param s GID of the sending Node.
    * \param target Pointer to target Node.
@@ -433,19 +442,20 @@ It supports the passing of synapse parameters and is thread-safe.
     double_t d = NAN,
     double_t w = NAN );
 \end{lstlisting}
-\caption{NEST internal connect function to create a synapse.}
+\caption{NEST internal \emph{connect} function to create a synapse. The pasted parameters are:
+\emph{s} and \emph{target} specifies the pre-synaptic and post-synaptic neuron, respectivel;
+\emph{syn} is the name of the synapse model (Tsodyks model \ref{sec:dataformats});
+\emph{params} contains the synapse model parameters;
+\emph{d} and \emph{w} specify the synapse model delay and weight, respectively.}
 \label{code:connect}
 \end{figure}
-It has to be called on the node where the post-synaptic neuron is located.
-The synapses are grouped by pre-synaptic neurons.
-Therefore the synapses have to be rearranged before they can be connected efficiently.
-
-The developed algorithm \ref{alg2} loads the synapses from file, rearranges the order
-among nodes and calls the connect function for each synapse on the correct process.
-\begin{algorithm}
+It has to be called on the process where the post-synaptic neuron is located.
+But in the file the synapse information are grouped by pre-synaptic neurons (see section \ref{sec:dataformats}).
+Therefore the dataset of synapses has to be transformed before it can be connected efficiently.
+\begin{algorithm}[ht!]
 	\KwData{List of HDF5 files for each process, block size}
 	\KwResult{Connected NEST network}
-	\While{Block to read in HDF5 files}{
+	\While{Block to read in HDF5 dataset}{
 		Read block and store in memory \hspace{45px}(1)\;
  Determine target process for each synapse \hspace{63px}(1,2) \hspace{36px}$\mathcal{O}(n)$\;
  Sort synapses by target processes \hspace{66px}(1,2) \hspace{28px}$\mathcal{O}(n^2)$\;
@@ -456,47 +466,91 @@ among nodes and calls the connect function for each synapse on the correct proce
 	set in brackets contains current needed variables}
 \label{alg2}
 \end{algorithm}
+The algorithm \ref{alg2} loads the synapses block-wise from file, rearranges (see Figure \ref{fig:importsynvis}) the order
+among processes and calls the connect function for each synapse on the corresponding process (see section \ref{sec:NEST:Datastructure}).
 
 At first the each node loads the pre-synaptic neuron ids from \emph{neuron} dataset to memory.
-After that each iteration reads block-wise a set of synapses from \emph{syn} dataset and
-stores them inside a vector of synapse objects.
+After that in each iteration a block (beginning from the entry \emph{block size}$*$ iteration number,
+e.g see Figure \ref{fig:importsynvis} and \ref{fig:importsynvis2nd}) of synapses is read from \emph{syn} dataset and
+is stored inside a vector of synapse objects
+(contains source neuron id, target neuron id, target neuron process, synapse model parameters).
 Then the pre-synaptic neuron ids are integrated into each synapse object.
-Each process contains a set of synapses now.
-But most of synapses have to be transferred to different nodes.
-Therefore the process (target process) where the post-synaptic neuron is located is determined (using equation \ref{eq:processfromid}).
-To transfer it to the target process, all synapse vectors have to be sorted by the target vector.
+Each process contains a set of synapses then.
+But most of synapses have to be send to different nodes.
+Therefore the process (target process) where the post-synaptic neuron is located is determined (using equation \ref{eq:processfromid})
+and integrated.
+To send it to the target process, all synapse vectors have to be sorted by the target neuron process.
 After that \emph{MPI\_Alltoallv} is used to send the synapses from all to all processes.
-Afterwards each process receives its list of synapses and can use the \emph{NEST} connect function, to copy it to its internal data structure.
-The last step of the algorithm is 
-
-Further the function call set\_{}status is thread-safe, because each
-thread stores its neuron parameters in an own object.
-But creating a \emph{DictionaryDatum} object is not thread-safe.
-The emph{DictionaryDatum} object is necessary to pass the model
-parameters to the neuron nodes. The creation and destruction of this
-object refers to a memory stack object for SLI objects, which is an static object,
-without thread-safety precautions. 
-
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[scale=0.4]{pictures/Connect_inside_iteration.eps}
-\caption{Inside iteration parallel workflow}
-\label{Algparts}
-\end{figure}
-
+Each process receives its list of synapses and can use the \emph{NEST} connect function, to copy it to its internal data structure.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=2.0]{pictures/import_syn_vis.eps}
-\caption{Distribute synapses to processes.}
+\caption{Illustration of the first four steps of the algorithm in the first iteration \ref{alg2}.
+The first row represents the \emph{syn} dataset on disk.
+The following rows represent vectors of synapses per process (represented by the column).
+The color of the boxes illustrate the current association.
+In the second row the association relates to the position in the \emph{syn} dataset.
+Afterwards it relates to the \emph{target process}.
+}
+\label{fig:importsynvis}
 \end{figure}
 
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=2.0]{pictures/import_syn_vis_second_it.eps}
-\caption{Distribute synapses to processes.}
+\caption{Illustration of the first step of the algorithm in the second iteration \ref{alg2}.
+In the second iteration each process reads in the first step the second block of \emph{syn} dataset entries.
+A block is specified as the set of read entries per iteration.}
+\label{fig:importsynvis2nd}
 \end{figure}
+\newpage
+The last step of the algorithm is to call \emph{connect} iteratively for each synapse.
+It is executed multi-threaded.
+Each thread calls \emph{connect} for its own synapses iteratively.
+The synapse parameters are passed to \emph{connect} function call via a \emph{DictionaryDatum}.
+\emph{DictionaryDatum} is a SLI object for storing a map.
+It uses a \emph{Token} mechanism for access elements.
+To access entries \emph{Token} objects have to be created and deleted,
+which is not thread-safe. It can produce a data race in a static memory pool object of NEST.
+Therefore the creation and deletion of the needed \emph{Token} is serialized with mutexes.
+All thread iterate over all synapses.
+But each thread skips all synapses where the target neuron is not thread-local.
+Thread-locality is given if $t_i$ (see equation \ref{eq:threadfromid}) is equal to the local thread id.
+$i$ relates to the target neuron id.
+\begin{figure}[ht!]
+\begin{lstlisting}[style=cppcode]
+#pragma omp parallel default(shared)
+{ 
+  omp_set_lock(&tokenLock);
+  DictionaryDatum* d = createDictionaryDatum();  
+  omp_unset_lock(&tokenLock);
 
+  const thread tid = nest::NestModule::get_network().get_thread_id();
+      
+  for (int i=0;i<synapses_.size();i++) {
+    try {
+      const thread target_thread = getTargetThread(synapses_[i])
+      if (target_thread == tid)
+	     singleConnect(synapses_[i], .., target_node, target_thread, ..);
+    }
+    catch (..) {
+      ..
+    }
+  }
+  
+  omp_set_lock(&tokenLock);
+  delete d;  
+  omp_unset_lock(&tokenLock);
+}
+\end{lstlisting}
+\caption{Pseudo code of thread parallel connect function calls}
+\end{figure}
+\emph{singleConnect} assigns the parameters to already created \emph{DictionaryDatum} object.
+To avoid recreation of \emph{Token} objects a vector of  \emph{Token} pointers is
+passed. Applying \emph{set\_{}status} on the passed \emph{Token} objects allow to
+insert the current parameters inside the \emph{DictionaryDatum} object without data races.
+After that the NEST \emph{connect} function is called with passing besides the source and target
+neuron information the \emph{DictionaryDatum} object and weight and delay.
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
 void H5Synapses::singleConnect(NESTNodeSynapse& syn, 
@@ -506,10 +560,10 @@ void H5Synapses::singleConnect(NESTNodeSynapse& syn,
     		DictionaryDatum& d, 
     		std::vector<const Token*> v_ptr)
 {
-  index source = synapse.source_neuron_;
+  index source = synapse.source_neuron;
   if (NestModule::get_network().is_local_node(target_node)) { 
-    for (int i=2; i<prop_names.size(); i++) {
-      double value = syn.prop_values_[i] * facts[i] + offsets[i];
+    for (int i=0; i<param_names.size(); i++) {
+      double value = syn.params[i] * facts[i] + offsets[i];
       setValue<double_t>( *v_ptr[i], value );
     }
     NestModule::get_network().connect(source, node, thread,
@@ -523,6 +577,19 @@ void H5Synapses::singleConnect(NESTNodeSynapse& syn,
 }
 \end{lstlisting}
 \caption{}
+\end{figure}
+
+\newpage
+All in all the implementation make use of all available processes and all by NEST used cores in the most compute intensive part.
+Figure \ref{fig:ConnectInsideIteration} illustrates the flow of the synapse information between nodes. 
+All processes access one dataset to load a set of it each. Afterwards the synapse information is processed by different steps.
+In \emph{Alltoall} the synapse information is send is reordered between the nodes.
+So the synapses can be stored in the NEST data structure in the next step.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.4]{pictures/Connect_inside_iteration.eps}
+\caption{Inside iteration parallel work flow}
+\label{fig:ConnectInsideIteration}
 \end{figure}
 
 \newpage
