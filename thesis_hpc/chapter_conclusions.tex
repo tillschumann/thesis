@@ -17,12 +17,31 @@ So the generated circuit contains around 15 TB and is spitted in three HDF5 file
 a first simulation of a full circuit model. Thus is allows to run and test is full pipeline from Allen Brain data to a NEST simulation. If there are more experiments available they can be included into
 the circuit generation easily. The size of the circuit wont change. Thus no changes are needed anywhere else.
 
-Three different circuits are generated: The full mouse brain circuit,
+
+\begin{table}[ht!]
+\begin{centering}
+    \begin{tabular}{ | l | l | r | r | r |}
+    \hline
+    Identifier & ratio & neurons & synapses & total size \\ \hline \hline
+    threehundredths & $0.3\%$ & $~2.5*10^5$ & $~2.2*10^9$ & $~26$ GB \\ \hline
+    quater & $25\%$ & $~1.9*10^7$ & $~1.6*10^{11}$ & $~4$ TB \\ \hline
+    full & $100\%$ & $~7.5*10^7$ & $~7.2*10^{11}$ & $~16$ TB \\ \hline
+    \end{tabular}
+    \caption{The circuits \emph{3hundredths}, \emph{1quater} and \emph{full} were created for testing and debugging on different scales.
+All circuits were generated with identical parameters, only the input neuron file varies.}
+\end{centering}
+    \end{table}
+
+
+\label{table:circuits}
+
+Three different circuits (see Table \ref{table:circuits}) are generated: The full mouse brain circuit,
 a smaller circuit, which contains 25 percent of the full mouse brain circuit and
 1 300st of the full circuit. The percentage is related to the number of neurons inside
 the circuit. Based on the neurons the connections are generated. In principle the
 number of connections should be of the same proportion, but can deviate, because of 
 discrete picking based on probabilities.
+
 
 \begin{figure}[ht!]
 \centering
@@ -34,15 +53,17 @@ discrete picking based on probabilities.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.4]{pictures/full_circuit_rack_distribution.eps}
-\caption{Synapse inbalance for using NEST standard configuration on different number ob nodes. The values are normalized by its mean value.}
+\caption{Estimated synapse imbalance of neuron distribution on processes.
+It shows the distributions of relative sums (sum of number of synapses per process divided by mean of sums) of synapses per process (y-scale) on different scales (x-axis) }
 \label{fullcircuitdist}
 \end{figure}
 
-Memory imbalance resulting from an imbalance of number of synapses per neuron can be compressed by shuffling neurons on the nodes.
-NEST distributes neurons based of the modulo of their ids. This results in a nearly equal number of neurons per node.
-But it does not take the number of synapses per neuron into account. The distribution of ids can not be affected, but the assignment of the
-neuron ids can be adjusted. Such a assignment implicate a memory overhead. The mapping has to be stored in memory and to disk for post processing.
-If the memory overhead is bigger than the memory imbalance, there is no meaning in its implementation.
+The neurons are distributed equably on all processes based on equation \ref{eq:ProcessByNeuron}.
+But the number of incoming synapses varies between the neurons.
+Therefore a memory imbalance could occur between the processes.
+To analyse the imbalance, an analysing script iterates over the \emph{syn} dataset and counts
+the number of incoming synapses per neuron. Normalized results are plotted in box-plot diagrams 
+in Figure \ref{fullcircuitdist}. An optimization for a specific simulation run is possible
 
 
 \section{Data format usability}
@@ -84,40 +105,50 @@ consuming parts of the algorithm. The parts relate to figure \ref{Algparts}.
 The following figures \ref{fig:implV03} give an overview of the measured wall-clock timings.
 The timings are shown per node and iteration number. They give an idea how the timings are distributed.
 The performance of the different parts can be compared and bottlenecks can be found.
-\begin{figure}[ht!]
-     \begin{center}
-        \subfigure[Load hdf5 files]{%
-            \label{fig:first}
-            \includegraphics[width=0.45\textwidth]{pictures/V03_loadSynapses.eps}
-        }
-        \subfigure[Sort connection information data by target node]{%
-           \label{fig:second}
-           \includegraphics[width=0.45\textwidth]{pictures/V03_sort.eps}
-        }\\ %  ------- End of the first row ----------------------%
-        \subfigure[Send data to all target nodes using AlltoAllv]{%
-            \label{fig:third}
-            \includegraphics[width=0.45\textwidth]{pictures/V03_communicate.eps}
-        }
-        \subfigure[Connect function which calculated delay and calls NEST connect]{%
-            \label{fig:fourth}
-            \includegraphics[width=0.45\textwidth]{pictures/V03_connect.eps}
-        }
-    \end{center}
-    \caption{%
-        The the plots show the the execution time for node per iteration.
-        The y-axes corresponds to the node id and the x-axes corresponds to the iteration number.
-        The color scale is in seconds.
-        In each iteration loadSynapses loads max $1e6$ synapses from hdf5 file.
-     }%
-   \label{fig:implV03}
-\end{figure}
+%\begin{figure}[ht!]
+%     \begin{center}
+%        \subfigure[Load hdf5 files]{%
+%            \label{fig:first}
+%            \includegraphics[width=0.45\textwidth]{pictures/V03_loadSynapses.eps}
+%        }
+%        \subfigure[Sort connection information data by target node]{%
+%           \label{fig:second}
+%           \includegraphics[width=0.45\textwidth]{pictures/V03_sort.eps}
+%        }\\ %  ------- End of the first row ----------------------%
+%        \subfigure[Send data to all target nodes using AlltoAllv]{%
+%            \label{fig:third}
+%            \includegraphics[width=0.45\textwidth]{pictures/V03_communicate.eps}
+%        }
+%        \subfigure[Connect function which calculated delay and calls NEST connect]{%
+%            \label{fig:fourth}
+%            \includegraphics[width=0.45\textwidth]{pictures/V03_connect.eps}
+%        }
+%    \end{center}
+%    \caption{%
+%        The the plots show the the execution time for node per iteration.
+%        The y-axes corresponds to the node id and the x-axes corresponds to the iteration number.
+%        The color scale is in seconds.
+%        In each iteration loadSynapses loads max $1e6$ synapses from hdf5 file.
+%     }%
+%   \label{fig:implV03}
+%\end{figure}
 One can see that \emph{Read} and \emph{Connect} are the critical parts.
 For the interpretations of the plots one has to take into account that different parts of the algorithm
 (\emph{Read} and \emph{Alltoall}) contain mpi collective operations and contain therefor mpi waits.
-Thus the wall-clock timings do not satisfy the pure step functionality but also the imbalance from its previous step.
-Therefore a showcase run with 
+Thus the wall-clock timings do not satisfy the pure step functionality but also the imbalance from previous steps.
+To analyse the impact, an experiment is performed which extends the implementation with \emph{MPI\_Barriers}
+between the algorithm steps.
+\newpage
+\subsubsection{Read step}
+The efficiency of the \emph{Read} step is bounded by the io bandwidth of the system.
+Blue Brain IV has a theoretical bandwidth of $50$ GB/s per rack.
 
-
+The amount of data read in \emph{Read} step depends on the number of synapse parameters $N_{params}$,
+the number of read synapses per iteration $N_{blocksize}$ and the number of processes $N_{processes}$.
+This results in measured bandwidth of:
+\begin{equation}
+b = sizeof(float) * N_{params} * \frac{N_{blocksize} * N_{processes}}{\Delta T}
+\end{equation}
 \subsubsection{Connect step}
 
 Thread parallelization of the connect step allows to store the synapses efficiently in the NEST data structure.
@@ -128,7 +159,7 @@ parameters are assigned to the values inside the already created SLI object. Thi
 Thus a small overhead for the creation and destroying of the object is perceived.
 \begin{figure}[ht!]
 \centering
-\includegraphics[scale=0.3]{pictures/boxplot_new_con_dt_1_300.eps}
+\includegraphics[scale=0.3]{pictures/boxplot_new_con_dt_1_300_edit.eps}
 \caption{Comparison of mean of single connect duration across one iteration on one node.}
 \label{boxplotnewcon}
 \end{figure}
@@ -137,31 +168,35 @@ the thread, the connection calls per thread varies.
 As for nodes the neurons are distributed in the modules fashion on the threads for one node.
 The distribution properties are the same. Thus there is a larger variation on a larger number of threads.
 Figure \ref{boxplotnewcon} shows wall-clock time measurements for the connect step. The measurements are
-extracted from the execution of the 1per300 circuit. It is executed on 128 nodes, which varing number of
+extracted from the execution of the 1per300 circuit. It is executed on 128 nodes with varying number of
 threads. The circuit plus fixed number of nodes specify the distribution of neurons per node.
 The variations of the timings correlates with the distribution of synapses per node (figure \ref{fullcircuitdist}).
 To look into detail, figure \ref{detailnewcon:second} shows the measured wall-clock time for each node
 plotted over the maximum number of new connections per thread. It shows a strong correlation between the variable and
 the duration. Thus the increasing variations of timings can be explained by the variations of synapses per thread.
-The figure indicates two different timings per connection. There is an offset of regression between the purple
-and the red dots. Purple an red dots represent all measurements with less than 40,000 and more than new synapses per
+The figure indicates two different timings per connection. There is an offset of regression between the pink
+and the red dots. Pink an red dots represent all measurements with less than 40,000 and more than new synapses per
 node respectively. Figure \ref{detailnewcon:first} shows the density of number of new synapses per node.
 Less synapses results in a smaller vector size. There seems to be a loss of efficiency, which properly result from
 the use of different cache levels. 
 
 \begin{figure}[ht!]
      \begin{center}
-        \subfigure[Load hdf5 files]{%
+        \subfigure[Histogram showing measured densities of number of new synapses per iteration step for one process.]{%
             \label{detailnewcon:first}
             \includegraphics[scale=0.41]{pictures/histogram_new_const_1_300.eps}
         }
-        \subfigure[Sort connection information data by target node]{%
+        \subfigure[Plotted wall-clock timings of \emph{connect} step over the number of new synapses for one thread
+        			(Thread is part of process from Figure \ref{detailnewcon:first}. The new synapses are part of the new synapses from the process).
+        			Pinks and red dotes relate to iterations, where the number of new synapses is smaller and bigger than $4*10^5$,
+        			respectively (The values relate to the hills from Figure \ref{detailnewcon:first}). 
+        			]{%
            \label{detailnewcon:second}
            \includegraphics[scale=0.41]{pictures/t8_duration_per_con_1_300.eps}
 		}
     \end{center}
     \caption{%
-        Measured details of connect step.
+        The measurements are taken the same simulation run with the 1per300 circuit. It is run on the Blue Brain IV.
      }%
    \label{detailnewcon}
 \end{figure}
@@ -181,116 +216,116 @@ the use of different cache levels.
       \item Weak scaling
 \end{itemize}
 
-\begin{figure}[!h] \centering
-\begin{tikzpicture}
-	\begin{axis}[title=AMBM CONNECT MODULE,
-		legend style={at={(0.5,-0.20)},
-		anchor=north,legend columns=-1},
-		xlabel=number of racks,
-		ylabel=Parallel efficiency (\% of linear scaling),
-		width=8.5cm
-		]
-
-	\addplot[color=blue,mark=*] coordinates {
-		(1,100)
-		(2,110)
-		(4,30)
-	};
-	\addplot[color=red,mark=*] coordinates {
-		(1,100)
-		(2,114)
-		(4,117)
-	};
-	\addplot[color=green,mark=*] coordinates {
-		(1,100)
-		(2,84)
-		(4,54)
-	};
-	\addplot[color=yellow,mark=*] coordinates {
-		(1,100)
-		(2,91)
-		(4,110)
-	};
-	\legend{io,sort,mpi,connect}
-	\end{axis}%
-\end{tikzpicture}%
-\begin{tikzpicture}
-	\begin{axis}[title=AMBM CONNECT MODULE,
-		legend style={at={(0.5,-0.20)},
-		anchor=north,legend columns=-1},
-		xlabel=number of racks,
-		ylabel=wall clock in seconds,
-		width=8.5cm
-		]
-
-	\addplot[color=blue,mark=*] coordinates {
-		(1,73)
-		(2,33)
-		(4,60)
-	};
-	\addplot[color=red,mark=*] coordinates {
-		(1,85)
-		(2,37)
-		(4,12)
-	};
-	\addplot[color=green,mark=*] coordinates {
-		(1,278)
-		(2,163)
-		(4,132)
-	};
-	\addplot[color=yellow,mark=*] coordinates {
-		(1,171)
-		(2,93)
-		(4,38)
-	};
-	\legend{io,sort,mpi,connect}
-	\end{axis}%
-\end{tikzpicture}%
-\end{figure}
-\begin{figure}[!h] \centering
-\begin{tikzpicture}
-	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
-		xlabel=number of racks,ylabel=Parallel efficiency (\% of linear scaling),width=8.5cm]
-
-	\addplot[color=blue,mark=*] coordinates {
-		(1,100)
-		(2,93)
-		(4,72)
-	};
-	\addplot[color=red,mark=*] coordinates {
-		(1,100)
-		(2,94)
-	};
-	\addplot[color=red,mark=o] coordinates {
-		(1,100)
-		(2,94)
-		(4,101)
-	};
-	\legend{mod,slisim, slisim estimated}
-	\end{axis}%
-\end{tikzpicture}%
-\begin{tikzpicture}
-	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
-		xlabel=number of racks,ylabel=wall clock in seconds,width=8.5cm]
-
-	\addplot[color=blue,mark=*] coordinates {
-		(1,640)
-		(2,344)
-		(4,220)
-	};
-	\addplot[color=red,mark=*] coordinates {
-		(1,1208)
-		(2,637)
-	};
-	\addplot[color=red,mark=o] coordinates {
-		(1,1208)
-		(2,637)
-		(4,299)
-	};
-	\legend{mod,slisim, slisim estimated}
-	\end{axis}%
-\end{tikzpicture}%
-\end{figure}
+%\begin{figure}[!h] \centering
+%\begin{tikzpicture}
+%	\begin{axis}[title=AMBM CONNECT MODULE,
+%		legend style={at={(0.5,-0.20)},
+%		anchor=north,legend columns=-1},
+%		xlabel=number of racks,
+%		ylabel=Parallel efficiency (\% of linear scaling),
+%		width=8.5cm
+%		]
+%
+%	\addplot[color=blue,mark=*] coordinates {
+%		(1,100)
+%		(2,110)
+%		(4,30)
+%	};
+%	\addplot[color=red,mark=*] coordinates {
+%		(1,100)
+%		(2,114)
+%		(4,117)
+%	};
+%	\addplot[color=green,mark=*] coordinates {
+%		(1,100)
+%		(2,84)
+%		(4,54)
+%	};
+%	\addplot[color=yellow,mark=*] coordinates {
+%		(1,100)
+%		(2,91)
+%		(4,110)
+%	};
+%	\legend{io,sort,mpi,connect}
+%	\end{axis}%
+%\end{tikzpicture}%
+%\begin{tikzpicture}
+%	\begin{axis}[title=AMBM CONNECT MODULE,
+%		legend style={at={(0.5,-0.20)},
+%		anchor=north,legend columns=-1},
+%		xlabel=number of racks,
+%		ylabel=wall clock in seconds,
+%		width=8.5cm
+%		]
+%
+%	\addplot[color=blue,mark=*] coordinates {
+%		(1,73)
+%		(2,33)
+%		(4,60)
+%	};
+%	\addplot[color=red,mark=*] coordinates {
+%		(1,85)
+%		(2,37)
+%		(4,12)
+%	};
+%	\addplot[color=green,mark=*] coordinates {
+%		(1,278)
+%		(2,163)
+%		(4,132)
+%	};
+%	\addplot[color=yellow,mark=*] coordinates {
+%		(1,171)
+%		(2,93)
+%		(4,38)
+%	};
+%	\legend{io,sort,mpi,connect}
+%	\end{axis}%
+%\end{tikzpicture}%
+%\end{figure}
+%\begin{figure}[!h] \centering
+%\begin{tikzpicture}
+%	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
+%		xlabel=number of racks,ylabel=Parallel efficiency (\% of linear scaling),width=8.5cm]
+%
+%	\addplot[color=blue,mark=*] coordinates {
+%		(1,100)
+%		(2,93)
+%		(4,72)
+%	};
+%	\addplot[color=red,mark=*] coordinates {
+%		(1,100)
+%		(2,94)
+%	};
+%	\addplot[color=red,mark=o] coordinates {
+%		(1,100)
+%		(2,94)
+%		(4,101)
+%	};
+%	\legend{mod,slisim, slisim estimated}
+%	\end{axis}%
+%\end{tikzpicture}%
+%\begin{tikzpicture}
+%	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
+%		xlabel=number of racks,ylabel=wall clock in seconds,width=8.5cm]
+%
+%	\addplot[color=blue,mark=*] coordinates {
+%		(1,640)
+%		(2,344)
+%		(4,220)
+%	};
+%	\addplot[color=red,mark=*] coordinates {
+%		(1,1208)
+%		(2,637)
+%	};
+%	\addplot[color=red,mark=o] coordinates {
+%		(1,1208)
+%		(2,637)
+%		(4,299)
+%	};
+%	\legend{mod,slisim, slisim estimated}
+%	\end{axis}%
+%\end{tikzpicture}%
+%\end{figure}
 
 \section{Measured memory consumption}
 

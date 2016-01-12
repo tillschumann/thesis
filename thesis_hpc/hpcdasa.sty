@@ -56,6 +56,7 @@
 \newcommand{\addsupervisor}[1]{}                % Erstgutachter hinzufuegen (Optional Institutskuerzel)
 \newcommand{\addsecondreferee}[1]{}             % Zweitgutachter hinzufuegen (Optional Institutskuerzel)
 \newcommand{\addadviser}[1]{}                   % Betreuer/ Assistent hinzufuegen (Optional Institutskuerzel)
+\newcommand{\addsecadviser}[1]{}                   % Betreuer/ Assistent hinzufuegen (Optional Institutskuerzel)
 
 % Titelseite ausgeben
 \renewcommand{\maketitle}{}
@@ -70,6 +71,7 @@
 \newcommand{\printsupervisors}{}
 \newcommand{\printsecondreferees}{}
 \newcommand{\printadvisers}{}
+\newcommand{\printsecadvisers}{}
 \newcommand{\printversicherung}{}                % Versicherung der selbstaendigen Arbeit ausgeben
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -82,6 +84,8 @@
 \setboolean{@printsecondreferee}{false}              %  (wird gesetzt, falls \addsecondreferee benutzt wird
 \newboolean{@printadviser}                           % Soll der Betreuer/ Assistent ausgegeben werden
 \setboolean{@printadviser}{false}                    %  (wird gesetzt, falls \addadviser benutzt wird
+\newboolean{@printsecadviser}                           % Soll der Betreuer/ Assistent ausgegeben werden
+\setboolean{@printsecadviser}{false}                    %  (wird gesetzt, falls \addadviser benutzt wird
 
 \newlength{\@templength}
 \newlength{\@supervisorlength}                        % Laenge des laengsten Betreuerlabels (Betreuer, Erstgutachter, Zweitgutachter etc.)
@@ -90,6 +94,7 @@
 \newlength{\@supervisornamelength}                    % Laenge des Erstgutachterlabels (z.B. Erstgutachter)
 \newlength{\@secondrefereenamelength}                 % Laenge des Zweitgutachterlabels (z.B. Zweitgutachter)
 \newlength{\@advisernamelength}                       % Laenge des Betreuer/Assistentenlabels (z.B. Betreuer)
+\newlength{\@secadvisernamelength}                       % Laenge des Betreuer/Assistentenlabels (z.B. Betreuer)
 
 % Ein paar sinnvolle(?) Aenderungen der Standardparameter fuer die Float-Platzierung
 % [http://groups.google.de/group/de.comp.text.tex/msg/e85b9d18d50b2be1]
@@ -126,6 +131,7 @@
 			\newcommand*{\supervisorname}{Erstgutachter} %Betreuer
 			\newcommand*{\secondrefereename}{Zweitgutachter}
 			\newcommand*{\advisername}{Betreuer}
+			\newcommand*{\secadvisername}{Zweitbetreuer}
 			\newcommand{\rwthhpcname}{an der\\
 			                           Rheinisch-Westf\"alischen Technischen Hochschule Aachen\\
 			                           Fakult\"at f\"ur Mathematik, Informatik und Naturwissenschaften\\
@@ -150,6 +156,7 @@
 			\newcommand*{\supervisorname}{First Referee}
 			\newcommand*{\secondrefereename}{Second Referee}
      \newcommand*{\advisername}{Supervisor}
+     \newcommand*{\secadvisername}{Second Supervisor}
 			\newcommand{\rwthhpcname}{at the\\
 			                           RWTH Aachen University\\
 			                           Faculty of Mathematics, Computer Science and Natural Sciences\\
@@ -277,6 +284,31 @@
 }
 
 %
+% Betreuer/ Zweiten Assistent hinzufuegen
+%
+\renewcommand{\printsecadvisers}{}
+\renewcommand{\addsecadviser}[2][]
+{%
+	\expandafter\ifx\csname instref#1\endcsname\relax
+  	% \instrefxyz steht nicht zur Verfuegung
+  	\PackageError{hpcdasa}%Paket
+  	             {Institute "#1" not defined. Institute must be defined before using a reference to it}%Kurztext
+  	             {Please define institute before using a reference to it.}%Langtext
+	\else
+		\settowidth{\@templength}{#2 \instituteref{#1}}
+		\ifthenelse{\@templength>\@supervisorlength}
+			{\setlength{\@supervisorlength}{\@templength}}%true
+			{}%false
+		% Neuen Zweitgutachter an "Tabelle" anhaengen
+		\ifthenelse{\equal{\printsecadvisers}{}}
+			{\g@addto@macro\printsecadvisers{#2 \instituteref{#1}}}    %1. Eintrag
+			{\g@addto@macro\printsecadvisers{\\ #2 \instituteref{#1}}} %Folgende Eintraege
+		\setboolean{@printsecadviser}{true}
+	\fi
+}
+
+
+%
 % Versicherung ausgeben
 %
 \renewcommand{\printversicherung}{
@@ -306,6 +338,7 @@
 	\settowidth{\@supervisornamelength}{\supervisorname}
 	\settowidth{\@secondrefereenamelength}{\secondrefereename}
 	\settowidth{\@advisernamelength}{\advisername}
+	\settowidth{\@secadvisernamelength}{\secadvisername}
 	\ifthenelse{\boolean{@printsecondreferee}}
 		{\ifthenelse{\@supervisornamelength>\@secondrefereenamelength}
 			{\setlength{\@supervisorlabellength}{\@supervisornamelength}}%true
@@ -324,6 +357,15 @@
 		{
 		%	\setlength{\@supervisorlabellength}{\@supervisornamelength}%
 		}%printadviser=false		
+	% fuer Betreuer/ Assistent
+	\ifthenelse{\boolean{@printsecadviser}}
+		{\ifthenelse{\@secadvisernamelength>\@supervisorlabellength}
+			{\setlength{\@supervisorlabellength}{\@secadvisernamelength}}%true
+			{} %\setlength{\@supervisorlabellength}{\@secondrefereenamelength}}%false
+		}%printadviser=true
+		{
+		%	\setlength{\@supervisorlabellength}{\@supervisornamelength}%
+		}%printadviser=false
 	\begin{titlepage}
 		\phantomsection\pdfbookmark{\titlepagename}{titel}
 		\begin{flushright}
@@ -381,7 +423,15 @@
 					\end{minipage}
 				}%true
 				{}%false
-
+			\medskip
+			\ifthenelse{\boolean{@printsecadviser}}
+				{
+				\makebox[\@supervisorlabellength][l]{\secadvisername:} \hspace{1em}
+					\begin{minipage}[t]{\@supervisorlength}
+						\printsecadvisers
+					\end{minipage}
+				}%true
+				{}%false
 			\vspace*{1cm}
 			
 			\ifthenelse{\boolean{@printinstitute}}

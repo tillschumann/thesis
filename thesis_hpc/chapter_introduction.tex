@@ -5,13 +5,12 @@
 
 In 2014, the Neurorobotics team of the Blue Brain Project (BBP \cite{BBP}), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
 of a mouse brain from data provided by the Allen Institute for Brain Science \cite{AllenInstitute}.
-Using NEST software \ref{NEST}, the BBP Neurorobotics team was then able to simulate a
+Using the Neural Simulation Tool NEST \ref{NEST}, the BBP Neurorobotics team was able to simulate a
 scaled-down model of the mouse brain on a laptop computer, paving the way towards
 making a mouse brain interact with an environment. A full-scale implementation of
-the mouse brain model is possible, but requires the use of large scale resources with low latency requirements only modern supercomputers can today provide.
-The current functionality of NEST supports  generating large neuronal networks
-on a supercomputer based an random distributions but not yet from experimental data contained in brain atlases. 
-We suggest as part of this thesis to first develop the means to fully model a mouse brain from experimental data using NEST software on available supercomputing architectures.
+the mouse brain model is possible, but requires a large scale of resources with low latency requirements that only modern supercomputers can provide today.
+The current functionality of NEST generates large neuronal networks on a supercomputer based on only on random distributions, not yet from experimental data contained in brain atlases.
+Topic of the thesis is to develop the means to fully model a mouse brain from experimental data using NEST software on available supercomputing architectures.
 \newpage
 
 \section{Brain simulation}
@@ -24,16 +23,16 @@ We suggest as part of this thesis to first develop the means to fully model a mo
  The nervous system is the most complex system of our body with respect to functionality.
  It contains billions of nerve and glia cells. 
  The nerve cells are connected via synapses to a complex network.
- Electrical pulses from neuron to neuron transmit information through the network.
- Glia cells help to maintain the right concentration of chemical substances in the
+ Electrical pulses from neuron to neuron transmit information through this network.
+ Glia cells help maintain the right concentration of chemical substances in the
  extracellular space around neurons and provide supporting structures for the
  growth of neurons and for their spatial arrangement.
   \subsection{Macroscopic structure}
   \label{sec:Macroscopicstructure}
-  The anatomy of the brain as depicted in Figure \ref{Aufbau1}, shows that different parts vary in cell density and functionality.
- Figure \ref{Aufbau1} shows a cross-section of the human brain. The outer layer is called the gray matter, due to the color caused by the high density of nerve cells.
+  The anatomy of the brain as depicted in Figure \ref{Aufbau1}, shows that its parts vary in cell density and functionality.
+ Figure \ref{Aufbau1} shows a cross-section of the human brain. The outer layer is called gray matter, due to the color caused by the high density of nerve cells.
  For the most port the white matter, which is underneath the gray matter,
- consists of connection fibers of the nerve cells.
+ consists mainly of connection fibers of the nerve cells.
  The thalamus is located in the middle of the brain and functions as a relay station between the sensory system and the cortical systems for cognition and motor control.
   \begin{figure}[!htbp]
   %\subfigure[A cross-section of the human brain shows different densities of nerve cells \cite{CN}.]{
@@ -54,12 +53,12 @@ We suggest as part of this thesis to first develop the means to fully model a mo
   \end{figure}
   Because of the high density of nerve cells the gray matter is the main part of information processing of the brain.
   
-  The number of nerve cells (neurons), the number of connections (synapses) and the structure differs from person to person.
-  The connections of each neuron are dynamic and change over time.
-  Some parts of the brain can still be assigned roughly to functionality as shown in Figure \ref{Aufbau2}.\\
+  Some parts of the brain can still be assigned roughly to functionality as shown in Figure \ref{Aufbau2}.
+  However, the number of nerve cells (neurons), the number of connections (synapses) and the structure differs from person to person.
+  The connections of each neuron are dynamic and change over time. \\
   Having a look at the vertical structure of the cortex,
   the gray matter can be partitioned in six layers as shown in figure \ref{mikroaufbau}.
-  The cells in each layer have similarities like cell type, connections to other layers and connections to the thalamus and other parts.
+  The cells in each layer have similarities like: cell type, connections to other layers and connections to the thalamus and other parts.
   %-forebrain(anterior part of the brain)
   %-neocortex(surface of the mammalian brain, gray)
  
@@ -67,12 +66,12 @@ We suggest as part of this thesis to first develop the means to fully model a mo
   \newpage
   \subsection{Microscopic structure}
   The nerve cells are tiny structures which are connected to each other.
-  For an understanding of the brain a deeper look at the nerve cells is however necessary.
+  In order to understand the brain, a deeper look at the nerve cells is however necessary.
   There are different cell types in a brain. They vary in structure and size.
   Pyramidal, spiny stellate and smooth stellate cells occur most often.
-  For each layer there are types which occur more frequently. 
+  Each layer has types which occur more frequently.
   
-  In Figure \ref{Corticalneurons} a typical neuron is depicted.
+  Figure \ref{Corticalneurons} depicts a typical neuron.
   It contains the soma (the cell body) dendrites and axons.
   Electrical pulses are transported from the dendrites to the soma.
   In case of a spike an electrical impulse is forwarded through the axon.
@@ -90,7 +89,7 @@ We suggest as part of this thesis to first develop the means to fully model a mo
   in contrast the inhibitory neurons inhibit the following neurons.
   Via electrical currents the connected neurons influence the membrane potential of each neuron.
   , which can be measured.
-  As an example the membrane potential is plotted over time in Figure \ref{membrane_potential}.
+  For example, Figure \ref{membrane_potential} shows the membrane potential plotted over time.
   Chemical processes inside the neuron generate a spike if the membrane potential reaches a specific electrical level called the threshold.  
   As shown in Figure \ref{membrane_potential} spikes are peaks in the membrane potential.  
   
@@ -119,7 +118,7 @@ We suggest as part of this thesis to first develop the means to fully model a mo
   In order to analyse the membrane potential more objectively it is reduced to timings of the spikes.
   For multiple neuron the spike timings in a dot plot can be visualized as in Figure \ref{spikeplot}.
   One can get an overview of the activity in a whole neuronal network if the spike sums are
-  plotted (summed up spikes for each time bin) in a so-called histogram (bottom row of figure \ref{spikeplot}).
+  plotted (summed up spikes for each time bin) in a histogram (bottom row of figure \ref{spikeplot}).
 
 	\begin{itemize}
       \item Short overview over simulators: NEST, NEURON, STEPS
@@ -134,7 +133,7 @@ We suggest as part of this thesis to first develop the means to fully model a mo
 \newpage
 \section{Allen Brain Atlas}
    Allen Institute for Brain Science provides a high-resolution map of neural connections in the mouse brain.
-   It contains several injection experiments. The provided datasets of the experiments 
+   It contains several injection experiments (see Figure \ref{fig:atlas}). The provided datasets of the experiments 
    contain a 3D image of cell injection and a 3D image of its axonal projection labelled by viral
    tracers.
    
@@ -184,14 +183,14 @@ We suggest as part of this thesis to first develop the means to fully model a mo
     	\caption{%
         Assign density of experiments to neurons.
      }%
-   \label{fig:atlas}
+   \label{fig:atlasvoxel}
    \end{figure}
 
 The 3D images contain discrete voxelized density values.
 Most entries are zero. All entries which are above a given threshold are interpreted 
 as injected and projected voxels.
 Using a piecewise constant interpolation the values are assigned to each neuron.
-So for one experiment source and possible target neurons are specified (see Figure \ref{fig:atlas}).
+So for one experiment source and possible target neurons are specified (see Figure \ref{fig:atlasvoxel}).
 A set of experiments is used to connect neurons located at the injections
 to the neurons at the projections. Because multiple experiments have injected the same regions and therefore
 same neurons, for each neuron the experiment is used which has the lowest total injection
@@ -235,7 +234,7 @@ For each neuron $10,000$ (source neuron) connections are generated to neurons (t
    \newpage
 \section{Blue Brain Project recipe}
 
-The Blue Brain Project was able to reconstruct a microcircuit of part of somatosensory cortex of juvenile rat \cite{markram2015reconstruction}.
+The Blue Brain Project was able to reconstruct a microcircuit of part of somatosensory cortex of a juvenile rat \cite{markram2015reconstruction}.
 They presented a complementary algorithmic approach that reconstructs neuronal microcircuitry
 across all layers using available sparse data and that leverages biological principles and
 interdependencies between datasets to predict missing biological data.
@@ -305,10 +304,10 @@ Therefore all synaptic parameters are determined from the BBP matrices.
 \label{alg:BBP}
 \end{algorithm}
 \newpage
-\section{NEST}
+\section{Neural Simulation Tool}
 \label{NEST}
-NEST is a simulator for spiking neural network models that focuses on the dynamics, size and structure of neural systems rather than on the exact morphology of individual neurons. The development of NEST is coordinated by the NEST Initiative. NEST is used to model networks with simplified morphologies of spiking neurons of any size, for example:
-Models of information processing e.g. in the visual or auditory cortex of mammals, models of network activity dynamics, e.g. laminar cortical networks or balanced random networks and models of learning and plasticity. A NEST simulation tries to follow the logic of an electrophysiological experiment that takes place inside a computer with the difference, that the neural system to be investigated must be defined by the experimenter. The definition is based on number of neurons with parameters and connections between these neurons. NEST supports the generation based on probabilistic values. The stochastic settings of a neuronal network can be used to create its artificial copy inside of NEST. To manipulate or observe the network dynamics, the experimenter can define so-called devices which represent the various instruments (for measuring and stimulation) found in an experiment. These devices write their data either to memory or to file. 
+Neural Simulation Tool, NEST, is a simulator for spiking neural network models that focuses on the dynamics, size and structure of neural systems rather than on the exact morphology of individual neurons. The development of NEST is coordinated by the NEST Initiative. NEST is used to model networks with simplified morphologies of spiking neurons of any size. For example it is used for
+models of information processing e.g. in the visual or auditory cortex of mammals, models of network activity dynamics, e.g. laminar cortical networks or balanced random networks and models of learning and plasticity. A NEST simulation tries to follow the logic of an electrophysiological experiment that takes place inside a computer with the difference, that the neural system to be investigated must be defined by the experimenter. The definition is based on number of neurons with parameters and connections between these neurons. NEST supports the generation based on probabilistic values. The stochastic settings of a neuronal network can be used to create its artificial copy inside of NEST. To manipulate or observe the network dynamics, the experimenter can define devices which represent the various instruments (for measuring and stimulation) found in an experiment. These devices write their data either to memory or to file. 
 
 NEST features the execution on parallel environments (e.g. super computers as JUQUEEN).
 Therefore it uses the MPI (Message Passing Interface \cite{MPI}) standard for interprocess communication.
@@ -322,7 +321,7 @@ NEST keeps the full neuronal network model in memory.
 Therefore it distinguishes between nodes and connections.
 Nodes and connections represent mostly neurons and synapses, respectively.
 Nodes hold model parameters.
-However synapses hold besides model parameters the pre-synaptic and post-synaptic neuron information.
+However synapses hold besides model parameters the pre-synaptic and post-synaptic neuron information, which each synapse connects.
 
 In multi process environments nodes are distributed on the processes.
 For multi threaded environments each thread processes a subset of nodes.
@@ -371,7 +370,7 @@ connection objects in a dynamically-sized vector (copied and simplified from \ci
 \label{fig:NESTsynstorage}
 \end{figure}
 
-
+\newpage
 \section{Visualization}
 To interpret the output of a neuronal simulation the spiking activity of the neurons is analysed, mostly. 
 Different types of methods allow to extract stochastic characteristics from spike trains.
@@ -385,7 +384,9 @@ it can give an impression of the activity.
 \end{itemize}
 
 \section{Parallel IO}
-Build-up a large scale neuronal network from point to point connectivity results in new requirements for data processing and the data format. The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
+Full-scale data-driven simulations pushing the requirements of data processing and capability of the data format.
+To build-up a large scale neuronal network from point to point connectivity requires large bandwidth for accessing the data from disks.
+The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
 Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to one file.
 It uses MPI-IO to manage parallel read and write operations. Further HDF5 is a self descriptive format and therefore easy to handle
 and exchanged between different platforms. Already given reduced circuits are stored in HDF5 file format by the neurorobotics team, 
