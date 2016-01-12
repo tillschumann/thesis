@@ -4,10 +4,11 @@
 \chapter{Implementation}
 
 The implementation which are done in this thesis aim at enabling the building and simulation
-of a full mouse brain model relaying on point neuron model. Such a model must be build by
-reconstructing parts of the model from experimental data provided by both the Allen Institute for
-Brain for Science and the Blue Brain Project
-To this aim, an efficient data format is defined, the circuit generation scripts are adapted to
+of a full mouse brain model relaying on point neuron models. Such a model must be build by
+reconstructing parts of the model from experimental data.
+Allen Institute for Brain for Science and the Blue Brain Project provide such data.
+To this aim, the pipeline of large scale data-driven simulations with the NEST simulator is investigated.
+Therefore an efficient data format is defined, the circuit generation scripts are adapted to
 run on a bigger scale and the NEST simulator is extended to load the new data format.
 
 \section{Data formats}
@@ -16,16 +17,15 @@ A point neuron model contains point neurons and connections (synapses) between t
 The same point neuron model (conductance based exponential integrate-and-fire neuron model \cite{brette2005adaptive}) and synapse model (Tsodyks synapse model containing synaptic short-term depression and short-term facilitation \cite{tsodyks1997neural, fuhrmann2002coding}) are used for all neurons and synapses respectively.
 The neurons and synapses are characterized by parameters.
 Each neuron is defined by a given set of parameters.
-The synapses contain besides the parameters the pre-synaptic and post-synaptic neuron id, which the synapses connects.
+The synapses contain besides the parameters pre-synaptic and post-synaptic neuron ids.
 To store the circuit in files two different data formats are defined.
 The first data format defines the storage for all neuron parameters.
-The second data format defines the storage for the synapse parameters and pre-synaptic and post-synaptic neuron ids.
+The second data format defines the storage for synapse parameters and pre-synaptic and post-synaptic neuron ids.
 
 The data format for the neurons and the synapses follow two different concepts.
 The neuron data format contains multiple datasets containing the neuron parameters.
 All datasets have by definition the same length. This length defines the number of neurons.
 The neuron parameters of neuron $i$ are stored in the i-th line of each dataset.
-Besides the neuron parameters the file contains attributes for storing meta data of the circuit.
 \begin{figure}[ht!]
    	\begin{center}
         \subfigure[The neuron file contains a dataset for each parameter.
@@ -46,10 +46,12 @@ Besides the neuron parameters the file contains attributes for storing meta data
      }%
    \label{fig:atlas}
    \end{figure}
-The synapse data format contains only two datasets. In general the datasets contain for each synapse
+   
+The synapse data format contains two datasets. In general the datasets contain for each synapse
 a pre-synaptic neuron id, a post-synaptic neuron id and a set of parameters. To reduce the amount of data.
-The pre-synaptic neuron ids are grouped together in the \emph{neuron} dataset. This is feasible, because
-the number of synapses is way bigger than the number of pre-synaptic ($~11,000$ synapses per pre-synaptic neuron).
+The pre-synaptic neuron ids are grouped together in one \emph{neuron} dataset. This is feasible, because
+the number of synapses is way bigger than the number of pre-synaptic neurons ($~11,000$ synapses per pre-synaptic neuron).
+The dataset contains an array of  pre-synaptic neuron ids (\emph{id}) with their references (\emph{syn\_n} and \emph{syn\_ptr}).
 The \emph{syn\_ptr} value defines the related starting index in the \emph{syn} dataset,
 and \emph{syn\_n} defines the number of related following entries.
 The \emph{syn} dataset contains the post-synaptic neuron id and a set of parameters.
@@ -58,12 +60,13 @@ Both datasets use a compound data type to store different data types in the same
 \newpage
 \section{Circuit generation}
 The already existing python scripts can generate circuits up to one percent of the full mouse brain model.
-The scripts are developed to fit on a local laptop.
+The scripts are developed to fit on local laptops.
 Going the way towards the full mouse brain model, larger machines have to be taken into account.
 A full mouse brain model generation requires more resources and computation power.
 Therefore the circuit generation should be ported to the Blue Brain IV super computer.
 A new implementation should make use of the available resources.
 Rewriting the sequential python scripts to a hybrid C++ application require a parallel implementation of the algorithms.
+
 
 %%insert somewhere
 %Unfortunately all injections from these experiments do not
@@ -79,11 +82,12 @@ The outer one iterates over the experiments, the next inner one over voxels, whi
 one over neurons inside the voxel.
 Besides a if condition in the voxel iteration, there are no dependencies between the iterations.
 The if condition compares the total injection densities.
-It only regenerates the connections for the voxel, if the previous used experiments for this voxel injects more in total than the current
-experiment.
+It only regenerates the connections for the voxel, if the current
+experiment injects less than the previous experiments (less injection means more precise projections).
 For a parallel implementation this dependency has to be avoided.
-To overcome the dependency, the best chosen injection per voxel is calculated before hand.
-Thus the loop over the voxels moves after the loop over the experiments.
+To overcome the dependency, the best chosen experiment (the best experiment per voxel is the experiment with the smallest injection which still injects the current voxel) per voxel is calculated before hand.
+Thus the loop over the voxels moves outside the loop over the experiments.
+
 When the used voxels are identified the number of generated synapses can be calculated, based on the
 number of neurons inside the voxels and the hard-coded number of synapses per neuron.
 Thus the HDF5 file and the \emph{syn} dataset is created before the voxel iterations.
