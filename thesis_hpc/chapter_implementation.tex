@@ -128,15 +128,22 @@ each process.
 But there are regions which were not injected by any experiment available.
 So there is no connection information available for the internal neurons.
 To overcome the missing data a piecewise constant interpolation is applied to the chosen experiment per voxel
-in \emph{Interpolate values for empty voxels}.
-
+in \emph{Interpolate values for empty voxels} (see paragraph \ref{par:interpolation}).
 Afterwards the voxels are mirrored from the right to the left hemisphere, because the
 Allen Brain Atlas mostly delivers injection sites for the right hemisphere and
 the mouse brain model is assumed to be symmetric.
-
 Finally all voxel information are gathered to all processes.
-For debugging or manipulating purposes function \emph{Save voxel properties to HDF5 file} can be used
+For debugging or manipulating purposes, task \emph{Save voxel properties to HDF5 file} can be used
 to save the generated voxel information to file (see chapter \ref{file:voxelinfo}).
+
+Finally, the first third of the voxels are distributed (see paragraph \ref{par:loadbalancing}) on the processes.
+Each process iterates over its voxels and generates connections for each neuron inside the voxels.
+Therefore the sequential algorithm is used.
+To make use of all cores the acceptance rejection function
+(it picks the post-synaptic neurons and takes most of the computation time per iteration)
+distributes its internal loop on the available threads.
+Each thread picks $~ \frac{10,000}{N_{threads}}$ post-synaptic neurons.
+In the end of each iteration each process writes its generated connection independently to file.
 
 %\begin{figure}[ht!]
 %   	\begin{center}
@@ -157,6 +164,7 @@ to save the generated voxel information to file (see chapter \ref{file:voxelinfo
 %   \end{figure}
 
 \paragraph{Load balancing}
+\label{par:loadbalancing}
 An efficient parallel implementation depends on the distribution of the voxels.
 The work load should be distributed equably on all processes.
 Therefore an estimation of the work load per iteration is necessary.
@@ -194,6 +202,8 @@ At first a third of all voxels are distributed (using algorithm \ref{alg:distrib
 After that the master process distributes further voxels in sets on request from the other processes.
 
 \paragraph{Interpolate connection information}
+\label{par:interpolation}
+
 The constant interpolation of connection information, interpolates the used experiment per voxel in 3D space.
 It is realised with an iteratively nearest neighbour search algorithm for each missing voxel.
 The algorithm iterates over all neighbours with increasing distance.
@@ -207,6 +217,8 @@ projected in a 2D plane.
 \end{figure}
 The first voxel along the search direction which is found is declared as the nearest neighbour.
 The chosen experiment from the nearest neighbour is adopted.
+
+
 
 \subsection{Short range connections}
 
@@ -283,41 +295,52 @@ and projection is used as the reference system. If source neurons are inside the
 post-synaptic neurons are in the projection space, the implementation is correct.
 For the short range connectivity all post-synaptic neurons of synapses having the same pre-synaptic neuron should
 lay inside a cylinder in layer 1 to 6. Visualising the post-synaptic neurons geometrical on top of the contour of layer 1 to 6 allows to review if the shape matches with a cylinder.
-To perform the visual validation the renderer voxalize \ref{voxelize} is used with the visualization tool Paraview \ref{paraview}.
+To perform the validation the renderer voxalize \ref{voxelize} is used.
+It reduces the post-synaptic neuron cloud to densities of neurons per voxel ($N_{x,y,z}$).
+The voxels can be directly compared to the projection densities ($P_{x,y,z}$) from an experiment.
+\begin{equation}
+	P_{x,y,z} \propto N_{x,y,z}
+\end{equation}
+The relation between the densities should be proportional.
+The visualization tool Paraview \ref{paraview} allows a visual comparison of the density values.
  \begin{figure}[ht!]
 \centering
 \includegraphics[width=0.4\textwidth]{pictures/paraview_ex.png}
 \end{figure}
-For the validation the BBP visualization team offered a rendering pipeline to visualize the placement of target neurons for each synapse file. Therefore the neuron and synapse HDF5 can be imported into 
-Voxelize \ref{voxelize}. Voxelize creates a voxelized dataset out of the target neuron positions, which can be exported into
+For a visual validation the Blue Brain Project visualization team offered a rendering pipeline to visualize the placement of post-synaptic neurons for each synapse file. Therefore the neuron and synapse files can be imported into 
+Voxelize \ref{voxelize}. Voxelize creates a voxelized dataset out of the post-synaptic neuron positions, which can be exported into
 a MetaImage \ref{MetaImage} file or directly viewed with Livre \ref{Livre}.
 The MetaImage files can be viewed with Paraview \ref{Paraview}.
 Injection and projection images are also given in the MetaImage format.
 A direct comparison inside of Paraview is possible.
-Loading the projection inside of Paraview and applying the contour filter on it with a threshold of $0.01$ (threshold is also applied to the same data in the long range connectivity generation) allows to visualize the valid boundaries for all target neurons for this particular experiment.
+Loading the projection inside of Paraview and applying the contour filter on it with a threshold of $0.01$ (threshold is also applied to the same data in the long range connectivity generation) allows to visualize the valid boundaries for all post-synaptic neurons for this particular experiment.
  
 \begin{figure}[ht!]
    	\begin{center}
-        \subfigure[1]{%
+        \subfigure[Densities in 3D space of the projection]{%
             \label{fig:allInjections}
             \includegraphics[scale=0.15]{pictures/exp1_energy.png}
         }
         \hspace{0.2cm}
-        \subfigure[2]{%
+        \subfigure[Post-synaptic neuron placement in 3D space]{%
             \label{fig:oneProjection}
             \includegraphics[scale=0.15]{pictures/exp1_post.png}
        }
        \hspace{0.2cm}
-        \subfigure[3]{%
+        \subfigure[Post-synaptic neuron placement inside of half cutted contour of the projection densities]{%
             \label{fig:oneProjection}
             \includegraphics[scale=0.15]{pictures/exp1_post_contour.png}
        }
     \end{center}
     	\caption{%
-        The diagram shows the data format with their related datasets and data types.
+        Example of visual long range connections validation of a single experiment (id: 113935285).
+        The used connections are part of the full circuit.
      }%
-   \label{fig:atlas}
+   \label{fig:longrangevalidation}
    \end{figure}
+   
+The example \ref{fig:longrangevalidation} illustrates the usage of the visual validation of long range connections.
+It shows that for the specific experiment the post-synaptic neurons are placed inside the correct regions.
 
 \section{NEST import modules}
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
