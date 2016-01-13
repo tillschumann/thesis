@@ -93,6 +93,70 @@ number of neurons inside the voxels and the hard-coded number of synapses per ne
 Thus the HDF5 file and the \emph{syn} dataset is created before the voxel iterations.
 The iterations of the loop over the voxels are distributed on the processes.
 Inside the iteration over all neurons the sequential algorithm can be applied.
+
+
+
+Figure \ref{fig:longrangParallel} illustrates the workflow of all processes.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.5]{pictures/longRange_parallelAlg.eps}
+\caption{Task distribution between the processes for the long range connections generation. It illustrates which tasks are distributed between which processes.}
+\label{fig:longrangParallel}
+\end{figure}
+\emph{Process 0} is selected as the master process. It does not participate on the iterations.
+It manages the dynamic distribution of the voxels to the other processes and 
+assigns write positions to each voxels. Thus each process receives besides the 
+voxel information the positions,
+where it has to write its data to the HDF5 datasets.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.5]{pictures/longRange_BestExp_parallelAlg.eps}
+\caption{Subtasks of the above listed \emph{Load experiment per voxel} task}
+\label{fig:longrangeLEPV}
+\end{figure}
+Task \emph{Load experiment per voxel} from Figure \ref{fig:longrangParallel} contain several subtasks.
+It generates the voxel datasets, which are distributed afterwards.
+Manipulations of the generation effect mostly this part.
+So the part allows modifications of the applied functionalities. 
+Further the whole function can be skipped by loading the voxel information from file \ref{file:voxelinfo}.
+Figure \ref{fig:longrangeLEPV} shows the subtasks.
+The red tasks are optional and can be activated via command line arguments.
+In the first task \emph{Find best experiment per voxel} each process loads a set of experiments.
+Iteratively the experiment with the smallest total injection density is assigned to each voxel
+on each process. Afterwards a MPI reduction function returns the smallest value for each voxel on
+each process.
+But there are regions which were not injected by any experiment available.
+So there is no connection information available for the internal neurons.
+To overcome the missing data a piecewise constant interpolation is applied to the chosen experiment per voxel
+in \emph{Interpolate values for empty voxels}.
+
+Afterwards the voxels are mirrored from the right to the left hemisphere, because the
+Allen Brain Atlas mostly delivers injection sites for the right hemisphere and
+the mouse brain model is assumed to be symmetric.
+
+Finally all voxel information are gathered to all processes.
+For debugging or manipulating purposes function \emph{Save voxel properties to HDF5 file} can be used
+to save the generated voxel information to file (see chapter \ref{file:voxelinfo}).
+
+%\begin{figure}[ht!]
+%   	\begin{center}
+%        \subfigure[All nodes are equal and process the work based on a static distribution]{%
+%            \label{fig:shortColumn}
+%            \includegraphics[scale=0.5]{pictures/All_Worker_Collective.eps}
+%        }
+%        \hspace{1cm}
+%        \subfigure[The 0 node is assigned as the master node and handles from this on the management of the work distribution.]{%
+%            \label{fig:shortColumnInCircuit}
+%            \includegraphics[scale=0.5]{pictures/MasterWorker.eps}
+%       }
+%    	   \end{center}
+%    	\caption{%
+%        The figure illustrates the work distribution and communication between the nodes.
+%     }%
+%   \label{fig:atlas}
+%   \end{figure}
+
+\paragraph{Load balancing}
 An efficient parallel implementation depends on the distribution of the voxels.
 The work load should be distributed equably on all processes.
 Therefore an estimation of the work load per iteration is necessary.
@@ -128,41 +192,11 @@ At first a third of all voxels are distributed (using algorithm \ref{alg:distrib
 \label{alg:distributeWeightedVoxels}
 \end{algorithm}
 After that the master process distributes further voxels in sets on request from the other processes.
-Figure \ref{fig:longrangParallel} illustrates the workflow of all processes.
-\begin{figure}[ht!]
-\centering
-\includegraphics[scale=0.5]{pictures/longRange_parallelAlg.eps}
-\caption{Task distribution between the processes for the long range connections generation. It illustrates which tasks are distributed between which processes.}
-\label{fig:longrangParallel}
-\end{figure}
-\emph{Process 0} is selected as the master process. It does not participate on the iterations.
-It manages the dynamic distribution of the voxels to the other processes and 
-assigns write positions to each voxels. Thus each process receives besides the 
-voxel information the positions,
-where it has to write its data to the HDF5 datasets.
-\begin{figure}[ht!]
-\centering
-\includegraphics[scale=0.5]{pictures/longRange_BestExp_parallelAlg.eps}
-\caption{Subtasks of the above listed \emph{Load experiment per voxel} task}
-\label{fig:longrangeLEPV}
-\end{figure}
-Task \emph{Load experiment per voxel} from Figure \ref{fig:longrangParallel} contain several subtasks.
-It generates the voxel datasets, which are distributed afterwards.
-Manipulations of the generation effect mostly this part.
-So the part allows modifications of the applied functionalities. 
-Further the whole function can be skipped by loading the voxel information from file \ref{file:voxelinfo}.
-Figure \ref{fig:longrangeLEPV} shows the subtasks.
-The red tasks are optional and can be activated via command line arguments.
-In the first task \emph{Find best experiment per voxel} each process loads a set of experiments.
-Iteratively the experiment with the smallest total injection density is assigned to each voxel
-on each process. Afterwards a MPI reduction function returns the smallest value for each voxel on
-each process.
-But there are regions which were not injected by any experiment available.
-So there is no connection information available for the internal neurons.
-To overcome the missing data a piecewise constant interpolation is applied to the chosen experiment per voxel
-in \emph{Interpolate values for empty voxels}.
+
+\paragraph{Interpolate connection information}
+The constant interpolation of connection information, interpolates the used experiment per voxel in 3D space.
 It is realised with an iteratively nearest neighbour search algorithm for each missing voxel.
-The missing voxels are distributed.
+The algorithm iterates over all neighbours with increasing distance.
 Figure \ref{longrange} shows an illustration of the search algorithm
 projected in a 2D plane.
 \begin{figure}[ht!]
@@ -174,38 +208,10 @@ projected in a 2D plane.
 The first voxel along the search direction which is found is declared as the nearest neighbour.
 The chosen experiment from the nearest neighbour is adopted.
 
-Afterwards the voxels are mirrored from the right to the left hemisphere, because the
-Allen Brain Atlas mostly delivers injection sites for the right hemisphere and
-the mouse brain model is assumed to be symmetric.
-
-Finally all voxel information are gathered to all processes.
-For debugging or manipulating purposes function \emph{Save voxel properties to HDF5 file} can be used
-to save the generated voxel information to file (see chapter \ref{file:voxelinfo}).
-
-%\begin{figure}[ht!]
-%   	\begin{center}
-%        \subfigure[All nodes are equal and process the work based on a static distribution]{%
-%            \label{fig:shortColumn}
-%            \includegraphics[scale=0.5]{pictures/All_Worker_Collective.eps}
-%        }
-%        \hspace{1cm}
-%        \subfigure[The 0 node is assigned as the master node and handles from this on the management of the work distribution.]{%
-%            \label{fig:shortColumnInCircuit}
-%            \includegraphics[scale=0.5]{pictures/MasterWorker.eps}
-%       }
-%    	   \end{center}
-%    	\caption{%
-%        The figure illustrates the work distribution and communication between the nodes.
-%     }%
-%   \label{fig:atlas}
-%   \end{figure}
-
-
 \subsection{Short range connections}
 
-The algorithm \ref{alg:BBP} presented in the analysis section can be parallelized straight forward.
-Each iteration is independent. The challenging part is the distribution of the iterations and
-the writing to disk. The number of synapses which are created is not know. It is only available
+The short range connection generation algorithm \ref{alg:BBP} presented in the analysis section can be parallelized straight forward.
+Each iteration is independent. Number of synapses which are created is not know. It is available
 at the end. Therefore all synpases are stored inside memory during the iterations and only written to disk 
 at the end.
 
@@ -217,12 +223,12 @@ at the end.
 The iterations from the main loop from the sequential algorithm \ref{alg:BBP} are distributed between the processes.
 The short range algorithm follows the same concepts as the long range generation parallelization.
 The iterations are distributed first statically and afterwards dynamically.
-The master process\emph{Process 0} handles the dynamic distribution management.
+The master process, \emph{Process 0}, handles the dynamic distribution management.
 To overcome that the dynamical distribution becomes a bottleneck in the beginning a third of the iterations are distributed
 statically between the working processes beforehand.
 The work-load per neuron is not estimated in advance.
 The iterations are partitioned continuously without weights.
-Each process of the workes (all processes except of \emph{Process 0}) receives the neurons with the ids $x_{process\_id-1}$
+Each process of the workers (all processes except of \emph{Process 0}) receives the neurons with the ids $x_{process\_id-1}$
 to $x_{process\_id}$ (\emph{Process 0} is not part of distribution. It is skipped.).
 $x_i$ relates to equation \ref{eq:process2id}.
 \begin{equation}
@@ -237,11 +243,11 @@ the given sequential algorithm is possible. Only the storage of the generated sy
 after all iterations. So in each loop the synapse list is stored in a buffer.
 The buffer is based on an own implemented queue class. It nests standard vectors.
 It contains one vector of fixed size vectors, which contain the synapse objects.
-It allows to increase the buffer size efficiently. The buffer size is adapted to 
+The buffer size is adapted to 
 the memory available on the used Blue Gene Q systems.
-Also the buffer can be written to disk efficiently, because the sub vectors are
+The buffer is written to disk in chunks (sub vectors). The sub vectors are
 accessible and can be written as chunks to file.
-If all neurons are distributed and processed, all processes, including the master process, calculate the writing position
+When all neurons are distributed and processed, all processes, including the master process, calculate the writing position
 in the HDF5 datasets where each process has to write its data to. After that all workers write theirs synapse vectors to
 disk.
 
@@ -272,9 +278,9 @@ the synapses. So the position of the source and target can be visualized and be 
 reference system. For the long and the short range connectivity the geometrical shape is know.
 In particular the long range connectivity should connect neurons from the injected regions to neurons
 in the projected region for each used experiment. Therefore a circuit for a single experiment is 
-generated, the target and source neurons are visualized in a 3D coordinate system and the the injection
+generated, the pre-synaptic and post-synaptic neurons are visualized in a 3D coordinate system and the the injection
 and projection is used as the reference system. If source neurons are inside the injection space and all
-target neurons are in the projection space, the implementation is correct.
+post-synaptic neurons are in the projection space, the implementation is correct.
 For the short range connectivity all post-synaptic neurons of synapses having the same pre-synaptic neuron should
 lay inside a cylinder in layer 1 to 6. Visualising the post-synaptic neurons geometrical on top of the contour of layer 1 to 6 allows to review if the shape matches with a cylinder.
 To perform the visual validation the renderer voxalize \ref{voxelize} is used with the visualization tool Paraview \ref{paraview}.
@@ -290,26 +296,43 @@ Injection and projection images are also given in the MetaImage format.
 A direct comparison inside of Paraview is possible.
 Loading the projection inside of Paraview and applying the contour filter on it with a threshold of $0.01$ (threshold is also applied to the same data in the long range connectivity generation) allows to visualize the valid boundaries for all target neurons for this particular experiment.
  
-\begin{itemize}
-      \item Pictures of both validation
-      \item Visual validation of spiking activity
-      \item Statistical properties are not analyzed in this work 
-\end{itemize}
+\begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[1]{%
+            \label{fig:allInjections}
+            \includegraphics[scale=0.15]{pictures/exp1_energy.png}
+        }
+        \hspace{0.2cm}
+        \subfigure[2]{%
+            \label{fig:oneProjection}
+            \includegraphics[scale=0.15]{pictures/exp1_post.png}
+       }
+       \hspace{0.2cm}
+        \subfigure[3]{%
+            \label{fig:oneProjection}
+            \includegraphics[scale=0.15]{pictures/exp1_post_contour.png}
+       }
+    \end{center}
+    	\caption{%
+        The diagram shows the data format with their related datasets and data types.
+     }%
+   \label{fig:atlas}
+   \end{figure}
 
 \section{NEST import modules}
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
 an user interface based on an own description language \emph{SLI} and  and a Python interface.
-The new use case shall be integrated into the standard work flow of NEST.
+The large scale data-driven simulation use case shall be integrated into the standard work flow of NEST.
 To this end, the functionality in \emph{C++} the interfaces have to be extended.
-The difficulties of the network generation is based on a difference in 
-the NEST internal data structure and the data delivered by the Allen Institute.
-Connection information contains target and source neurons besides biochemical
+The difficulties of the network building inside of NEST is based on a difference in 
+the NEST internal data structure and the data delivered by the circuit generation.
+Connection information contains pre-synaptic and post-synaptic neurons besides biochemical
 information of the synapses. Because of the in vitro injection methods the
-connection information maps the synapse from the source to the target neurons.
+connection information maps the synapse from the pre-synaptic to the post-synaptic neurons.
 For multi process simulations NEST distributes all neurons based on a modulo function 
 to the processes. Because of memory optimizations the synapses are only stored on the
-post synaptic process. This means that the connection information is stored
-on the process, where the target neuron is located. Therefore a transformation of the given data is
+post-synaptic process. This means that the connection information is stored
+on the process, where the post-synaptic neuron is located. Therefore a transformation of the given data is
 necessary. Preprocessing of the input data should be avoided as far as possible to capture
 future use cases.
 The resulting implementation shall load the connection information efficiently in parallel,
@@ -317,6 +340,15 @@ distribute the synapse information to the post synaptic process and store it in
 the NEST data structure.
 Further requirements of the implementation are an efficient use of the available resources as
 memory and computation power. 
+
+The internal c++ API of NEST allows creation and manipulation of the circuit.
+The API is mainly developed to be an interface between the internal structure
+and the SLI interface. But my implementation accesses the c++ functions directly,
+to avoid the SLI layer. To access the API in between the internal NEST classes
+have to be analysed. Because I am facing the execution on large scale machines,
+I focus on thread-safty and locality of internal circuit generation functions.
+Which means, I focus on how NEST internally distribute the data and on which processes, which
+function have to be called.
 
 
 \lstdefinestyle{cppcode} {language=C++,
@@ -332,20 +364,11 @@ memory and computation power.
 }
 
 \subsubsection{Import neurons}
-The internal c++ API of NEST allows creation and manipulation of the circuit.
-The API is mainly developed to be an interface between the internal structure
-and the SLI interface. But my implementation accesses the c++ functions directly,
-to avoid the SLI layer. To access the API in between the internal NEST classes
-have to be analysed. Because I am facing the execution on large scale machines,
-I focus on thread-safty and locality of internal circuit generation functions.
-Which means, I focus on how NEST internally distribute the data and on which processes, which
-function have to be called.
-
 NEST does not support information exchange during the internal circuit generation. 
 To create neurons inside the circuit the equal function call has to be
 performed on all processes. NEST itself sorts out, which information is needed on which process.
 But by analysing the NEST code I found out that not all function calls are necessary on all processes.
-The creation of objects (\ref{code:addnode}) has to performed on all processes.
+In detail, the creation of objects (\ref{code:addnode}) has to performed on all processes.
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
 /*** Add a number of nodes to the network.
@@ -385,7 +408,7 @@ where the object is stored.
 This allows to only load and assign the parameters on the corresponding process.
 Therefore knowing the distribution of neurons on the processes is essential.
 It is based on the modulus function \ref{NEST}.
-Process with id $i$ is stored on process $i mod N_{processes}$.
+Process with id $i$ is stored on process ($i \mod N_{processes}$).
 
 To group neurons together to subnets, neurons can be created inside of virtual subnets.
 This subnets have to be created before hand.
@@ -463,7 +486,7 @@ Therefore it is thread-safe and can be run multi threaded.
 \end{figure}
 It has to be called on the process where the post-synaptic neuron is located.
 But in the file the synapse information are grouped by pre-synaptic neurons (see section \ref{sec:dataformats}).
-Therefore the dataset of synapses has to be transformed before it can be connected efficiently.
+Therefore the dataset of synapses has to be transformed before it the synapses can be stored in the NEST data structure.
 \begin{algorithm}[ht!]
 	\KwData{List of HDF5 files for each process, block size}
 	\KwResult{Connected NEST network}
@@ -482,11 +505,11 @@ The algorithm \ref{alg2} loads the synapses block-wise from file, rearranges (se
 among processes and calls the connect function for each synapse on the corresponding process (see section \ref{sec:NEST:Datastructure}).
 
 \newpage
-\paragraph{Read step}
-At first each node loads all pre-synaptic neuron information from the \emph{neuron} dataset to memory.
-But each node does not need all neuron information. 
-The neuron information includes neuron id (\emph{id}), number of entries  (\emph{syn\_n}) and pointer to entry (\emph{syn\_ptr}) .
-All entries inside the \emph{syn} dataset from  entry \emph{syn\_ptr} for \emph{syn\_n} entries have the pre-synaptic neuron id specified by \emph{id}.
+\paragraph{Initialising}
+At first each node loads all pre-synaptic neuron references from the \emph{neuron} dataset to memory.
+But each node does not need all of them. 
+The neuron reference includes neuron id (\emph{id}), number of entries  (\emph{syn\_n}) and pointer to entry (\emph{syn\_ptr}) .
+All entries inside the \emph{syn} dataset from  entry \emph{syn\_ptr} for \emph{syn\_n} entries have the pre-synaptic neuron specified by its \emph{id}.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=1.0]{pictures/NeuronLinksRemoving.eps}
@@ -499,15 +522,11 @@ Each process can use it to remove unnecessary entries from memory.
 \end{figure}
 The distribution of the \emph{syn} dataset is defined.
 Each process reads the entries with an offset of $N_{blocksize} * p_{me}$ and
-for each iteration it adds to the offset a stride of $N_{processes} * N_{blocksize}$.
-Each processes removes all pre-synaptic neuron information, which do not point to
-neurons inside its chunk by reversing the pointers.
+for each iteration it adds a stride of $N_{processes} * N_{blocksize}$  to the offset (e.g see first line in Figure \ref{fig:importsynvis} and \ref{fig:importsynvis2nd}).
+Each processes removes all pre-synaptic neuron references, which do not belong to
+neurons inside its chunk by reversing the references.
 
-After that the algorithm iterates over the \emph{syn} dataset.
-Each iteration includes reading a block of the dataset, rearranging and connecting the synapses.
-The block is defined by a file pointer and a size.
-The file pointer is shifted in each iteration by the block size
-(e.g see first line in Figure \ref{fig:importsynvis} and \ref{fig:importsynvis2nd}).
+\paragraph{Read step}
 From each entry of the block a synapse object is created
 (contains source neuron id, target neuron id, target neuron process, synapse model parameters)
 inside a synapse vector. Then the pre-synaptic neuron ids are integrated into each synapse object.
@@ -545,14 +564,16 @@ It is executed multi-threaded.
 
 \paragraph{Connect step}
 Each thread calls \emph{connect} for its own synapses iteratively.
-The synapse parameters are passed to \emph{connect} function call via a \emph{DictionaryDatum}.
+Synapse parameters are passed to \emph{connect} function call via a \emph{DictionaryDatum} object.
 \emph{DictionaryDatum} is a SLI object for storing a map.
 It uses a \emph{Token} mechanism for access elements.
 To access entries \emph{Token} objects have to be created and deleted,
 which is not thread-safe. It can produce a data race in a static memory pool object of NEST.
 Therefore the creation and deletion of the needed \emph{Token} is serialized with mutexes.
-All thread iterate over all synapses.
-But each thread skips all synapses where the target neuron is not thread-local.
+Besides the creation of a \emph{DictionaryDatum} object \emph{createDictionaryDatum} creates needed \emph{Token} objects.
+
+In between each thread iterate over all synapses in parallel.
+But each thread skips synapses where the post-synaptic is not thread-local.
 Thread-locality is given if $t_i$ (see equation \ref{eq:threadfromid}) is equal to the local thread id.
 $i$ relates to the target neuron id.
 \begin{figure}[ht!]
@@ -583,12 +604,13 @@ $i$ relates to the target neuron id.
 \end{lstlisting}
 \caption{Pseudo code of thread parallel connect function calls}
 \end{figure}
-\emph{singleConnect} assigns the parameters to already created \emph{DictionaryDatum} object.
+\emph{singleConnect} assigns the parameters to the \emph{DictionaryDatum} object.
 To avoid recreation of \emph{Token} objects a vector of  \emph{Token} pointers is
 passed. Applying \emph{set\_{}status} on the passed \emph{Token} objects allow to
 insert the current parameters inside the \emph{DictionaryDatum} object without data races.
+A for loop iterates over the parameters and copy the values indie the \emph{DictionaryDatum} object.
 After that the NEST \emph{connect} function is called with passing besides the source and target
-neuron information the \emph{DictionaryDatum} object and weight and delay.
+neuron information the \emph{DictionaryDatum} object, weight and delay.
 \begin{figure}[ht!]
 \begin{lstlisting}[style=cppcode]
 void H5Synapses::singleConnect(NESTNodeSynapse& syn, 
@@ -618,11 +640,11 @@ void H5Synapses::singleConnect(NESTNodeSynapse& syn,
 \end{figure}
 
 \newpage
-All in all the implementation make use of all available processes and all by NEST used cores in the most compute intensive part.
+All in all the implementation make use of available processes and by NEST used cores in the most compute intensive parts.
 Figure \ref{fig:ConnectInsideIteration} illustrates the flow of the synapse information between nodes. 
-All processes access one dataset to load a set of it each. Afterwards the synapse information is processed by different steps.
-In \emph{Alltoall} the synapse information is send is reordered between the nodes.
-So the synapses can be stored in the NEST data structure in the next step.
+All processes access a single dataset to load a set of it each. Afterwards the synapse information is processed by different steps.
+In \emph{Alltoall} the synapse information reordered between the nodes.
+So the synapses can be stored in the NEST data structure on the correct process.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.4]{pictures/Connect_inside_iteration.eps}

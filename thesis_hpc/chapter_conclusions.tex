@@ -11,10 +11,13 @@ From the neuron HDF5 file 12 parameters are used by the simulation.
 It contains further parameters which are used for the connection generation and the visualization,
 like coordinates. In total the neuron HDF5 file is of the size of around 9 GB.
 The synapse HDF5 file only contains needed parameters for the simulation.
-There are 5 synapse parameter per connection. This results in 15 TB of data.
+There are five synapse parameter per connection. This results in 15 TB of data
+for the long range connectivity and 600 GB for the short range connectivity.
 
-So the generated circuit contains around 15 TB and is spitted in three HDF5 files (Neuron file, long range synapses file and short range synapses file). The interpolation which are added to the circuit generation introduces new errors, but allow
-a first simulation of a full circuit model. Thus is allows to run and test is full pipeline from Allen Brain data to a NEST simulation. If there are more experiments available they can be included into
+So the generated circuit contains around 15 TB and is spitted in three HDF5 files (neuron file, long range synapses file and short range synapses file). The interpolation which are added to the circuit generation introduces errors, but allow
+a first simulation of a full circuit model. Thus it allows to run and test the full
+pipeline from Allen Brain and Blue Brain Project recipe data to a neuronal simulation with NEST.
+If there are more experiments available they can be included into
 the circuit generation easily. The size of the circuit wont change. Thus no changes are needed anywhere else.
 
 
@@ -37,10 +40,9 @@ All circuits were generated with identical parameters, only the input neuron fil
 
 Three different circuits (see Table \ref{table:circuits}) are generated: The full mouse brain circuit,
 a smaller circuit, which contains 25 percent of the full mouse brain circuit and
-1 300st of the full circuit. The percentage is related to the number of neurons inside
+$\frac{1}{300}$ of the full circuit. The percentage is related to the number of neurons inside
 the circuit. Based on the neurons the connections are generated. In principle the
-number of connections should be of the same proportion, but can deviate, because of 
-discrete picking based on probabilities.
+number of connections should be of the same proportion.
 
 
 \begin{figure}[ht!]
@@ -135,7 +137,7 @@ The performance of the different parts can be compared and bottlenecks can be fo
 One can see that \emph{Read} and \emph{Connect} are the critical parts.
 For the interpretations of the plots one has to take into account that different parts of the algorithm
 (\emph{Read} and \emph{Alltoall}) contain mpi collective operations and contain therefor mpi waits.
-Thus the wall-clock timings do not satisfy the pure step functionality but also the imbalance from previous steps.
+Thus the wall-clock timings do not satisfy the pure step duration but also the imbalance from previous steps.
 To analyse the impact, an experiment is performed which extends the implementation with \emph{MPI\_Barriers}
 between the algorithm steps.
 \newpage
@@ -145,7 +147,7 @@ Blue Brain IV has a theoretical bandwidth of $50$ GB/s per rack.
 
 The amount of data read in \emph{Read} step depends on the number of synapse parameters $N_{params}$,
 the number of read synapses per iteration $N_{blocksize}$ and the number of processes $N_{processes}$.
-This results in measured bandwidth of:
+This results in a measured bandwidth of:
 \begin{equation}
 b = sizeof(float) * N_{params} * \frac{N_{blocksize} * N_{processes}}{\Delta T}
 \end{equation}
@@ -153,29 +155,34 @@ b = sizeof(float) * N_{params} * \frac{N_{blocksize} * N_{processes}}{\Delta T}
 
 Thread parallelization of the connect step allows to store the synapses efficiently in the NEST data structure.
 The pure connect functionality of NEST is thread-safe. But creating and destroying SLI data objects is not and can result
-in data-races. To overcome this limitation the creation and destroying of the objects is serialized. Before iterating over all synapses one SLI object is created and destroyed afterwards for each thread. A single connect function
-call of the NEST api expects the synapse parameters stored in a SLI object. In each iteration the current
-parameters are assigned to the values inside the already created SLI object. This SLI object is passed to the function call.
-Thus a small overhead for the creation and destroying of the object is perceived.
+in data-races. To overcome this limitation the creation and destroying of the objects is serialized.
+Before iterating over all synapses one SLI object is created and destroyed afterwards for each thread.
+A single connect function call of the NEST api expects the synapse parameters stored in a SLI object.
+In each iteration the current parameters are assigned to the values inside the already created SLI object.
+This SLI object is passed to the function call.
+Thus a small overhead for the creation and destroying of the object are perceived.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.3]{pictures/boxplot_new_con_dt_1_300_edit.eps}
 \caption{Comparison of mean of single connect duration across one iteration on one node.}
 \label{boxplotnewcon}
 \end{figure}
-Because each thread iterates over all synapses, but only stores the connection if the target neuron is located on
+Because each thread iterates over all synapses, but only stores the connection if the post-synaptic neuron is located on
 the thread, the connection calls per thread varies.
 As for nodes the neurons are distributed in the modules fashion on the threads for one node.
 The distribution properties are the same. Thus there is a larger variation on a larger number of threads.
 Figure \ref{boxplotnewcon} shows wall-clock time measurements for the connect step. The measurements are
-extracted from the execution of the 1per300 circuit. It is executed on 128 nodes with varying number of
+extracted from the execution of the threehundredths circuit. It is executed on 128 nodes with varying number of
 threads. The circuit plus fixed number of nodes specify the distribution of neurons per node.
+
+A larger number of threads leads to smaller wall-clock timings, but the chance of imbalance increases.
 The variations of the timings correlates with the distribution of synapses per node (figure \ref{fullcircuitdist}).
 To look into detail, figure \ref{detailnewcon:second} shows the measured wall-clock time for each node
 plotted over the maximum number of new connections per thread. It shows a strong correlation between the variable and
 the duration. Thus the increasing variations of timings can be explained by the variations of synapses per thread.
 The figure indicates two different timings per connection. There is an offset of regression between the pink
-and the red dots. Pink an red dots represent all measurements with less than 40,000 and more than new synapses per
+(left point cloud)
+and the red (right point cloud) dots. Pink an red dots represent all measurements with less than 40,000 and more than new synapses per
 node respectively. Figure \ref{detailnewcon:first} shows the density of number of new synapses per node.
 Less synapses results in a smaller vector size. There seems to be a loss of efficiency, which properly result from
 the use of different cache levels. 
