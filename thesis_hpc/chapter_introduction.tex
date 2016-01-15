@@ -29,9 +29,9 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
  growth of neurons and for their spatial arrangement.
   \subsection{Macroscopic structure}
   \label{sec:Macroscopicstructure}
-  The anatomy of the brain as depicted in Figure \ref{Aufbau1}, shows that its parts vary in cell density and functionality.
- Figure \ref{Aufbau1} shows a cross-section of the human brain. The outer layer is called gray matter, due to the color caused by the high density of nerve cells.
- For the most port the white matter, which is underneath the gray matter,
+  The anatomy of the brain varies in cell density and functionality.
+  The outer layer is called gray matter, due to the color caused by the high density of nerve cells.
+  The most part the white matter, which is underneath the gray matter,
  consists mainly of connection fibers of the nerve cells.
  The thalamus is located in the middle of the brain and functions as a relay station between the sensory system and the cortical systems for cognition and motor control.
   \begin{figure}[!htbp]
@@ -55,6 +55,7 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
   
   Some parts of the brain can still be assigned roughly to functionality as shown in Figure \ref{Aufbau2}.
   However, the number of nerve cells (neurons), the number of connections (synapses) and the structure differs from person to person.
+  On average the number of neurons and synapses in the human brain are around $8*10^10$ and $1*10^15$, respectively. 
   The connections of each neuron are dynamic and change over time. \\
   Having a look at the vertical structure of the cortex,
   the gray matter can be partitioned in six layers as shown in figure \ref{mikroaufbau}.
@@ -88,7 +89,6 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
   The excitatory neurons excite the following neurons, 
   in contrast the inhibitory neurons inhibit the following neurons.
   Via electrical currents the connected neurons influence the membrane potential of each neuron.
-  , which can be measured.
   For example, Figure \ref{membrane_potential} shows the membrane potential plotted over time.
   Chemical processes inside the neuron generate a spike if the membrane potential reaches a specific electrical level called the threshold.  
   As shown in Figure \ref{membrane_potential} spikes are peaks in the membrane potential.  
@@ -156,7 +156,7 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
    \label{fig:atlas}
    \end{figure}
    The images provide connection information between neurons all over the brain.
-   The extracted connectivity information is used to build of long range connectivity inside
+   The extracted connectivity information is used to build up long range connectivity inside
    the mouse brain model.
    \begin{figure}[ht!]
    	\begin{center}
@@ -249,7 +249,7 @@ brain model to estimate the short range connectivity inside the mouse neocortex.
 \end{figure}
 The recipe is mainly based on connection probabilities of different neuron types inside the somatosenory cortex.
 To a given point neuron cloud with neuron type information the recipe returns synaptic
-connection details (e.g matrices in Figure \ref{BBPconnectionPropasMatrix} shows the number of connections and connection probability between two neurons concerning their \emph{m-type}), which are used to extent the long range connectivity from the Allen Brain Atlas by short range connectivity. 
+connection details (e.g matrices in Figure \ref{BBPconnectionPropasMatrix} shows the number of connections and connection probability between two neurons concerning their \emph{m-type}), which are used to extent the mouse brain model with short range connectivity. 
 \begin{figure}[ht!]
    	\begin{center}
         \subfigure[contain all neuron information]{%

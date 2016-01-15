@@ -7,13 +7,13 @@
 
 
 The generated full mouse brain circuit contains around 74 million neurons and 660 billion synapses.
-From the neuron file 12 parameters are used by the simulation.
+The simulation uses 12 parameters from the neuron file.
 It contains further parameters which are used for the connection generation and the visualization,
-like coordinates. In total the neuron file is of the size of around 9 GB.
+like coordinates. In total the neuron file is around 9 GB.
 The synapse file only contains needed parameters for the simulation.
 There are five synapse parameter per connection. This results in 15 TB of data
 for the long range connectivity and 600 GB for the short range connectivity.
-All in all, the generated circuit contains around 16 TB of data and is splitted in three HDF5
+All in all, the generated circuit contains around 16 TB of data and it is split in three HDF5
 files (neuron file, long range synapses file and short range synapses file).
 
 The interpolation, which are applied to the long range connection generation, introduces errors.
@@ -50,15 +50,15 @@ All circuits were generated with identical parameters, only the input neuron fil
 \label{table:circuits}
 
 Three different circuits (see Table \ref{table:circuits}) are generated: The full mouse brain circuit,
-a smaller circuit, which contains 25 percent of the full mouse brain circuit and
+a smaller circuit that contains 25 percent of the full mouse brain circuit and
 $\frac{1}{300}$ of the full circuit. The percentage is related to the number of neurons inside
-the circuit. Based on the neurons the connections are generated. In principle the
+the circuit. The connections are generated based on the neurons. In principle the
 number of connections should be of the same proportion.
 
 \section{Data format usability}
 The HDF5 data format for neuron parameters is used as given from the Neurorobotics team.
 Because of its small size (9 GB) in comparison to the synapse dataset (15 TB) the performance improvement by changing
-to a transposed data format can be neglected. Thus the usability of having different datasets and being able
+to a transposed data format can be neglected. Thus the advantage of having different datasets and being able
 to add new datasets can be kept. It also implies that the generation script does not have to be converted or no 
 conversion scripts are needed.
 
@@ -72,7 +72,7 @@ This is avoided by looking for the best injection per voxel beforehand.
 
 
 Optimization of the linear acceptance rejection function (see \ref{par:linearacceptancerejection})
-reduces the complexity of the picking from number of neurons in projection to number of voxels in projection.
+reduces the complexity of picking from number of neurons in projection to number of voxels in projection.
 For the full circuit this corresponds to a reduction of the order of 2.
 Using all core inside the function gives a further speed up.
 Each thread has to pick $~\frac{10,000}{N_{threads}}$ voxels instead of
@@ -83,7 +83,7 @@ $10,000$.
 \section{Short range connections generation}
 The sequential algorithm could be ported directly to a parallel implementation without changing it.
 Using a Master-Slave approach also reduced the complexity of the distribution of independent iterations.
-The critical part of the implementation is the IO, because the number of created synapses is not know in the beginning.
+The critical part of the implementation is the IO, because the number of created synapses is not known in the beginning.
 Therefore the file size can not calculated beforehand, which is mandatory for an efficient writing to HDF5 files. 
 By using a buffer or temporary files this problem can be avoided.
 Because of the given resources (IBM Blue Gene Q) and the high parallel efficiency (see later section)
@@ -178,15 +178,16 @@ This SLI object is passed to the function call.
 Thus a small overhead for the creation and destroying of the object are perceived.
 \begin{figure}[ht!]
 \centering
-\includegraphics[scale=0.3]{pictures/boxplot_new_con_dt_1_300_edit.eps}
-\caption{Comparison of mean of single connect duration across one iteration on one node.}
+\includegraphics[scale=0.5]{pictures/boxplot_new_con_dt_1_300_speedup.eps}
+\caption{The speed-up of the connection frequency per process for different number of threads is shown.
+The plot shows histograms of measured values using the threehundredths circuit.}
 \label{boxplotnewcon}
 \end{figure}
-Because each thread iterates over all synapses, but only stores the connection if the post-synaptic neuron is located on
-the thread, the connection calls per thread varies.
+Each thread iterates over all synapses, but only stores the connection if the post-synaptic neuron is located on
+the thread. Thus the connection frequency per thread varies.
 As for nodes the neurons are distributed in the modules fashion on the threads for one node.
 The distribution properties are the same. Thus there is a larger variation on a larger number of threads.
-Figure \ref{boxplotnewcon} shows wall-clock time measurements for the connect step. The measurements are
+Figure \ref{boxplotnewcon} shows measured connection frequencies for the connect step. The measurements are
 extracted from the execution of the threehundredths circuit. It is executed on 128 nodes with varying number of
 threads. The circuit plus fixed number of nodes specify the distribution of neurons per node.
 
@@ -334,14 +335,14 @@ the use of different cache levels.
 %\end{tikzpicture}%
 %\end{figure}
 
-\section{Measured memory consumption}
+%\section{Measured memory consumption}
 
-\subsection{Long range connection generation}
+%\subsection{Long range connection generation}
 
 
 
-\subsection{Short range connection generation}
-\subsection{Load circuit}
+%\subsection{Short range connection generation}
+%\subsection{Load circuit}
 
 \newpage
 \section{Usability for Scientists}
