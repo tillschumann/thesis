@@ -7,16 +7,16 @@
 
 
 The generated full mouse brain circuit contains around 74 million neurons and 660 billion synapses.
-From the neuron HDF5 file 12 parameters are used by the simulation.
+From the neuron file 12 parameters are used by the simulation.
 It contains further parameters which are used for the connection generation and the visualization,
-like coordinates. In total the neuron HDF5 file is of the size of around 9 GB.
-The synapse HDF5 file only contains needed parameters for the simulation.
+like coordinates. In total the neuron file is of the size of around 9 GB.
+The synapse file only contains needed parameters for the simulation.
 There are five synapse parameter per connection. This results in 15 TB of data
 for the long range connectivity and 600 GB for the short range connectivity.
-So the generated circuit contains around 15 TB and is spitted in three HDF5
+All in all, the generated circuit contains around 16 TB of data and is splitted in three HDF5
 files (neuron file, long range synapses file and short range synapses file).
 
-The interpolation, which are applied to the circuit long range connection generation, introduces errors.
+The interpolation, which are applied to the long range connection generation, introduces errors.
 For illustration Figure \ref{interpolationdistance} shows the locality of missing voxels in one slice.
 The quality of the interpolation can be estimated from the distance (color scale in Figure).
 The distance corresponds to the distance from the nearest neighbour search algorithm.
@@ -27,14 +27,10 @@ It highlights problematic regions.
 \caption{Plotted values from the nearest neighbor algorithm. You can see the distance to the next injected voxel.}
 \label{interpolationdistance}
 \end{figure}
-It should be taken into account by analysing the circuit spiking activity
-(the distance values are written to the voxel information file (\ref{file:voxelinfo})).
-The interpolations allow to generate a full mouse brain model from incomplete experimental data.
-A first simulation of a full circuit model is possible.
-So the pipeline from Allen Brain and Blue Brain Project recipe data to a neuronal simulation with NEST can be tested.
+But the interpolations enable generation of a full mouse brain model from incomplete experimental data.
+This full mouse brain model can be loaded inside of NEST with the implemented modules.
 If there are more experiments available they can be included into
 the circuit generation easily.
-It wont have an impact on the size of the resulting model.
 
 \begin{table}[ht!]
 \begin{centering}
@@ -58,24 +54,6 @@ a smaller circuit, which contains 25 percent of the full mouse brain circuit and
 $\frac{1}{300}$ of the full circuit. The percentage is related to the number of neurons inside
 the circuit. Based on the neurons the connections are generated. In principle the
 number of connections should be of the same proportion.
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[scale=0.4]{pictures/full_circuit_rack_distribution.eps}
-\caption{Estimated synapse imbalance of neuron distribution on processes.
-It shows the distributions of relative sums (sum of number of synapses per process divided by mean of sums) of synapses per process (y-scale) on different scales (x-axis). Relative sums means absolute sums devided by the mean sum per process. }
-\label{fullcircuitdist}
-\end{figure}
-
-The neurons are distributed equably on all processes based on equation \ref{eq:ProcessByNeuron}.
-But the number of incoming synapses varies between the neurons.
-Therefore a memory imbalance could occur between the processes.
-To analyse the imbalance, an analysing script iterates over the \emph{syn} dataset and counts
-the number of incoming synapses per neuron. Normalized results are plotted in box-plot diagrams 
-in Figure \ref{fullcircuitdist}.
-It shows an increasing imbalance of synapses per process with increasing number of processes.
-
-
 
 \section{Data format usability}
 The HDF5 data format for neuron parameters is used as given from the Neurorobotics team.
@@ -105,12 +83,36 @@ $10,000$.
 \section{Short range connections generation}
 The sequential algorithm could be ported directly to a parallel implementation without changing it.
 Using a Master-Slave approach also reduced the complexity of the distribution of independent iterations.
-The only issue is the writing of the file, because the number of created synapses is not know in the beginning.
-Using a buffer or temporary files is necessary to return a non chunk based HDF5 file.
+The critical part of the implementation is the IO, because the number of created synapses is not know in the beginning.
+Therefore the file size can not calculated beforehand, which is mandatory for an efficient writing to HDF5 files. 
+By using a buffer or temporary files this problem can be avoided.
 Because of the given resources (IBM Blue Gene Q) and the high parallel efficiency (see later section)
-wirting all synapses to memory is feasible (already for a small number of nodes the created connections fit in memory).
+writing all synapses to a buffer is feasible (already for a small number of nodes the created connections fit in memory).
 
 \section{Import circuit}
+Loading the mouse brain model inside of NEST is the main goal of the thesis.
+Therefore NEST is extended with two import modules, which allow to import the
+generated mouse brain model. To show that the implemented algorithms are feasible 
+the circuit properties, which effect the load balance, are analysed.
+Afterwards the performance characteristics of the implemented algorithm are shown.
+
+\subsection{Load balance}
+The neurons are distributed equably on all processes based on equation \ref{eq:ProcessByNeuron}.
+But the number of incoming synapses varies between the neurons.
+Therefore a memory imbalance could occur between the processes.
+To analyse the imbalance, an analysing script iterates over the \emph{syn} dataset and counts
+the number of incoming synapses per neuron. Normalized results are plotted in box-plot diagrams 
+in Figure \ref{fullcircuitdist}.
+It shows an increasing imbalance of synapses per process with increasing number of processes.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.4]{pictures/full_circuit_rack_distribution.eps}
+\caption{Estimated synapse imbalance of neuron distribution on processes.
+It shows the distributions of relative sums (sum of number of synapses per process divided by mean of sums) of synapses per process (y-scale) on different scales (x-axis). Relative sums means absolute sums devided by the mean sum per process. }
+\label{fullcircuitdist}
+\end{figure}
+
+\subsection{Speed-up}
 Four parts of the synapse loading algorithm are instrumented to get wall clock timings.
 \emph{Read}, \emph{Sort}, \emph{Alltoall} and \emph{Connect} are considered to be the mots time
 consuming parts of the algorithm. The parts relate to figure \ref{Algparts}.
@@ -410,12 +412,12 @@ Only one use-case (\ref{s}) of the mouse brain model is used in this thesis for 
 Never the less more use-cases are realizable with the given implementations.
 In general the neuron load module can be used equivalent to the neuron create function
 and the synapses load module can be used equivalent to the neuron connect function.
-Further a given circuit can be loaded and adapted (use offset or scaling factor for parameters).
-Load neurons can be divided into subsets. The SLI functionality allow to access neuron sets
-from the subnets. Thus the grouping performed with the subnet dataset is available for all SLI functions.
+Further, a given circuit can be loaded and adapted (use offset or scaling factor for parameters).
+Loaded neurons can be divided into subsets. The \emph{SLI} functionality allows to access neuron sets
+from subnets. Thus the grouping performed with the subnet dataset is available for all \emph{SLI} functions.
 Stimulus generator and \emph{Spikedetector} or \emph{Multimeter} can be used to stimulate
-and observe specific neurons respectively.
-Furthermore SLI connect functions can be used to strengthening or weakening the connections between to
+and observe specific neurons, respectively.
+Furthermore, \emph{SLI} connect functions can be used to strengthening or weakening the connections between two
 parts of the circuit.
 
 \begin{itemize}
