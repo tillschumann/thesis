@@ -42,7 +42,7 @@ The neuron parameters of neuron $i$ are stored in the i-th line of each dataset.
        }
     	   \end{center}
     	\caption{%
-        The diagram shows the data format with the related datasets and data types.
+        The diagrams show the data formats with their related datasets and data types.
      }%
    \label{fig:atlas}
    \end{figure}
@@ -78,7 +78,7 @@ Rewriting the sequential python scripts to a hybrid C++ application requires a p
 
 \subsection{Long range connections}
 
-The sequential long range connections generation algorithm (see Algorithms \ref{}) is mainly based on three nested for loops.
+The sequential long range connections generation algorithm (see Algorithms \ref{alg2}) is mainly based on three nested for loops.
 The outer one iterates over the experiments, the next inner one over voxels, which are injected by the experiment and the third
 one over neurons inside the voxel.
 Besides a if condition in the voxel iteration, there are no dependencies between the iterations.
@@ -205,7 +205,7 @@ At first a third of all voxels are distributed (using algorithm \ref{alg:distrib
 		Add voxel to private voxel list
 	}
 }
-\caption{Algorithm to distribute weighted voxels to processes}
+\caption{Distribute weighted voxels to processes}
 \label{alg:distributeWeightedVoxels}
 \end{algorithm}
 After that the master process distributes further voxels in sets on request from the other processes.
@@ -221,7 +221,7 @@ projected in a 2D plane.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=2.5]{pictures/longRange_Nearest_parallelAlg.eps}
-\caption{Find nearest neighbour loop}
+\caption{Illustration of the search direction of the nearest search algorithm}
 \label{longrange}
 \end{figure}
 The first voxel along the search direction which is found is declared as the nearest neighbour.
@@ -239,6 +239,9 @@ at the end.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.5]{pictures/shortRange_parallelAlg.eps}
+\caption{Task distribution between the processes for the short range connections generation.
+It illustrates which tasks are distributed between which processes.}
+\label{fig:shortrangeparallel}
 \end{figure}
 
 The iterations from the main loop from the sequential algorithm \ref{alg:BBP} are distributed between the processes.
@@ -311,10 +314,14 @@ The voxels can be directly compared to the projection densities ($P_{x,y,z}$) fr
 	P_{x,y,z} \propto N_{x,y,z}
 \end{equation}
 The relation between the densities should be proportional.
-The visualization tool Paraview \ref{paraview} allows a visual comparison of the density values.
+The visualization tool Paraview \ref{sec:paraview} allows a visual comparison of the density values.
  \begin{figure}[ht!]
 \centering
 \includegraphics[width=0.4\textwidth]{pictures/paraview_ex.png}
+\caption{Screenshot of a visualization with Paraview. It shows in grey the contour around the projection of an experiment.
+The lange range connections algorithm generated synapses only for the given experiment. 
+The generated post-synaptic neurons are shown in red.}
+\label{fig:paraviewex}
 \end{figure}
 For a visual validation the Blue Brain Project visualization team offered a rendering pipeline to visualize the placement of post-synaptic neurons for each synapse file. Therefore the neuron and synapse files can be imported into 
 Voxelize \ref{sec:voxelize}. Voxelize creates a voxelized dataset out of the post-synaptic neuron positions, which can be exported into
@@ -454,7 +461,7 @@ Therefore the implemented algorithm sorts out the needed subnets in its first st
  Read parameter datasets collectively; \\
  Assign parameters to neurons;
 \label{alg2}
-\caption{Implemented import neurons algorithm}
+\caption{Import neurons}
 \end{algorithm}
 Unique values are extracted from the subnet dataset.
 After that, a subnet is created for each unique value. 
@@ -529,7 +536,7 @@ Therefore the dataset of synapses has to be transformed before it the synapses c
  MPI\_Alltoallv using sorted list \\
  Connect all synapses using NEST function \\
 	}
-	\caption{Implemented import synapses algorithm, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
+	\caption{Import synapses, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
 	set in brackets contains current needed variables}
 \label{alg2}
 \end{algorithm}
@@ -676,7 +683,7 @@ So the synapses can be stored in the NEST data structure on the correct process.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.4]{pictures/Connect_inside_iteration.eps}
-\caption{Inside iteration parallel work flow}
+\caption{Illustration of synapse pipeline for two processes. It shows how the synapse information is processed by each tasks and when it is exchanged.}
 \label{fig:ConnectInsideIteration}
 \end{figure}
 

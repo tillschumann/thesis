@@ -97,7 +97,7 @@ the circuit properties, which effect the load balance, are analysed.
 Afterwards the performance characteristics of the implemented algorithm are shown.
 
 \subsection{Load balance}
-The neurons are distributed equably on all processes based on equation \ref{eq:ProcessByNeuron}.
+The neurons are distributed equably on all processes based on equation \ref{eq:processfromid}.
 But the number of incoming synapses varies between the neurons.
 Therefore a memory imbalance could occur between the processes.
 To analyse the imbalance, an analysing script iterates over the \emph{syn} dataset and counts
@@ -115,7 +115,7 @@ It shows the distributions of relative sums (sum of number of synapses per proce
 \subsection{Speed-up}
 Four parts of the synapse loading algorithm are instrumented to get wall clock timings.
 \emph{Read}, \emph{Sort}, \emph{Alltoall} and \emph{Connect} are considered to be the mots time
-consuming parts of the algorithm. The parts relate to figure \ref{Algparts}.
+consuming parts of the algorithm. The parts relate to figure \ref{fig:shortrangeparallel}.
 \emph{Def. Node} is negligible (It takes less than 1 percent computation time of an iteration and scales constant with the number of nodes.).
 The following figures \ref{fig:implV03} give an overview of the measured wall-clock timings.
 The timings are shown per node and iteration number. They give an idea how the timings are distributed.
@@ -409,7 +409,7 @@ offset synparams synmodel filepath H5SynapseTll_i_s_a_s
 
 \subsection{NEST simulation options}
 
-Only one use-case (\ref{s}) of the mouse brain model is used in this thesis for performance evaluations.
+Only one use-case (\ref{ambmusecase}) of the mouse brain model is used in this thesis for performance evaluations.
 Never the less more use-cases are realizable with the given implementations.
 In general the neuron load module can be used equivalent to the neuron create function
 and the synapses load module can be used equivalent to the neuron connect function.
