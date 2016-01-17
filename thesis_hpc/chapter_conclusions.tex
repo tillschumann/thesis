@@ -78,6 +78,12 @@ Using all core inside the function gives a further speed up.
 Each thread has to pick $~\frac{10,000}{N_{threads}}$ voxels instead of
 $10,000$.
 
+The program execution takes around around 15h on the Blue Brain IV using 2048 processes.
+Each processes uses all threads. Optimized collective writing operations could 
+lower the needed execution time.
+But is not feasible, because the generation script will be executed only a few times
+and the computational resources are given.
+
 
 
 \section{Short range connections generation}
@@ -88,6 +94,11 @@ Therefore the file size can not calculated beforehand, which is mandatory for an
 By using a buffer or temporary files this problem can be avoided.
 Because of the given resources (IBM Blue Gene Q) and the high parallel efficiency (see later section)
 writing all synapses to a buffer is feasible (already for a small number of nodes the created connections fit in memory).
+
+The program execution takes around around 2h on the Blue Brain IV using 1024 processes.
+Two tasks per process are launched. Optimizing the load balance could lead a better performance.
+But is not feasible, because the generation script will be executed only a few times
+and the computational resources are given.
 
 \section{Import circuit}
 Loading the mouse brain model inside of NEST is the main goal of the thesis.
@@ -349,10 +360,57 @@ the use of different cache levels.
 
 \subsection{Manipulation of circuit}
 
-\begin{itemize}
-      \item control circuit generation / possibilities
-      \item  manipulate circuit
-\end{itemize}
+The connection generation implementations accept a set of command line arguments.
+The arguments allow to influence the program execution.
+All accepted arguments are listed in table \ref{tab:longrangeargs}.
+Besides data path manipulations the voxel experiment assignment can be 
+manipulated on different levels. The number of used experiments can be specified
+and limited. Further, the interpolation can be enabled and limited to a range.
+Also, the the available voxel information can be mirrored to the other hemisphere.
+Apart from this, the voxel experiment assignment can be exported to a file.
+This file can be manipulated externally and imported again.
+
+The weights of all created synapses can be strengthened by a set factor.
+This is necessary for reduces models.
+
+The 
+\begin{table}[ht!]
+\begin{centering}
+    \begin{tabular}{ | c | l | p{7cm} |}
+    \hline
+    Argument & expected type & function \\ \hline \hline
+    \emph{-e} & path & set path to file, which contains picked experiment ids \\ \hline
+    \emph{-n} & path & path to input neuron file \\ \hline
+    \emph{-h} & path &  output folder\\ \hline
+    \emph{-s} & - &  save voxel information\\ \hline
+    \emph{-l} & path &  load voxel information\\ \hline
+    \emph{-o} & - &  enable voxel interpolation\\ \hline
+    \emph{-x} & - &  enable mirroring of voxels\\ \hline
+    \emph{-c} & integer & only use one experiment with given id \\ \hline
+    \emph{-m} & integer & limit number of loaded experiments \\ \hline
+    \emph{-d} & integer & limit search distance for voxel interpolation \\ \hline
+    \emph{-i} & integer & strengthening of weights for each synapse \\ \hline
+    \end{tabular}
+    \caption{Long range generation arguments to influence program execution.}
+    \label{tab:longrangeargs}
+\end{centering}
+\end{table}
+
+The short range generation only accepts path manipulations and weight strengthening.
+The arguments are listed in table \ref{tab:shortrangeargs}.
+\begin{table}[ht!]
+\begin{centering}
+    \begin{tabular}{ | c | l | p{7cm} |}
+    \hline
+    Argument & expected type & function \\ \hline \hline
+    \emph{-n} & path & path to input neuron file \\ \hline
+    \emph{-h} & path &  output folder\\ \hline
+    \emph{-i} & integer & strengthening of weights for each synapse \\ \hline
+    \end{tabular}
+    \caption{Short range generation arguments to influence program execution.}
+    \label{tab:shortrangeargs}
+\end{centering}
+\end{table}
 
 \subsection{Import neurons}
 \emph{H5NeuronCsX\_s\_s\_a\_s} expects 4 input parameters:
@@ -403,9 +461,6 @@ The function returns the neuron id of the first neuron it created.
 /filepath (circuit/syn.h5) def
 offset synparams synmodel filepath H5SynapseTll_i_s_a_s
 \end{lstlisting}
-\begin{itemize}
-      \item How can it be used
-\end{itemize}
 
 \subsection{NEST simulation options}
 
@@ -418,16 +473,27 @@ Loaded neurons can be divided into subsets. The \emph{SLI} functionality allows 
 from subnets. Thus the grouping performed with the subnet dataset is available for all \emph{SLI} functions.
 Stimulus generator and \emph{Spikedetector} or \emph{Multimeter} can be used to stimulate
 and observe specific neurons, respectively.
-Furthermore, \emph{SLI} connect functions can be used to strengthening or weakening the connections between two
+More use-cases are possible: For example the \emph{SLI} connect functions can be used to strengthening or weakening the connections between two
 parts of the circuit.
-
-\begin{itemize}
-	  \item Test different stimuli
-	  \item how to get results
-\end{itemize}
 
 \subsection{Analysis}
 \begin{itemize}
 	  \item Visualize spiking activity with Brion/Paraview
       \item Visualize spiking activity with ViSNEST
 \end{itemize}
+
+\subsection{Conclusion}
+The presented implementations in chapter 2 allow to run a data-driven simulation using the neuronal simulator NEST.
+A pipeline for generating connections from different sources is implemented, which can handle the amount of data needed for 
+a full mouse brain simulation. Further, presented visualisation tools allow to analyse the neuronal activity visually.
+Besides a demonstration of the today's possibilities, the work in this thesis extends the neuronal simulator with the feature of loading well-defined
+point neuron circuits. An integration of the new import functionality into the \emph{SLI}
+interface allows to extend current simulations with well-defined circuit data easily.
+As more data is available data-driven neuronal simulations will gain further importance.
+
+The used data format is not optimized for the NEST data structure. It stores the circuit data in general way 
+to not put any obstacles in the way to use the proposed data format for different use-cases.
+
+The achieved performance of importing the circuit is feasible. Anyway improvements are possible.
+For example, a multi core sort algorithm could speed-up the sort set.
+Additionally gain could be gotten by optimizing the core of NEST for the build-up procedures.
