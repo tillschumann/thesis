@@ -290,7 +290,8 @@ disk (\emph{Write buffers to file}).
 
 \section{Circuit validation}
 In the context of this thesis the circuit is validated in terms of geometrically correct placement of
-the synapses. The position of the pre-synaptic and post-synaptic neurons can be visualized and  compared to a 
+the synapses. Further, stochastic properties of the synapse files are validated.
+The position of the pre-synaptic and post-synaptic neurons can be visualized and  compared to a 
 reference system. For the long and the short range connectivity the geometrical shape is know.
 In particular the long range connectivity should connect neurons from the injected regions to neurons
 in the projected region for each experiment. Therefore a circuit for a single experiment is 
@@ -354,6 +355,21 @@ Loading the projection inside of Paraview and applying the contour filter on it 
    
 The example \ref{fig:longrangevalidation} illustrates the usage of the visual validation of long range connections.
 It shows that for the specific experiment the post-synaptic neurons are placed inside the correct regions.
+
+Stochastic properties of the synapses files are validated, as well.
+An analysing program iterates over all synapses in a passed synapse file.
+The program determines min, max and mean values of all parameters.
+Further, it looks for invalid entries. An invalid entry is defines, as
+zero entries for all parameters. Also, it calculates the number of in-coming
+and out-coming synapse per neuron. These values are compared to the desired values.
+For the long range connection generation the out-coming synapses per neuron has to be
+$0$ or $10,000$. For the short range connection generation the out-coming synapses per neuron
+has to be between $0$ and $10,000$. The analysing program prints the parameters properties 
+and the number of zero entries on screen. The number of in-coming and out-coming 
+synapses per neuron are written to two binary files, containing a list of \emph{uint64} values.
+They are evaluated for valid boundaries with a Python script.
+
+
 
 \section{NEST import modules}
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers

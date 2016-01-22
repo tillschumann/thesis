@@ -8,8 +8,35 @@
 \end{otherlanguage}
 \begin{otherlanguage}{english}
 \begin{abstract}
-  Hier werden auf einer halben bis ganzen Seite die Kernaussagen Arbeit
-  auf Englisch zusammengefasst.
+  In 2014, the Neurorobotics team of the Blue Brain Project (BBP), project of the Ecole Federale Polytechnique
+Federale de Lausanne (EPFL), successfully produced a point-neuron model of a mouse brain from data
+provided by the Allen Institute for Brain Science (Provide reference of Allen Institute). Using NEST software, the
+BBP Neurorobotics team was then able to simulate a scaled-down model of the mouse brain on a laptop
+computer, paving the way towards making a mouse brain interact with an environment. A full-scale
+implementation of the mouse brain model is possible, but requires the of large scale resources with low latency
+requirements only modern supercomputers can today provide.The current functionality of NEST supports
+generating large neuronal networks on a super computer based an random distributions but not yet from
+experimental data contained in brain atlases. We suggest as part of this thesis to first develop the means to fully
+model a mouse brain from experimental data using NEST software on available supercomputing architectures.
+Building from this experience, we wish to work on accelerating NEST computation up to real time so that the
+study of mouse brain plasticity becomes tractable. Leveraging from this new set of functionalities, we plan to
+derive network requirements for the HBP to drive the design of the HBP network across supercomputing centers
+so that both neurorobotics and interactive supercomputing applications can be demonstrated.
+
+The neuronal spiking network simulator NEST is developed in C++ and delivers an user interface based on an
+own description language SLI and and a Python interface. The new use case shall be integrated into the
+standard work flow of NEST. Besides the functionality in C++ the interfaces have to be extended. The difficulties
+of the network generation is based on a difference in the NEST internal data structure and the data delivered by
+the Allen Institute. Connection information contains target and source neurons besides biochemical information
+of the synapses. Because of the in vitro injection methods the connection information maps the synapse from
+the source to the target neurons. For multi process simulations NEST distributes all neurons based on a modulo
+function to the processes. Because of memory optimizations the synapses are only stored on the post synaptic
+process. This means that the connection information is stored
+on the process, where the target neuron is located. Therefore a transformation of the given data is necessary.
+Preprocessing of the input data should be avoided as far as possible to capture future use cases. The resulting
+implementation shall load the connection information efficiently in parallel, distribute the synapse information to
+the post synaptic node and store it in the NEST data structure. Further requirements of the implementation are
+an efficient use of the available resources as memory and computation power.
   \bigskip\par
   \textbf{Keywords:} HPC, OpenMP
 \end{abstract}

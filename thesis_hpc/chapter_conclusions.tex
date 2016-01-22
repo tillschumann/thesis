@@ -78,7 +78,7 @@ Using all core inside the function gives a further speed up.
 Each thread has to pick $~\frac{10,000}{N_{threads}}$ voxels instead of
 $10,000$.
 
-The program execution takes around around 15h on the Blue Brain IV using 2048 processes.
+The program execution takes around around 15h on the Blue Brain IV using 2048 processes for the full circuit.
 Each processes uses all threads. Optimized collective writing operations could 
 lower the needed execution time.
 But is not feasible, because the generation script will be executed only a few times
@@ -94,8 +94,12 @@ Therefore the file size can not calculated beforehand, which is mandatory for an
 By using a buffer or temporary files this problem can be avoided.
 Because of the given resources (IBM Blue Gene Q) and the high parallel efficiency (see later section)
 writing all synapses to a buffer is feasible (already for a small number of nodes the created connections fit in memory).
+The buffer implementation, which behaves like a queue, is efficient in terms of writing to disk and writing to file
+if the queue chunks are large enough. Using larger chunks leads to 
+a higher utilization of the theoretical bandwidth. Additionally, it leads to less write independent,
+write operations, which reduces the waiting time in serialization mechanisms.
 
-The program execution takes around around 2h on the Blue Brain IV using 1024 processes.
+The program execution takes around around 0.5h on the Blue Brain IV using 256 processes for the full circuit.
 Two tasks per process are launched. Optimizing the load balance could lead a better performance.
 But is not feasible, because the generation script will be executed only a few times
 and the computational resources are given.
