@@ -55,7 +55,7 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
   
   Some parts of the brain can still be assigned roughly to functionality as shown in Figure \ref{Aufbau2}.
   However, the number of nerve cells (neurons), the number of connections (synapses) and the structure differs from person to person.
-  On average the number of neurons and synapses in the human brain are around $8*10^10$ and $1*10^15$, respectively. 
+  On average the number of neurons and synapses in the human brain are around $8*10^{10}$ and $1*10^{15}$, respectively. 
   The connections of each neuron are dynamic and change over time. \\
   Having a look at the vertical structure of the cortex,
   the gray matter can be partitioned in six layers as shown in figure \ref{mikroaufbau}.
@@ -70,7 +70,6 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
   In order to understand the brain, a deeper look at the nerve cells is however necessary.
   There are different cell types in a brain. They vary in structure and size.
   Pyramidal, spiny stellate and smooth stellate cells occur most often.
-  Each layer has types which occur more frequently.
   
   Figure \ref{Corticalneurons} depicts a typical neuron.
   It contains the soma (the cell body) dendrites and axons.
@@ -107,7 +106,7 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
   \includegraphics[scale=0.36]{pictures/membrane_potential.png}
   \label{membrane_potential}
   }
-  \hfill
+  \hspace{0.5cm}
   \subfigure[The dot plot shows spikes of each neuron over time. On the y-axis there are the neurons number.
   The histogram in the lower panel sums up all spikes for each time bin. \cite{CN}]{
   \includegraphics[scale=0.36]{pictures/spike_plot.png}
@@ -126,11 +125,11 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
    \end{itemize}
    
 \section{Virtual mouse}
-HBP neurorobotics team built a model mouse brain and a model mouse body, integrating them both into a single simulation and providing a simplified but comprehensive model of how the body and the brain interact with each other. It gives the possibility to
+The HBP neurorobotics team built a model mouse brain and a model mouse body, integrating them both into a single simulation and providing a simplified but comprehensive model of how the body and the brain interact with each other. It gives the possibility to
 replicate sensory input and motor output using the mouse models.
 The goal is to build the tools and the infrastructure that will allow researchers to perform virtual experiments on mice and other virtual organisms.
 
-The HBP scientists used biological data about the mouse brain collected by the Allen Brain Institute in Seattle and the Biomedical Informatics Research Network in San Diego. These data contain detailed information about the positions of the mouse brain's 75 million neurons and the connections between different regions of the brain. They integrated this information with complementary data on the shapes, sizes and connectivity of specific types of neurons collected by the Blue Brain Project in Geneva. A simplified version of the virtual mouse brain (just 200,000 neurons) was then mapped to different parts of the mouse body, including the mouse's spinal cord, whiskers, eyes and skin. For instance, touching the mouse's whiskers activated the corresponding parts of the mouse sensory cortex.\cite{virtualmouse}
+The HBP scientists used biological data of the mouse brain collected by the Allen Brain Institute in Seattle and the Biomedical Informatics Research Network in San Diego. These data contain detailed information about the positions of the mouse brain's 75 million neurons and the connections between different regions of the brain. They integrated this information with complementary data on the shapes, sizes and connectivity of specific types of neurons collected by the Blue Brain Project in Geneva. A simplified version of the virtual mouse brain (just 200,000 neurons) was then mapped to different parts of the mouse body, including the mouse's spinal cord, whiskers, eyes and skin. For instance, touching the mouse's whiskers activated the corresponding parts of the mouse sensory cortex.\cite{virtualmouse}
 	
 \section{Allen Brain Atlas}
    Allen Institute for Brain Science provides a high-resolution map of neural connections in the mouse brain.
@@ -152,7 +151,8 @@ The HBP scientists used biological data about the mouse brain collected by the A
    	\end{center}
     	\caption{%
          Illustration of the given experiments and the projection image of an example experiment.
-   		 It gives an insight into the synaptic structure of the whole brain.
+   		 It gives an insight into the synaptic structure of the whole brain. The colors are
+   		 inverted to enhance the visibility.
      }%
    \label{fig:atlas}
    \end{figure}
@@ -194,7 +194,7 @@ The 3D images contain discrete voxelized density values.
 Most entries are zero. All entries which are above a given threshold are interpreted 
 as injected and projected voxels.
 Using a piecewise constant interpolation the values are assigned to each neuron.
-So for one experiment source and possible target neurons are specified (see Figure \ref{fig:atlasvoxel}).
+For one experiment pre-synaptic and possible post-synaptic neurons are specified (see Figure \ref{fig:atlasvoxel}).
 A set of experiments is used to connect neurons located at the injections
 to the neurons at the projections. Because multiple experiments have injected the same regions and therefore
 same neurons, for each neuron the experiment is used which has the lowest total injection
@@ -207,7 +207,7 @@ For each voxel it iterates over all containing neurons.
 For each neuron $10,000$ (source neuron) connections are generated to neurons (target neurons) in the experiment projection area.
 	The target neurons are randomly (taking each probability value into account) picked
 	out of all possible neurons inside the projection area.
-	The delay is determined based on the distance of the source and target neuron.
+	The delay is determined from on the distance of the source and target neuron.
 	Further parameters are determined with a specific direct function and a random variable.
    
    \begin{algorithm}
@@ -239,7 +239,7 @@ For each neuron $10,000$ (source neuron) connections are generated to neurons (t
 \section{Blue Brain Project recipe}
 
 The Blue Brain Project was able to reconstruct a microcircuit of part of somatosensory cortex of a juvenile rat \cite{markram2015reconstruction}.
-They presented a complementary algorithmic approach that reconstructs neuronal microcircuitry
+Members of the Blue Brain Project presented a complementary algorithmic approach that reconstructs neuronal microcircuitry
 across all layers using available sparse data and that leverages biological principles and
 interdependencies between datasets to predict missing biological data.
 The algorithm with the available data form a recipe which is applied to the mouse
@@ -402,8 +402,6 @@ because of its easy to use Python interface. On a personal computer a light weig
 circuit from HDF5 to NEST, using HDF5 Python interface with the NEST python interface. Therefore selecting the same or similar data 
 format is preferred to reduce the number of needed adaptations of scripts.
 
-
-\subsection{HDF5}
 The Hierarchical Data Format (HDF) implements a model for managing and storing data. The model includes an abstract data model and an abstract storage model (the data format), and libraries to implement the abstract model and to map the storage model to different storage mechanisms. The HDF5 Library provides a programming interface to a concrete implementation of the abstract models.
 The main entities of data models are datasets.
 A dataset is a multidimensional (rectangular) array of data elements.
@@ -448,9 +446,8 @@ Therefore the neuronal simulator is extended with a new import module.
 A fitting data format, which is written by the generation implementations and read by the import module is not given yet.
 Thus this data format is defined, as well.
 
-All in all, the work includes: Defining a data format, rewriting the generation programs and extending the neuronal simulator by a
-import module.
+The work described in this thesis includes: Defining a data format, rewriting the generation programs and extending the neuronal simulator with an import module.
 Further, debugging and testing of the generated model and its simulation tackle new requirements.
-The work was done in a close collaboratoin with Csaba Erose and the visualisation teams from the Blue Brain Project and the IT-Center Aachen.
+The work was done as part of the high performance computing team of the Blue Brain Project in a close collaboratoin with Csaba Eroe and the visualisation teams from the Blue Brain Project and the IT-Center Aachen.
 New validation techniques had to be developed and are partly shown in the following chapters.
 

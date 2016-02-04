@@ -4,7 +4,7 @@
 \chapter{Implementation}
 
 The program and modules developed in this thesis enables the building and simulation
-of a full mouse brain model relaying on point neuron models. Such a model must be build by
+of a full mouse brain model relaying on point neuron models. Such a model must be built by
 reconstructing parts of from experimental data.
 Allen Institute for Brain for Science and the Blue Brain Project provide such data.
 To this aim, the pipeline of large scale data-driven simulations with the NEST simulator is investigated.
@@ -51,7 +51,7 @@ The synapse data format contains two datasets. In general the datasets contain f
 a pre-synaptic neuron id, a post-synaptic neuron id and a set of parameters.
 To reduce the amount of data the pre-synaptic neuron ids are grouped together in one \emph{neuron} dataset.
 This is feasible, because
-the number of synapses is way bigger than the number of pre-synaptic neurons ($~10,000$ synapses per pre-synaptic neuron).
+the number of synapses is way bigger than the number of pre-synaptic neurons (around $10,000$ synapses per pre-synaptic neuron).
 The dataset contains an array of  pre-synaptic neuron ids (\emph{id}) with references (\emph{syn\_n} and \emph{syn\_ptr}).
 The \emph{syn\_ptr} value defines the related starting index in the \emph{syn} dataset,
 and \emph{syn\_n} defines the number of related following entries.
@@ -62,9 +62,9 @@ Both datasets use a compound data type to store different data types in each sin
 \section{Circuit generation}
 The already existing python scripts can generate circuits up to $0.3$ percent of the full mouse brain model.
 The scripts are developed to fit on local laptops.
-Going the way towards the full mouse brain model, larger machines have to be taken into account.
+Going towards full mouse brain model, larger machines have to be taken into account.
 A full mouse brain model generation requires more resources and computation power.
-Therefore the circuit generation should be ported to the Blue Brain IV super computer.
+Therefore the circuit generation should be ported on the Blue Brain IV super computer.
 A new implementation should make use of the available resources.
 Rewriting the sequential python scripts to a hybrid C++ application requires a parallel implementation of the algorithms.
 
@@ -101,7 +101,7 @@ Inside the iteration over all neurons the sequential algorithm can be applied.
 \label{fig:longrangParallel}
 \end{figure}
 
-\emph{Process 0} is selected as the master process. It does not participate on the iterations.
+\emph{Process 0} is selected as the master process. It does not participate to the iterations.
 It manages the dynamic distribution of the voxels to the other processes and 
 assigns write positions to the pre-synaptic neurons. Thus each process receives besides the 
 voxel information the writing positions,
@@ -125,7 +125,7 @@ In the first task \emph{Find best experiment per voxel} each process loads a set
 Iteratively the experiment with the smallest total injection density is assigned to each voxel
 distributively. Afterwards a MPI reduction function returns the smallest value for each voxel on
 each process.
-But there are regions which were not injected by any experiment available.
+However, there are regions which were not injected by any experiment available.
 So there is no connection information available for the internal neurons.
 To overcome the missing data a piecewise constant interpolation is applied to the chosen experiment per voxel
 in \emph{Interpolate values for empty voxels} (see paragraph \ref{par:interpolation}).
@@ -138,7 +138,7 @@ to save the generated voxel information to file (see chapter \ref{file:voxelinfo
 
 Finally, the first third of the voxels are distributed (see paragraph \ref{par:loadbalancing}) on the processes.
 Each process iterates over its voxels and generates connections for each neuron inside the voxels.
-Therefore the sequential algorithm is used. THe linear acceptance rejection function is adapted (see \ref{par:linearacceptancerejection}).
+Therefore the sequential algorithm is used. The linear acceptance rejection function is adapted (see \ref{par:linearacceptancerejection}).
 In the end of each iteration each process writes its generated connection independently to file.
 
 \paragraph{Linear acceptance rejection optimization}
@@ -178,7 +178,7 @@ The work load should be distributed equably on all processes.
 Therefore an estimation of the work load per iteration is necessary.
 But it depends mainly on the number of neurons per voxel and the distribution properties of projection densities.
 Also inter process interaction influence the runtime.
-Each iterations can be partitioned into five parts: acceptance rejection method (\emph{linear}), storing to disk (\emph{store}),
+Each iteration can be partitioned into five parts: acceptance rejection method (\emph{linear}), storing to disk (\emph{store}),
 loading experiment data (\emph{load}), select neurons in injection (\emph{selI}), select neurons in projection (\emph{selP}).
 Thus the duration per iteration, $L$, is a sum of the partial sums:
 \begin{equation} \label{eq:L}
@@ -395,11 +395,11 @@ memory and computation power.
 
 The internal \emph{C++} API of NEST allows creation and manipulation of the circuit.
 The API is mainly developed to be an interface between the internal structure
-and the \emph{SLI} interface. But my implementation accesses the \emph{C++} functions directly,
-to avoid the \emph{SLI} layer. To access the API in between the internal NEST classes
-have to be analysed. Because I am facing the execution on large scale machines,
-I focus on thread-safty and locality of internal circuit generation functions.
-Which means, I focus on how NEST internally distribute the data and on which processes, which
+and the \emph{SLI} interface. But the implementation accesses the \emph{C++} functions directly,
+to avoid the \emph{SLI} layer. To access the API, the internal NEST classes
+have to be analysed. Because we are facing the execution on large scale machines,
+We focus on thread-safty and locality of internal circuit generation functions.
+Which means, we focus on how NEST internally distribute the data and on which processes, which
 function has to be called.
 
 
@@ -689,7 +689,7 @@ void singleConnect(..)
 \end{figure}
 
 \newpage
-All in all the implementation make use of available processes and by NEST used cores in the most compute intensive parts.
+The implementation make use of available processes and by NEST used cores in the most compute intensive parts.
 Figure \ref{fig:ConnectInsideIteration} illustrates the flow of the synapse information between nodes. 
 All processes access a single dataset to load a set of it each. Afterwards the synapse information is processed by different steps.
 In \emph{Alltoall} the synapse information are reordered between processes.

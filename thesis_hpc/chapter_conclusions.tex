@@ -56,7 +56,7 @@ the circuit. The connections are generated based on the neurons. In principle th
 number of connections should be of the same proportion.
 
 \section{Data format usability}
-The HDF5 data format for neuron parameters is used as given from the Neurorobotics team.
+The HDF5 data format for neuron parameters is used as given from the Neurorobotics team of the Blue Brain Project.
 Because of its small size (9 GB) in comparison to the synapse dataset (15 TB) the performance improvement by changing
 to a transposed data format can be neglected. Thus the advantage of having different datasets and being able
 to add new datasets can be kept. It also implies that the generation script does not have to be converted or no 
@@ -64,7 +64,6 @@ conversion scripts are needed.
 
 
 \section{Long range connections generation}
-The sequential algorithm is optimized and parallelized.
 Moving the best injection per voxel search outside the main iteration
 avoids unnecessary calculations and reduces the complexity of the main iteration.
 In the sequential algorithm parts of the connections are regenerated in each iteration.
@@ -92,7 +91,7 @@ Using a Master-Slave approach also reduced the complexity of the distribution of
 The critical part of the implementation is the IO, because the number of created synapses is not known in the beginning.
 Therefore the file size can not calculated beforehand, which is mandatory for an efficient writing to HDF5 files. 
 By using a buffer or temporary files this problem can be avoided.
-Because of the given resources (IBM Blue Gene Q) and the high parallel efficiency (see later section)
+Because of the given resources (Blue Brain IV) and the high parallel efficiency (see later section)
 writing all synapses to a buffer is feasible (already for a small number of nodes the created connections fit in memory).
 The buffer implementation, which behaves like a queue, is efficient in terms of writing to disk and writing to file
 if the queue chunks are large enough. Using larger chunks leads to 
@@ -136,7 +135,7 @@ The following figures \ref{fig:implV03} give an overview of the measured wall-cl
 The timings are shown per node and iteration number. They give an idea how the timings are distributed.
 The performance of the different parts can be compared and bottlenecks can be found.
 Runtime measurements of the import module are performed on different scale.
-Therefore IBM Blue Gene Q systems in Lugano and Juelich are used.
+Therefore IBM Blue Gene Q systems in Lugano (Blue Brain IV) and Juelich (JUQUEEN) are used.
 %\begin{figure}[ht!]
 %     \begin{center}
 %        \subfigure[Load hdf5 files]{%
@@ -417,37 +416,29 @@ The arguments are listed in table \ref{tab:shortrangeargs}.
 \end{table}
 
 \subsection{Import neurons}
-\emph{H5NeuronCsX\_s\_s\_a\_s} expects 4 input parameters:
+The import neuron module can be executed with the function \emph{SLI} function  \emph{H5NeuronCsX\_s\_s\_a\_s}. It loads all neurons from the specified with its parameters
+from the given HDF5 file. The function expects 4 input parameters:
 \begin{itemize}
       \item Name of the a subnet dataset (String).
 The subset has to contain for each neuron an integer value.
 The neurons are grouped together by this subnet value.
-
       \item A list of all datasets which values are interpreted as list of parameters.
-      
       \item Name of the used neuron model
-      
       \item path to the HDF5 file 
 \end{itemize}
-The function returns the neuron id of the first neuron it created.
-
+It returns the neuron id of the first neuron it created.
 \begin{lstlisting}[label=sliNeurons,caption=Calling the neuron import module via H5NeuronCsX\_s\_s\_a\_s SLI command ]
-/neuronmodel /aeif_cond_exp def
+/nmodel /aeif_cond_exp def
 /subnet (subnet) def
-/neuronparams [(C_m) (Delta_T) (E_L) (V_reset) (V_th) (a) (b)] def
+/nparameters [(C_m) (Delta_T) (E_L) (V_reset) (V_th) (a) (b)] def
 /filepath (circuit/ptneu_brain.h5) def
-subnet neuronparams neuronmodel filepath H5NeuronCsX_s_s_a_s /offset Set
+subnet nparameters nmodel filepath H5NeuronCsX\_s\_s\_a\_s /offset Set
 \end{lstlisting}
 
-
-
-\begin{itemize}
-      \item Sli command with parameters
-      \item How can it be used
-\end{itemize}
-
 \subsection{Import synapses}
-\emph{H5SynapseTll\_i\_s\_a\_s} expects 4 input parameters:
+The import neuron module can be executed with the function \emph{SLI} function  \emph{H5SynapseTll\_i\_s\_a\_s}. It loads all synapses with its given parameters
+from the given HDF5 file. The function expects 4 input parameters:
+ 
 \begin{itemize}
       \item Offset of the neuron ids. Mostly it is equal to first neuron id returned by \emph{H5NeuronCsX\_s\_s\_a\_s}
 
@@ -457,7 +448,6 @@ subnet neuronparams neuronmodel filepath H5NeuronCsX_s_s_a_s /offset Set
       
       \item path to the HDF5 file 
 \end{itemize}
-The function returns the neuron id of the first neuron it created.
 
 \begin{lstlisting}[label=sliSynapses,caption=Example importing synapses]
 /synmodel /tsodyks2_synapse def
@@ -501,3 +491,22 @@ to not put any obstacles in the way to use the proposed data format for differen
 The achieved performance of importing the circuit is feasible. Anyway improvements are possible.
 For example, a multi core sort algorithm could speed-up the sort set.
 Additionally gain could be gotten by optimizing the core of NEST for the build-up procedures.
+
+\section{Prospect}
+The introduced pipeline to run large scale data-driven simulation is still experimental.
+Even tough, validations are introduced and manipulation functionalities are included, the 
+implementations are only used and tested for the given use-case. Further, building a given 
+mouse brain model directs the proposed efficiency requirements. Taking into account that
+the mouse brain model is still in development, more efficient implementations of the 
+circuit generation could be of need. Scalability runs of the circuit generation could
+highlight bottlenecks. Additionally more general unit test should be introduced.
+
+The NEST import modules are only accessible via the SLI interface.
+To make it usable for more users the import modules should be integrated into the Python
+interface as well. Further, the generated circuit is distributed uniformly by NEST on the processes. But this is not guaranteed. Therefore it might me necessary to include reshuffling of neuron distribution to achieve better memory and load balancing in the pipeline.
+
+The simulated mouse brain model does not produce expected activity yet.
+The introduced validation are only taking the correct implementation of the algorithms into account.
+But the given model was never created and simulation on the full scale. Therefore the expected outcome is unclear. As soon as the model produces more sense full results, visualisation techniques from the
+Blue Brain Project and the RWTH Aachen can gives insight of the model behaviour.
+
