@@ -9,7 +9,7 @@ reconstructing parts of from experimental data.
 Allen Institute for Brain for Science and the Blue Brain Project provide such data.
 To this aim, the pipeline of large scale data-driven simulations with the NEST simulator is investigated.
 An efficient data format is defined, the circuit generation scripts are adapted to
-run on a bigger scale and the NEST simulator is extended to load the new data format.
+run on a larger scale and the NEST simulator is extended to load the new data format.
 
 \section{Data formats}
 \label{sec:dataformats}
@@ -51,7 +51,7 @@ The synapse data format contains two datasets. In general the datasets contain f
 a pre-synaptic neuron id, a post-synaptic neuron id and a set of parameters.
 To reduce the amount of data the pre-synaptic neuron ids are grouped together in one \emph{neuron} dataset.
 This is feasible, because
-the number of synapses is way bigger than the number of pre-synaptic neurons (around $10,000$ synapses per pre-synaptic neuron).
+the number of synapses is larger than the number of pre-synaptic neurons (around $10,000$ synapses per pre-synaptic neuron).
 The dataset contains an array of  pre-synaptic neuron ids (\emph{id}) with references (\emph{syn\_n} and \emph{syn\_ptr}).
 The \emph{syn\_ptr} value defines the related starting index in the \emph{syn} dataset,
 and \emph{syn\_n} defines the number of related following entries.
@@ -66,7 +66,7 @@ Going towards full mouse brain model, larger machines have to be taken into acco
 A full mouse brain model generation requires more resources and computation power.
 Therefore the circuit generation should be ported on the Blue Brain IV super computer.
 A new implementation should make use of the available resources.
-Rewriting the sequential python scripts to a hybrid C++ application requires a parallel implementation of the algorithms.
+Rewriting the sequential python scripts to an hybrid C++ application requires a parallel implementation of the algorithms.
 
 
 %%insert somewhere
@@ -118,12 +118,12 @@ Task \emph{Load experiment per voxel} from Figure \ref{fig:longrangParallel} con
 It generates the voxel datasets, which are distributed afterwards.
 Manipulations of the generation effect mostly this part.
 So the part allows modifications of the applied functionalities. 
-Further the whole function can be skipped by loading the voxel information from file (see \ref{file:voxelinfo}).
+Further the whole function can be skipped by loading the voxel information from file (see Appendix \ref{file:voxelinfo}).
 Figure \ref{fig:longrangeLEPV} shows the subtasks.
 The red tasks are optional and can be enabled via command line arguments (see Table \ref{tab:longrangeargs}).
 In the first task \emph{Find best experiment per voxel} each process loads a set of experiments.
-Iteratively the experiment with the smallest total injection density is assigned to each voxel
-distributively. Afterwards a MPI reduction function returns the smallest value for each voxel on
+Iteratively the experiment with the smallest total injection density is assigned to each voxel.
+Afterwards a MPI reduction function returns the smallest value for each voxel on
 each process.
 However, there are regions which were not injected by any experiment available.
 So there is no connection information available for the internal neurons.
@@ -132,7 +132,7 @@ in \emph{Interpolate values for empty voxels} (see paragraph \ref{par:interpolat
 Afterwards the voxels are mirrored from the right to the left hemisphere, because the
 Allen Brain Atlas mostly delivers injection sites for the right hemisphere and
 the mouse brain model is assumed to be symmetric.
-Finally all voxel information are gathered to all processes.
+Finally, all voxel information is gathered to all processes.
 For debugging or manipulating purposes, task \emph{Save voxel properties to HDF5 file} can be used
 to save the generated voxel information to file (see chapter \ref{file:voxelinfo}).
 
@@ -143,7 +143,7 @@ In the end of each iteration each process writes its generated connection indepe
 
 \paragraph{Linear acceptance rejection optimization}
 \label{par:linearacceptancerejection}
-Further optimization are applied to the linear acceptance rejection function,
+Further optimizations are applied to the linear acceptance rejection function,
 which picks the neurons in the projection area.
 In the given sequential algorithm each neuron has its own probability.
 But as given by the assignment all neurons in each voxel have the same value.
@@ -174,17 +174,17 @@ Each thread picks $~ \frac{10,000}{N_{threads}}$ target voxels.
 \paragraph{Load balancing}
 \label{par:loadbalancing}
 An efficient parallel implementation depends on the distribution of voxels.
-The work load should be distributed equably on all processes.
+The work load should be distributed equally on all processes.
 Therefore an estimation of the work load per iteration is necessary.
 But it depends mainly on the number of neurons per voxel and the distribution properties of projection densities.
-Also inter process interaction influence the runtime.
-Each iteration can be partitioned into five parts: acceptance rejection method (\emph{linear}), storing to disk (\emph{store}),
+Also inter process interaction influence the run times,
+each iteration can be partitioned into five parts: acceptance rejection method (\emph{linear}), storing to disk (\emph{store}),
 loading experiment data (\emph{load}), select neurons in injection (\emph{selI}), select neurons in projection (\emph{selP}).
 Thus the duration per iteration, $L$, is a sum of the partial sums:
 \begin{equation} \label{eq:L}
 	L \approx L_{linear}(n,m,M) + L_{store}(n,\omega) + L_{load}(\nu) + L_{selI}(n) + L_{selP}(m,\nu)
 \end{equation}
-$L_{load}(\nu)$, $L_{selI}(n)$ and $L_{selP}(m,\nu)$ are neglectable.
+$L_{load}(\nu)$, $L_{selI}(n)$ and $L_{selP}(m,\nu)$ are $0$.
 $\Omega$ and $\frac{\partial L_{linear}(n,m,M)}{\partial M}$  can not be estimated satisfyingly.
 $\Omega$ represents waiting times, which occur from independent parallel write operations.
 $M$ represents the distribution of probability values.
@@ -228,9 +228,9 @@ The first voxel along the search direction which is found is declared as the nea
 The chosen experiment from the nearest neighbour is adopted.
 
 \subsection{Short range connections}
-The short range connection generation algorithm (\ref{alg:BBP}) presented in the analysis section can be parallelized straight forward.
-Each iteration is independent. The number of generated synapses cannot be calculated beforehand. It is only available
-at the end. Therefore all synpases are stored inside of memory during the iterations and only written to disk 
+The short range connection generation algorithm (\ref{alg:BBP}) presented in the analysis section can be easily parallelized,
+because each iteration is independent. The number of generated synapses cannot be calculated beforehand. It is only available
+at the end. Therefore all synpases are stored in memory during the iterations and only written to disk 
 at the end.
 \begin{figure}[ht!]
 \centering
@@ -243,7 +243,7 @@ The iterations from the main loop from the sequential algorithm \ref{alg:BBP} ar
 The short range algorithm follows the same concepts as the long range generation parallelization.
 The iterations are distributed first statically and afterwards dynamically.
 The master process, \emph{Process 0}, handles the dynamic distribution management.
-To overcome that the dynamical distribution becomes a bottleneck in the beginning a fifth of the iterations are distributed
+To overcome the fact that the dynamical distribution becomes a bottleneck in the beginning a fifth of the iterations are distributed
 statically between the working processes beforehand.
 The work-load per neuron is not estimated in advance.
 The iterations are partitioned continuously without weights.
@@ -357,14 +357,14 @@ The example \ref{fig:longrangevalidation} illustrates the usage of the visual va
 It shows that for the specific experiment the post-synaptic neurons are placed inside the correct regions.
 
 Stochastic properties of the synapses files are validated, as well.
-An analysing program iterates over all synapses in a passed synapse file.
+An analysis program iterates over all synapses in a passed synapse file.
 The program determines min, max and mean values of all parameters.
-Further, it looks for invalid entries. An invalid entry is defines, as
+Further, it looks for invalid entries. An invalid entry is defined, as
 zero entries for all parameters. Also, it calculates the number of in-coming
 and out-coming synapse per neuron. These values are compared to the desired values.
 For the long range connection generation the out-coming synapses per neuron has to be
 $0$ or $10,000$. For the short range connection generation the out-coming synapses per neuron
-has to be between $0$ and $10,000$. The analysing program prints the parameters properties 
+has to be between $0$ and $10,000$. The analysis program prints the parameters properties 
 and the number of zero entries on screen. The number of in-coming and out-coming 
 synapses per neuron are written to two binary files, containing a list of \emph{uint64} values.
 They are evaluated for valid boundaries with a Python script.
@@ -487,19 +487,18 @@ entry starting from its process id.
 The synapse import module is based on the same concept as the import neuron module.
 The synapse creation functionality of NEST is analysed.
 Needed functions are reviewed for thread-safeness and locality.
-The generated synapse files, which have to be loaded, have a size in total of around $~16$ TB .
+The generated synapse files of the full mouse brain model, which have to be loaded, have a size in total of around $~16$ TB.
 The total size to store the synapses in memory is of the same order (see \ref{sec:NEST:Datastructure}).
-To reduce the required memory size the import synapse module should use as less memory
-as possible by being still efficient.
+To reduce the required memory size the import synapse module should use as less memory as possible.
 To realise it, the import module cannot load all synapses at once.
 So it has to load the synapses in parts.
 
 In the following an algorithm is developed which loads block-wise the given data on disk and rearranges it into
-the NEST data structure in memory. I start with the required result.
+the NEST data structure in memory.
 
 To store a given synapse into the NEST data structure,
 the NEST API function \emph{connect} has to be called.  
-Different versions are available which vary in the passed arguments.
+Different implementations are available which vary in the passed arguments.
 For the given use-case we want to pass all synaptic model parameters at once and
 avoid internal checks, because the implementation should cover necessary error handling by 
 itself. Double checks should be avoided.
@@ -559,7 +558,7 @@ among processes and calls the connect function for each synapse on the correspon
 \paragraph{Initialising}
 At first each node loads all pre-synaptic neuron references from the \emph{neuron} dataset to memory.
 But each node does not need all of them. 
-The neuron reference includes neuron id (\emph{id}), number of entries  (\emph{syn\_n}) and pointer to entry (\emph{syn\_ptr}) .
+The neuron reference includes neuron id (\emph{id}), number of entries  (\emph{syn\_n}) and pointer to entry (\emph{syn\_ptr}).
 All entries inside the \emph{syn} dataset from  entry \emph{syn\_ptr} for \emph{syn\_n} entries have the pre-synaptic neuron specified by its \emph{id}.
 \begin{figure}[ht!]
 \centering
@@ -703,10 +702,10 @@ Therefore the synapses can be stored in the NEST data structure on the correct p
 
 \newpage
 \subsubsection{Memory consumption}
-NEST stores the whole mouse brain model inside of memory.
-Taking into account that the data-driven simulation is limited by its memory consumption, the import modules are limited to their memory consumption.
+NEST stores the whole mouse brain model in memory.
+Taking into account that the data-driven simulation is limited by its memory consumption, the import modules are limited by their memory consumption.
 The neurons import module does not need to be memory efficient.
-It is executed before all synapses are stored inside of memory.
+It is executed before all synapses are stored in memory.
 During execution most of the given memory is free, which is way more than the neuron import module needs.
 But the import synapse module shares the memory with the synapses inside the NEST data structure. 
 Therefore the theoretical memory consumption is analysed:
@@ -735,4 +734,18 @@ $N_{block}$ is adaptable.
 Therefore an appropriate buffer size for the import synapse module can be calculated.
 The buffer size is equivalent to the block size.
 The import synapse module should use less than $5\%$ of the total available memory per process.
-Thus we get a block size of $1e6$.
+
+An optimal buffer size of read data in one iteration is determined via test runs.
+The theoretical optimal value is equal to the block size of the file size.
+For the JUQUEEN system the file system block size is $4$ MB.
+Several runs using different buffer sizes around $4$ MB are performed.
+\begin{figure}[h!]
+\begin{center}
+ \includegraphics[width=0.8\textwidth]{pgfplots/findBuffer.pdf}
+\end{center}
+\caption{Bandwidth comparison of the import module using different buffer sizes.
+Multiple runs are preformed with 8 (blue dots) and 16 (red squares) on JUQUEEN.}
+\label{schumann:fig:findBuffer}
+\end{figure}
+The achieved bandwidth (see Figure \ref{schumann:fig:findBuffer}) is approximately constant for block sizes between $4$ and $30$ MB on $8$ and $16$ racks.
+We implement a standard block size of $12$ MB.

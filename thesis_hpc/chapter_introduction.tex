@@ -53,7 +53,7 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
   \end{figure}
   Because of the high density of nerve cells the gray matter is the main part of information processing of the brain.
   
-  Some parts of the brain can still be assigned roughly to functionality as shown in Figure \ref{Aufbau2}.
+  Some parts of the brain can still be assigned roughly to functionalities as shown in Figure \ref{Aufbau2}.
   However, the number of nerve cells (neurons), the number of connections (synapses) and the structure differs from person to person.
   On average the number of neurons and synapses in the human brain are around $8*10^{10}$ and $1*10^{15}$, respectively. 
   The connections of each neuron are dynamic and change over time. \\
@@ -118,11 +118,6 @@ Topic of the thesis is to develop the means to fully model a mouse brain from ex
   For multiple neuron the spike timings in a dot plot can be visualized as in Figure \ref{spikeplot}.
   One can get an overview of the activity in a whole neuronal network if the spike sums are
   plotted (summed up spikes for each time bin) in a histogram (bottom row of figure \ref{spikeplot}).
-
-	\begin{itemize}
-      \item Short overview over simulators: NEST, NEURON, STEPS
-      \item Possibilities/limits of simulations
-   \end{itemize}
    
 \section{Virtual mouse}
 The HBP neurorobotics team built a model mouse brain and a model mouse body, integrating them both into a single simulation and providing a simplified but comprehensive model of how the body and the brain interact with each other. It gives the possibility to
@@ -201,9 +196,9 @@ same neurons, for each neuron the experiment is used which has the lowest total 
 density (sum of all injection densities).
 The algorithm iterates over all experiments and determines its
 total injection. Inside it iterates over all injected voxels.
-If there are not connections generated yet for the current voxel or the previous connections
-where generated with an experiment having a higher total injection density the connections are regenerated.
-For each voxel it iterates over all containing neurons.
+Connections are generated for each neuron inside the voxel,
+if the total injection density of the experiment is smaller than 
+all used experiments before for these voxel.
 For each neuron $10,000$ (source neuron) connections are generated to neurons (target neurons) in the experiment projection area.
 	The target neurons are randomly (taking each probability value into account) picked
 	out of all possible neurons inside the projection area.
@@ -242,7 +237,7 @@ The Blue Brain Project was able to reconstruct a microcircuit of part of somatos
 Members of the Blue Brain Project presented a complementary algorithmic approach that reconstructs neuronal microcircuitry
 across all layers using available sparse data and that leverages biological principles and
 interdependencies between datasets to predict missing biological data.
-The algorithm with the available data form a recipe which is applied to the mouse
+The algorithms with the available data form a recipe which is applied to the mouse
 brain model to estimate the short range connectivity inside the mouse neocortex.
 \begin{figure}[ht!]
 \centering
@@ -275,7 +270,7 @@ isocortical column inside a point neuron model of the mouse brain. ]{%
    \label{fig:shortColumnInCircuit}
 \end{figure}
 The given generation script loads needed neuron parameters (layer, m-type,
-e-type, coordinates,..) from the HDF5 file\ref{fig:allInjections}.
+e-type, coordinates,..) from an HDF5 file (see \ref{fig:allInjections}).
 After that it iterates over all neurons inside the neocortex region
 (neurons which are in layer 1 to 6 specified with the parameter layer).
 For each neuron (source neuron) all neurons (target neurons) inside its surrounded column
@@ -287,7 +282,7 @@ Figure \ref{illcolumn}) are selected.
 \caption{Illustration of column neuron selection (green/border) for a pre-synaptic neuron (blue).
 The neurons are stored in lists per voxel to simply the search by position.
 The grid represents the voxels. The dotted line represents the search region.
-The search algorithm iterates over all neurons inside the bluish region.
+The search algorithm iterates over all neurons inside the blue region.
 The dashed line represents the column.}
 \label{illcolumn}
 \end{figure}
@@ -319,19 +314,19 @@ models of information processing e.g. in the visual or auditory cortex of mammal
 
 NEST features the execution on parallel environments (e.g. super computers as JUQUEEN).
 Therefore it uses the MPI (Message Passing Interface \cite{snir1998mpi}) standard for interprocess communication.
-For thread parallelism it supports PThreads\cite{nichols1996pthread} and OpenMP\cite{dagum1998openmp}.
+For thread parallelism it supports both PThreads\cite{nichols1996pthread} and OpenMP\cite{dagum1998openmp}.
 
 
 \newpage
 \subsection{Data structure}
 \label{sec:NEST:Datastructure}
-NEST keeps the full neuronal network model in memory.
-Therefore it distinguishes between nodes and connections.
-Nodes and connections represent mostly neurons and synapses, respectively.
+NEST keeps the full neuronal network model in memory
+and distinguishes between nodes and connections.
+Nodes and connections represent neurons and synapses, respectively.
 Nodes hold model parameters.
-However synapses hold besides model parameters the pre-synaptic and post-synaptic neuron information, which each synapse connects.
+However synapses store besides model parameters the pre-synaptic and post-synaptic neuron information, which each synapse connects.
 
-In multi process environments nodes are distributed on the processes.
+In multi process environments nodes are distributed on processes.
 For multi threaded environments each thread processes a subset of nodes.
 Each process holds a list of meta information of all neurons.
 However the model objects are only stored on one process.
@@ -394,7 +389,8 @@ it can give an impression of the activity.
 \section{Parallel IO}
 Full-scale data-driven simulations pushing the requirements of data processing and capability of the data format.
 To build-up a large scale neuronal network from point to point connectivity requires large bandwidth for accessing the data from disks.
-The parallel IO is strictly limited by the given bandwidth. Clumsy parallel IO access can even lower the resulting bandwidth.
+For a simulation of the mouse brain model $16$ TB of data have to be loaded from disk.
+Clumsy parallel IO access can lower the resulting bandwidth.
 Thus the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to one file.
 It uses MPI-IO to manage parallel read and write operations. Further HDF5 is a self descriptive format and therefore easy to handle
 and exchanged between different platforms. Already given reduced circuits are stored in HDF5 file format by the neurorobotics team, 
@@ -402,7 +398,7 @@ because of its easy to use Python interface. On a personal computer a light weig
 circuit from HDF5 to NEST, using HDF5 Python interface with the NEST python interface. Therefore selecting the same or similar data 
 format is preferred to reduce the number of needed adaptations of scripts.
 
-The Hierarchical Data Format (HDF) implements a model for managing and storing data. The model includes an abstract data model and an abstract storage model (the data format), and libraries to implement the abstract model and to map the storage model to different storage mechanisms. The HDF5 Library provides a programming interface to a concrete implementation of the abstract models.
+The Hierarchical Data Format (HDF) implements a model for managing and storing data. The model includes an abstract data model and an abstract storage model (the data format), and libraries to implement the abstract model and to map the storage model to different storage mechanisms. The HDF5 Library provides a programming interface  for an implementation of the abstract models.
 The main entities of data models are datasets.
 A dataset is a multidimensional (rectangular) array of data elements.
 The data elements have to be from the same data format.
@@ -417,7 +413,7 @@ array.
             \includegraphics[scale=0.8]{pictures/HDF5Hyperslab.eps}
         }
         \hspace{0.5cm}
-        \subfigure[Hyperslab selections are used to distribute loaded data on the processes.]{%
+        \subfigure[Hyperslab selections are used to distribute loaded data on the processes. \emph{N1}, \emph{N2} and \emph{N3} correspond to the nodes 1, 2 and 3, respectively.]{%
             \label{fig:shortColumnInCircuit}
             \includegraphics[scale=0.8]{pictures/HDF5Parallel.eps}
             \label{fig:hdf5hyperslabs:parallel}
@@ -433,13 +429,12 @@ Parallel HDF5 is a configuration of the HDF5 library which lets you share open f
 Using hyperslab selections each process can access separate parts of a dataset \ref{fig:hdf5hyperslabs:parallel}.
 
 \section{Task description}
-In the second chapter the implementation are presented, which enable the simulation of a full mouse brain model with NEST.
-The presented algorithm in chapter 1 were developed to create reduced mouse brain models.
+In the second chapter the implementation, which enables the simulation of a full mouse brain model with NEST.
+The described algorithm in chapter 1 were developed to create reduced mouse brain models.
 A well tested model of $200,000$ neurons, which corresponds to $0.3\%$ of the full model, should be scaled up to $75,000,000$ neurons.
 Using the given implementation to generate the full model is not feasible, because of a lack of efficiency of the given implementations.
 Further a sequential approach does not make use of nowadays computer architectures.
 Therefore the sequential algorithms are parallized and implemented in \emph{C++}.
-A IBM Blue Gene Q system is available for debugging and testing.
 
 The neuronal simulator does not support the loading of large models.
 Therefore the neuronal simulator is extended with a new import module.
@@ -449,5 +444,5 @@ Thus this data format is defined, as well.
 The work described in this thesis includes: Defining a data format, rewriting the generation programs and extending the neuronal simulator with an import module.
 Further, debugging and testing of the generated model and its simulation tackle new requirements.
 The work was done as part of the high performance computing team of the Blue Brain Project in a close collaboratoin with Csaba Eroe and the visualisation teams from the Blue Brain Project and the IT-Center Aachen.
-New validation techniques had to be developed and are partly shown in the following chapters.
+New model validation techniques had to be developed and are partly shown in the following chapters.
 

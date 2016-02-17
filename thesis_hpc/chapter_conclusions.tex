@@ -110,6 +110,142 @@ generated mouse brain model. To show that the implemented algorithms are feasibl
 the circuit properties, which effect the load balance, are analysed.
 Afterwards the performance characteristics of the implemented algorithm are shown.
 
+The IO performance of the implementation affects mainly the usability.
+Runs on different scales should give detailed information about the reached bandwidth.
+The bandwidth is calculated by:
+\begin{equation}
+  bandwidth = bytes~per~synapse * \frac{number~of~synapses}{\Delta t} [\frac{Bytes}{s}]
+\end{equation}
+In priory the \emph{connect} task was detected as the bottleneck of the algorithm on scales up to 2 racks on IBM Blue Gene Q.
+A thread-parallelization of the \emph{connect} task achieved a speed-up.
+
+Two weak scaling and one strong scaling scenarios were tested.
+The properties are listed in table \ref{schumann:tbl:runs}.
+\begin{table}[h!]
+  \caption{Properties of scaling runs}
+\begin{center}
+\begin{tabular}{|r|l|p{1.5cm}|p{1.4cm}|p{1.4cm}|p{3cm}|}
+\hline
+id & scaling & importing & mpi ranks per node & threads per mpi rank & bg\_sizes \\
+\hline\hline
+1.    &  strong  & $1.9$ $TB$             & 1 & 16 & 1024, 2048, 4096, 8192, 16384, 28672 \\
+2.    &  weak  & $900$ $\frac{MB}{node}$      & 1 & 16 & 1024, 2048, 4096, 8192, 28672 \\
+3.    &  weak  & $220$ $\frac{MB}{node}$     & 1 & 16 & 1024, 2048, 4096, 8192, 16384, 28672 \\
+\hline
+\end{tabular}
+\end{center}
+\label{schumann:tbl:runs}
+\end{table}
+\begin{figure}[h!]
+\begin{center}
+ \includegraphics[width=0.8\textwidth]{pgfplots/bandwidth.pdf}
+\end{center}
+\caption{Bandwidth comparison of different scaling runs (see table \ref{schumann:tbl:runs}).
+The plotted values are taken from Table \ref{schumann:tbl:scalruns}.
+The \emph{theoretical} line shows the approximate maximum bandwidth of the system.}
+\label{schumann:fig:bandwidth}
+\end{figure}
+Figure \ref{schumann:fig:bandwidth} plots the bandwidth measured for the runs over number of nodes.
+The resulted bandwidths tackles around five percentage of the theoretical bandwidths.
+All runs give similar results.
+A more detailed look on the task scale should give more insights.
+An instrumented version of the algorithm with scorep gives us wall-clock timings of each task per node.
+We are interested in bottlenecks.
+Therefore we look at the proportions of the tasks (see Figure \ref{schumann:fig:taskratios}).
+\begin{figure}[h!]
+\begin{center}
+ \includegraphics[width=0.5\textwidth]{pgfplots/taskratios.pdf}
+\end{center}
+\caption{Measured task durations percentages of the total duration on different scales.
+ The displayed percentages are the means of percentages for all nodes.
+ The values are extracted from the 1. scaling run (see table \ref{schumann:tbl:runs}).
+ }
+\label{schumann:fig:taskratios}
+\end{figure}
+Apparently, \emph{load} and \emph{alltoall} effect mainly the run time of our module.
+\emph{load} performs io. It uses the HDF5 library to load synapses from disk to the internal data structure.
+\emph{alltoall} exchanges synapses between the ranks. Both tasks contain collective MPI calls.
+A detailed look at the call stack of the used H5Read function shows that the called MPI read operation is non-collective.
+Using the HDF5 property list interface we identify that the internal data structure of the import module prevents HDF5 from using collective read operations.
+A collective read operation could result in better read performance.
+Therefore a comparison of collective versus independent read operations should show possible benefits.
+Because of the limited time we focus on the comparison of a reduced algorithm,
+which allows an easy change of the used data structure.
+We can provide two test implementations with and without adapted data structure.
+\begin{figure}[h!]
+\begin{center}
+ \includegraphics[width=0.8\textwidth]{pgfplots/bandwidth_stats.pdf}
+\end{center}
+\caption{Comparison of achieved bandwidth from collective versus independent read operations.
+ Values from table \ref{schumann:tbl:indevscol} are used. Theoretical line shows the limits by the
+ JUQUEEN system.}
+\end{figure}
+The new algorithm reduces the iterations to the \emph{load} part with a following MPI barrier.
+The MPI barrier should simulate any \emph{collective} read operations inside of the \emph{alltoall} task.
+\begin{figure}[h!]
+\begin{center}
+ \includegraphics[width=0.5\textwidth]{pgfplots/indiVScollec.pdf}
+\end{center}
+\caption{Comparison of collective versus independent read operations executed on 16 racks.
+ Values are extracted from the scorep measurements from the runs listed in table \ref{schumann:fig:indiVScollec}.}
+ \label{schumann:fig:indiVScollec}
+\end{figure}
+
+Figure \ref{schumann:fig:indiVScollec} illustrates the benefit of collective versus independent read operations
+on the JUQUEEN system for 16 racks.
+
+Even tough the mean time of the read operations is similar, the serializations of the read calls effects the
+imbalance and therefore the idle times at the next collective operations. 
+
+Therefore a change in the data structure should bring great benefit for our implementation.
+We are confident that the optimization will result in better usage of the available bandwidth.
+Even tough large scale data-driven simulation are already possible with the developed import module for NEST,
+further optimization on the algorithm can increase the bandwidth and therefore lower the needed time.
+Taking into account that large scale data-driven simulations are getting more of interest as more 
+data is available, we are going to spend more effort in the optimization of the import module.
+
+
+\begin{table}[h!]
+  \caption{Scaling runs of the import module using independent read calls on JUQUEEN. \emph{1.times}, \emph{2.times} and
+  \emph{3.times} corresponds to the times of the 1., 2. and 3. scaling runs (see table \ref{schumann:tbl:runs}).}
+\begin{center}
+\begin{tabular}{|r|r|r|r|r|r|}
+\hline
+bg\_size& rpn & MPI ranks & 1. time[s] & 2. time[s] & 3. time[s] \\
+\hline\hline
+1024    &  1  & 1024      & 1222 & 523 & 123 \\
+2048    &  2  & 2048      & 642  & 593 & 118 \\
+4096    &  2  & 4096      & 363  & 661 & 139 \\
+8192    &  4  & 8192     & 325  & 827 & 245 \\
+16384   &  8  & 16384    & 208  & -   & 364 \\
+28672   & 16  & 28672    & 168  & 1401& 497\\
+\hline
+\end{tabular}
+\end{center}
+\label{schumann:tbl:scalruns}
+\end{table}
+
+\begin{table}[h!]
+  \caption{Scaling runs of test implementation to compare collective versus independent read calls on JUQUEEN. \emph{bytes~per~synapse} is $24$ for all runs.}
+\begin{center}
+\begin{tabular}{|r|r|r|r|r|r|}
+\hline
+bg\_size& rpn & MPI ranks & mpiio & synapses in buffer & time[s] \\
+\hline\hline
+2048    &  2  & 2048      & independent  &  9395240960 & 36.7041712582\\
+4096    &  4  & 4096      & independent  & 9395240960  & 21.6904791038\\
+16384   &  16  & 16384      &  independent & 300647710720  & 406.885908909\\
+512     &  0.5  & 512      & collective  & 9395240960  & 70.67277588\\
+2048    &  2  & 2048      & collective  & 9395240960  & 29.0894202424\\
+4096    &  4  & 4096      & collective  & 9395240960  & 12.5637469038\\
+8192    &  8  & 8192      & collective  &  9395240960 & 7.9934176194\\
+16384   &  16  & 16384      &  collective & 300647710720  & 191.27968665\\
+\hline
+\end{tabular}
+\end{center}
+\label{schumann:tbl:indevscol}
+\end{table}
+
 \subsection{Load balance}
 The neurons are distributed equably on all processes based on equation \ref{eq:processfromid}.
 But the number of incoming synapses varies between the neurons.
@@ -134,8 +270,8 @@ consuming parts of the algorithm. The parts relate to figure \ref{fig:shortrange
 The following figures \ref{fig:implV03} give an overview of the measured wall-clock timings.
 The timings are shown per node and iteration number. They give an idea how the timings are distributed.
 The performance of the different parts can be compared and bottlenecks can be found.
-Runtime measurements of the import module are performed on different scale.
-Therefore IBM Blue Gene Q systems in Lugano (Blue Brain IV) and Juelich (JUQUEEN) are used.
+Runtime measurements of the import module are performed at different scales.
+Therefore IBM Blue Gene /Q systems in Lugano (Blue Brain IV) and Juelich (JUQUEEN) are used.
 %\begin{figure}[ht!]
 %     \begin{center}
 %        \subfigure[Load hdf5 files]{%
@@ -171,8 +307,8 @@ To analyse the impact, an experiment is performed which extends the implementati
 between the algorithm steps.
 \newpage
 \subsection{Read step}
-The efficiency of the \emph{Read} step is bounded by the io bandwidth of the system.
-Blue Brain IV has a theoretical bandwidth of $50$ GB/s per rack.
+The efficiency of the \emph{Read} step is bounded by the IO bandwidth of the system.
+Blue Brain IV has a theoretical bandwidth of $8$ GB/s per rack.
 
 The amount of data read in \emph{Read} step depends on the number of synapse parameters $N_{params}$,
 the number of read synapses per iteration $N_{blocksize}$ and the number of processes $N_{processes}$.
@@ -238,118 +374,36 @@ the use of different cache levels.
    \label{detailnewcon}
 \end{figure}
 
-%\begin{figure}[!h] \centering
-%\begin{tikzpicture}
-%	\begin{axis}[title=AMBM CONNECT MODULE,
-%		legend style={at={(0.5,-0.20)},
-%		anchor=north,legend columns=-1},
-%		xlabel=number of racks,
-%		ylabel=Parallel efficiency (\% of linear scaling),
-%		width=8.5cm
-%		]
-%
-%	\addplot[color=blue,mark=*] coordinates {
-%		(1,100)
-%		(2,110)
-%		(4,30)
-%	};
-%	\addplot[color=red,mark=*] coordinates {
-%		(1,100)
-%		(2,114)
-%		(4,117)
-%	};
-%	\addplot[color=green,mark=*] coordinates {
-%		(1,100)
-%		(2,84)
-%		(4,54)
-%	};
-%	\addplot[color=yellow,mark=*] coordinates {
-%		(1,100)
-%		(2,91)
-%		(4,110)
-%	};
-%	\legend{io,sort,mpi,connect}
-%	\end{axis}%
-%\end{tikzpicture}%
-%\begin{tikzpicture}
-%	\begin{axis}[title=AMBM CONNECT MODULE,
-%		legend style={at={(0.5,-0.20)},
-%		anchor=north,legend columns=-1},
-%		xlabel=number of racks,
-%		ylabel=wall clock in seconds,
-%		width=8.5cm
-%		]
-%
-%	\addplot[color=blue,mark=*] coordinates {
-%		(1,73)
-%		(2,33)
-%		(4,60)
-%	};
-%	\addplot[color=red,mark=*] coordinates {
-%		(1,85)
-%		(2,37)
-%		(4,12)
-%	};
-%	\addplot[color=green,mark=*] coordinates {
-%		(1,278)
-%		(2,163)
-%		(4,132)
-%	};
-%	\addplot[color=yellow,mark=*] coordinates {
-%		(1,171)
-%		(2,93)
-%		(4,38)
-%	};
-%	\legend{io,sort,mpi,connect}
-%	\end{axis}%
-%\end{tikzpicture}%
-%\end{figure}
-%\begin{figure}[!h] \centering
-%\begin{tikzpicture}
-%	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
-%		xlabel=number of racks,ylabel=Parallel efficiency (\% of linear scaling),width=8.5cm]
-%
-%	\addplot[color=blue,mark=*] coordinates {
-%		(1,100)
-%		(2,93)
-%		(4,72)
-%	};
-%	\addplot[color=red,mark=*] coordinates {
-%		(1,100)
-%		(2,94)
-%	};
-%	\addplot[color=red,mark=o] coordinates {
-%		(1,100)
-%		(2,94)
-%		(4,101)
-%	};
-%	\legend{mod,slisim, slisim estimated}
-%	\end{axis}%
-%\end{tikzpicture}%
-%\begin{tikzpicture}
-%	\begin{axis}[title=AMBM NEST RUN,legend style={at={(0.5,-0.20)}, anchor=north,legend columns=-1},
-%		xlabel=number of racks,ylabel=wall clock in seconds,width=8.5cm]
-%
-%	\addplot[color=blue,mark=*] coordinates {
-%		(1,640)
-%		(2,344)
-%		(4,220)
-%	};
-%	\addplot[color=red,mark=*] coordinates {
-%		(1,1208)
-%		(2,637)
-%	};
-%	\addplot[color=red,mark=o] coordinates {
-%		(1,1208)
-%		(2,637)
-%		(4,299)
-%	};
-%	\legend{mod,slisim, slisim estimated}
-%	\end{axis}%
-%\end{tikzpicture}%
-%\end{figure}
-
-%\section{Measured memory consumption}
+\section{Memory consumption}
+During the development of the import module, the goal to fit the full mouse brain model on the
+Blue Brain IV seemed to get unrealistic. The full machine does not deliver enough memory resources.
+Test runs on different scales on the JUQUEEN should give concrete results.
+We extended the import module with a logging of imported synapses and the used memory.
+We used a BGQ library (see Appendix \ref{bgqmemory}) to measure the current memory usage after each iteration on each process. The runs on $6$ and $8$ racks executed successfully.
+The run on $4$ racks broke before. It run out of memory and crashed therefore.
+\begin{figure}[h!]
+\begin{center}
+ \includegraphics[width=0.8\textwidth]{pgfplots/newconnections.pdf}
+\end{center}
+\caption{Measured new connections per node.
+ }
+\label{fig:newconnections}
+\end{figure}
+Figure \ref{fig:newconnections} shows the number of new connections per node for the different runs.
+The vertical distance between the dashed and the dotted line reflects the imbalance of synapses between the nodes. Remarkable is the fact, that the imbalance is similar for the three different scales.
+It enables a precise prediction of the needed memory per process.
+\begin{figure}[h!]
+\begin{center}
+ \includegraphics[width=0.8\textwidth]{pgfplots/memory_plot.pdf}
+\end{center}
+\caption{Measured memory usage.
+ }
+\label{fig:memoryplot}
+\end{figure}
+Figure \ref{fig:memoryplot} shows the memory usage per node for the different runs.
+The black solid line illustrates the memory limit of each node of the IBM Blue Gene /Q.
+You can see that for 4 racks the full mouse brain model does not fit into memory.
+Even tough an imbalance compensation would not make the model fit. 
 
 %\subsection{Long range connection generation}
 
@@ -470,17 +524,11 @@ and observe specific neurons, respectively.
 More use-cases are possible: For example the \emph{SLI} connect functions can be used to strengthening or weakening the connections between two
 parts of the circuit.
 
-\subsection{Analysis}
-\begin{itemize}
-	  \item Visualize spiking activity with Brion/Paraview
-      \item Visualize spiking activity with ViSNEST
-\end{itemize}
-
 \subsection{Conclusion}
-The presented implementations in chapter 2 allow to run a data-driven simulation using the neuronal simulator NEST.
+The implementations presented in chapter 2 allow to run a data-driven simulation using the neuronal simulator NEST.
 A pipeline for generating connections from different sources is implemented, which can handle the amount of data needed for 
-a full mouse brain simulation. Further, presented visualisation tools allow to analyse the neuronal activity visually.
-Besides a demonstration of the today's possibilities, the work in this thesis extends the neuronal simulator with the feature of loading well-defined
+a full mouse brain simulation. Further, presented visualisation tools allow to analyse the neuronal activity.
+Besides a demonstration of today's possibilities, the work in this thesis extends the neuronal simulator with the feature of loading well-defined
 point neuron circuits. An integration of the new import functionality into the \emph{SLI}
 interface allows to extend current simulations with well-defined circuit data easily.
 As more data is available data-driven neuronal simulations will gain further importance.

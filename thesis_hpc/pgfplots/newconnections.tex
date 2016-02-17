@@ -1,0 +1,63 @@
+\documentclass[border=10pt]{standalone}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{width=10cm,compat=1.8}
+\begin{document}
+
+%\pgfplotstableread{C4.dat}{\c4}
+
+%\usetikzlibrary{patterns}
+
+\begin{tikzpicture}
+\begin{axis}[
+    %title=Measured bandwidth,
+    xlabel={iteration},
+    ylabel={number of synapses per node},
+    grid=major,
+    %legend entries={4 racks, min, max, 6 racks, min, max, 8 racks, min, max},
+    legend style={cells={anchor=west}},
+    legend pos = outer north east
+]
+
+\addlegendimage{empty legend}
+\addlegendentry {4 racks}
+\addplot[mark=none, color=red] table [x expr=\coordindex,y index=0,col sep=space] {C4.dat}; \addlegendentry[]{mean}
+\addplot[dotted,mark=none, color=red] table [x expr=\coordindex,y index=1,col sep=space] {C4.dat}; \addlegendentry{min}
+\addplot[dashed,mark=none, color=red] table [x expr=\coordindex,y index=2,col sep=space] {C4.dat}; \addlegendentry{max}
+
+
+\addlegendimage{empty legend}
+\addlegendentry {6 racks}
+\addplot[mark=none, color=blue] table [x expr=\coordindex,y index=0,col sep=space] {C6.dat}; \addlegendentry{mean}
+\addplot[dotted, mark=none, color=blue] table [x expr=\coordindex,y index=1,col sep=space] {C6.dat}; \addlegendentry{min}
+\addplot[dashed, mark=none, color=blue] table [x expr=\coordindex,y index=2,col sep=space] {C6.dat}; \addlegendentry{max}
+
+
+\addlegendimage{empty legend}
+\addlegendentry {8 racks}
+\addplot[mark=none, color=green] table [x expr=\coordindex,y index=0,col sep=space] {C8.dat}; \addlegendentry{mean}
+\addplot[dotted,mark=none, color=green] table [x expr=\coordindex,y index=1,col sep=space] {C8.dat}; \addlegendentry{min}
+\addplot[dashed,mark=none, color=green] table [x expr=\coordindex,y index=2,col sep=space] {C8.dat}; \addlegendentry{max}
+
+								  
+\addplot[mark=*,color=red] plot coordinates {(140,141000000.000000) (140,132877843.000000) (140,154332928.000000)}
+								  node[pos=0.38, pin=290 :1 ] {} 
+								  node[pos=0, pin=275 :2 ] {} 
+								  node[pos=1, pin=165 :3 ] {}
+								  ;
+\addplot[mark=*,color=blue] plot coordinates {(106,105980188.802083) (106,99106348.000000) (106,118853081.000000)}
+								  node[pos=0.35, pin=0 :1 ] {} 
+								  node[pos=0, pin=330 :2 ] {} 
+								  node[pos=1, pin=135 :3 ] {} 
+								  ;
+\addplot[mark=*,color=green] plot coordinates {(79,79485141.601562) (79,73589973.000000) (79,92388957.000000)}
+								  node[pos=0.32, pin=0 :1 ] {} 
+								  node[pos=0, pin=330 :2 ] {} 
+								  node[pos=1, pin=135 :3 ] {} 
+								  ;
+
+
+\end{axis}
+\end{tikzpicture}
+\end{document}
