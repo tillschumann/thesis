@@ -376,34 +376,64 @@ the use of different cache levels.
 
 \section{Memory consumption}
 During the development of the import module, the goal to fit the full mouse brain model on the
-Blue Brain IV seemed to get unrealistic. The full machine does not deliver enough memory resources.
-Test runs on different scales on the JUQUEEN should give concrete results.
-We extended the import module with a logging of imported synapses and the used memory.
-We used a BGQ library (see Appendix \ref{bgqmemory}) to measure the current memory usage after each iteration on each process. The runs on $6$ and $8$ racks executed successfully.
-The run on $4$ racks broke before. It run out of memory and crashed therefore.
+Blue Brain IV seemed to get unrealistic. We make the assumption that the full machine does not deliver enough memory resources for the whole circuit.
+Test runs on different scales on the JUQUEEN should give concrete results for the final implementation.
+The test runs load the neuron information and the long range synapses.
+The long range synapses are approximately 96\% of synapses in the full circuit.
+Thus reducing the test to only the long range synapses is feasible.
+We extended the import module with a logging of imported synapses and the used memory after each iteration.
+We used a BGQ library (see Appendix \ref{bgqmemory}) to measure the current memory usage on each process.
+The runs on $6$ and $8$ racks executed successfully.
+The run on $4$ racks crashed before.
+It run out of memory.
 \begin{figure}[h!]
 \begin{center}
  \includegraphics[width=0.8\textwidth]{pgfplots/newconnections.pdf}
 \end{center}
-\caption{Measured new connections per node.
+\caption{Number of synapses on each node after the iteration over iterations.
+The solid, dotted and dashed lines represent the mean, minimum and maximum number of all nodes, respectively.
+The green lines show the measurements from a run on 8 racks, the blue of 6 racks and the red of 8 racks.
+The points represent the last iteration per run.
+Thus the run iterates $80$ times on $8$ racks, $107$ times on $6$ racks and $140$ times on $4$ racks.
+The numbers 1, 2 and 3 represent references of the mean, minimum and maximum value, respectively.
  }
 \label{fig:newconnections}
 \end{figure}
 Figure \ref{fig:newconnections} shows the number of new connections per node for the different runs.
-The vertical distance between the dashed and the dotted line reflects the imbalance of synapses between the nodes. Remarkable is the fact, that the imbalance is similar for the three different scales.
+The vertical distance between the dashed and the dotted line reflects the imbalance of synapses between the nodes.
+Remarkable is the fact, that the imbalance $||p_2-p_3||$ is similar for the three different scales.
+\begin{equation}
+	||r_2-r_3|| \approx ||g_2-g_3|| \approx ||b_2-b_3||
+\end{equation}
+$r_i$, $g_i$ and $b_i$ represent the red, green and blue dots, respectively.
 It enables a precise prediction of the needed memory per process.
 \begin{figure}[h!]
 \begin{center}
  \includegraphics[width=0.8\textwidth]{pgfplots/memory_plot.pdf}
 \end{center}
-\caption{Measured memory usage.
+\caption{Used memory* per node after the iteration over iterations.
+The solid, dotted and dashed lines represent the mean, minimum and maximum number of all nodes, respectively.
+The green lines show the measurements from a run on 8 racks, the blue of 6 racks and the red of 8 racks.
+The points represent the last iteration per run. Thus the run on 8 racks iterates 80 times, on 6 racks 107 times and on
+4 racks 140 times. The points 1, 2 and 3 represent references of the final mean, minimum and maximum value, respectively.
+The run on 4 racks ran out of memory.
+The thin red line represents an estimation for the mean value between up to 160 iterations.
+The black solid line illustrates the memory limit for each node on IBM Blue Gene /Q systems.
+The intersection point of the thin red line and the black solid line is references with point 1*(red).
  }
 \label{fig:memoryplot}
 \end{figure}
 Figure \ref{fig:memoryplot} shows the memory usage per node for the different runs.
 The black solid line illustrates the memory limit of each node of the IBM Blue Gene /Q.
-You can see that for 4 racks the full mouse brain model does not fit into memory.
-Even tough an imbalance compensation would not make the model fit. 
+You can see that for 4 racks the long range synapses of the full mouse brain model does not fit in memory.
+Even tough an imbalance compensation would not make the model fit on $4$ racks,
+because the needed memory line would cross the memory limit.
+A perfect compensation would result in the memory usage of the measured mean values.
+Thus the intersection point 1*(red) marks the critical point.
+
+Further, the measured values enable an approximation of the memory needed per synapse.
+The gradient of the mean used memory line divided by the gradient of the mean number of synapses line returns
+memory needed per synapse. This results in approximately $106$ Bytes per synapse.
 
 %\subsection{Long range connection generation}
 
