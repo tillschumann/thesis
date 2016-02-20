@@ -1,0 +1,32 @@
+\documentclass[border=10pt]{standalone}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{width=7cm,compat=1.8}
+\begin{document}
+
+%\pgfplotstableread{C4.dat}{\c4}
+
+%\usetikzlibrary{patterns}
+
+\begin{tikzpicture}
+\begin{axis}[
+    %title=Measured bandwidth,
+    xmin=0,
+    ymin=0,
+    %xmax=160,
+    xlabel={new connections per thread},
+    ylabel={time [ms]},
+    grid=major,
+    %legend entries={4 racks, min, max, 6 racks, min, max, 8 racks, min, max},
+    legend style={cells={anchor=west}},
+    legend pos = south east
+]
+\addplot[only marks, color=green] table [x index=0,y index=1,col sep=space] {dpc2.dat}; \addlegendentry{main iteration}
+\addplot[only marks, color=red] table [x index=0,y index=1,col sep=space] {dpc.dat};
+\addlegendentry{last iteration}
+					  
+
+\end{axis}
+\end{tikzpicture}
+\end{document}

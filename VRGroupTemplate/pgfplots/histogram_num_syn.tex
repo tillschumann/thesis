@@ -1,0 +1,30 @@
+\documentclass[border=10pt]{standalone}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{width=7cm,compat=1.8}
+\begin{document}
+
+\begin{tikzpicture}
+
+\begin{axis}[
+	ybar interval,
+	xmin=0,
+	xmax=1400000,
+	ymin=0,
+	%xmax=2000000
+	xtick={0,200000,400000,600000,800000,1000000,1200000,1400000},
+	%xticklabel interval boundaries,
+	x tick label style= {rotate=0,anchor=north east},
+	xlabel={new synapses},
+	ylabel={density},
+	]
+
+
+%\addplot table [x index=0,y index=1,col sep=space] {hg.dat};
+
+\addplot table [x index=0,y index=1,col sep=space] {hg.dat};
+
+\end{axis}
+\end{tikzpicture}
+\end{document}
