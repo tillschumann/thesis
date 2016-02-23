@@ -1,0 +1,114 @@
+%\documentclass[german, twoside, parskip]{VRThesis} % dies ist eine deutsche Diplomarbeit
+\documentclass[english,twoside, parskip]{VRThesis} % this is an english master thesis
+
+% replace this by the title of the thesis
+\title{This is the Title of my Thesis}
+% replace this by the authors name
+\author{Matthias Mustermann}
+% replace this by the date of issue (Abgabedatum), for PhD thesis date of the exam
+\date{\today}                 
+
+% options for master thesis and Diplomarbeit
+% Matrikelnummer, student ID
+\studentid{999 666} 
+\fieldofstudy{Informatik}
+%\fieldofstudy{Software Systems Engineering}
+\firstsupervisor{Prof. Dr. Torsten W. Kuhlen \\ Visual Computing Institute}
+%\firstsupervisor{Prof. C. Bischof, Ph.D. \\ Institute for Scientific Computing}
+\secondsupervisor{Univ.-Prof. Dr. A. Supervisor \\ Institute for Aplied Psychology}
+\tutor{Dipl.-Inform. Hans Tutor}
+
+% options for a PhD thesis
+%\academictitle{eines Doktors der Naturwissenschaften}
+%\academictitle{einer Doktorin der Naturwissenschaften}
+%\bornin{Bonn}
+%\firstsupervisor{Prof. C. Bischof, Ph.D.}
+%\secondsupervisor{Univ.-Prof. Dr. A. Supervisor}
+%\onlinesentence{}
+
+\addtolength{\oddsidemargin}{+.2in}
+\addtolength{\evensidemargin}{-.2in}
+
+\begin{document} 
+
+% generates the title page - use the proper one for your thesis
+%\maketitle
+\makecoverMaster % this is the thesis cover (a shorter version of the title page)
+\maketitleMaster % this is the thesis title page
+%\maketitlePhD
+%\maketitlePhDfinal
+
+% generates the statement (Erklärung) page for master thesis and Diplomarbeit
+\makestatement
+
+% generates the table of contents (Inhaltsverzeichnis)
+\tableofcontents
+
+\chapter{Einleitung}
+\section{Überblick}
+Dieser Text dient als Beispiel für das \LaTeX-Template der Virtual Reality Gruppe der RWTH Aachen. Er enthält außerdem einen kurzen Überblick über spezielle Formatierungskonventionen.
+
+Dir Vorgaben dieses Dokuments entsprechen weitgehend der KOMA-Script Klasse \texttt{scrbook}. Außerdem wurden einige spezielle Anpassungen für die VR-Gruppe vorgenommen.
+
+\section{Neue Befehle}
+Um ein einheitliches Layout der Arbeiten zu gewährleisten, stellt die Dokumentklasse \texttt{VRThesis} nicht nur einen einheitlichen Satzspiegel bereit, sondern auch spezielle Befehle für einheitliche Titelseiten. 
+
+\paragraph{Titel einer Diplomarbeit}
+Speziell für Studenten gibt es den Befehl \texttt{maketitleMaster} für Diplomarbeiten (deutsch) und Masterarbeiten (englisch), der ein einheitliches Layout für Titelblätter von Diplom- und Masterarbeiten bereitstellt. Vorher müssen folgende felder gesetzt werden
+\begin{itemize}
+\item \texttt{title} Titel der Arbeit
+\item \texttt{author} Name des Autors
+\item \texttt{studentid} Matrikelnummer des Autors
+\item \texttt{fieldofstudy} Studiengang, z.B. "`Informatik"' oder "`Software Systems Engineering"'
+\item \texttt{firstsupervisor} Erstgutachter inkl. seines Institutes
+\item \texttt{secondsupervisor} Zweitgutachter  inkl. seines Institutes
+\item \texttt{tutor} Name des Betreuers; Ein zweiter Betreuer kann angegeben werden, wenn dieser durch ein "`$\backslash \backslash$ \&"' vom ersten getrennt wird.
+\item \texttt{date} Tag der Abgabe
+\end{itemize}
+
+\paragraph{Titel für eine einzureichende Dissertationsschrift}
+Die Promotionsordnung des FB 1 der RWTH-Aachen sieht spezielle Angaben vor, die auf dem Titelblatt einer Dissertation vorhanden sein müssen, wenn diese eingereicht wird. Aus diesen Informationen generiert der Befehl \texttt{maketitlePhD} automatisch ein einheitliches Titelblatt, das den Vorgaben entspricht. Der Befehl übernimmt die folgenden Parameter (in der angegebenen Reihenfolge):
+\begin{itemize}
+\item \texttt{title} Titel der Arbeit
+\item \texttt{author} Name des Autors inklusive (aktuellem) akademischem Grad und ggf. Geburtsnamen
+\item \texttt{academictitle} Angabe des zu erlangenden Titels, z.B. "`eines Doktors der Naturwissenschaften"' oder "`einer Doktorin der Naturwissenschaften"'
+\item \texttt{bornin} Geburtsort des Kandidaten, ggf. nähere geografische Lage des Geburtsortes
+\end{itemize}
+
+\paragraph{Titel der Pflichtexemplare einer Dissertationsschrift}
+Die Pflichtexemplare sind nach einer bestandenen Doktorprüfung abzugenben. Auch hier gibt es spezielle Vorgaben, die sich von denen der einzureichenden Version unterscheiden. Diese werden vom Kommando \texttt{maketitlePhDfinal} verarbeitet. Zusätzlich zu den oben genannten Parametern müssen angegeben werden:
+\begin{itemize}
+\item \texttt{firstsupervisor} Erster Berichterstatter
+\item \texttt{secondsupervisor} Zweiter Berichterstatter
+\item \texttt{date} Datum der mündlichen Prüfung
+\end{itemize}
+Wird die Dissertation elektronisch veröffentlicht, muss der Satz "`Diese Dissertation ist auf den Internetseiten der Hochschulbibliothek online verfügbar."' hizugefügt werden.
+
+\chapter{Bemerkungen}
+
+PLEASE, read the documents l2tabu.pdf (or l2tabuEN.pdf), short-math-guide.pdf and scientific-english.pdf before you start writing your thesis.
+
+\section{Mathematische Formeln}
+Eine abgesetzte Formel wird mittels der Umgebung \texttt{displaymath} eingefügt. 
+\begin{displaymath}
+E=m\cdot c^2
+\end{displaymath}
+Die Verwendung von \$\$...\$\$ sollte vermieden werden, da es sich hierbei um einen "`Plain-TeX-Befehl"' handelt, der unter Anderem Absatzabstände nicht immer korrekt behandelt. 
+
+Will man mehrere Formeln untereinander setzen, so nutzt man dafür nicht, wie bisher, die \texttt{eqnarray}-Umgebung, sondern besser die Umgebung \texttt{align}.
+\begin{align}
+\frac{dx}{dt}&=v(x,t) \\
+x(t_0) &= x_0
+\end{align}
+
+
+\section{Abbildungen}
+Ein einfache Abbildung zeigt \ref{fig::Logo}. Hier ist darauf zu achten, dass die Zentrierung durch \texttt{\\centering} erreicht wird und nicht mittels der \texttt{center}-Umgebung.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=50mm]{rwth_vci_bild_schwarz_grau_cmyk}
+\caption{\label{fig::Logo} Das Logo der Virtual Reality Group, RWTH Aachen University.}
+\end{figure}
+
+
+\end{document} 

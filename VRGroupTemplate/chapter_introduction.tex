@@ -1,0 +1,455 @@
+% Einführungskapitel
+%
+
+\chapter{Introduction}
+
+In 2014, the Neurorobotics team at the Blue Brain Project (BBP \cite{bbp}), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
+of a mouse brain from data provided by the Allen Institute for Brain Science \cite{AllenInstitute}.
+Using the Neural Simulation Tool NEST \ref{NEST}, the BBP Neurorobotics team was able to simulate a
+scaled-down model of a mouse brain on a laptop computer, paving the way towards
+ a mouse brain that can interact with an environment. In order to make full-scale implementation of
+the mouse brain model possible, a large scale of resources with low latency requirements is needed. Today, only modern supercomputers can provide these resources.
+The current functionality of NEST generates large neuronal networks on a supercomputer based only random distributions, not yet from experimental data contained in brain atlases.
+The purpose of this thesis is to develop the means to fully model a mouse brain from experimental data using NEST software on available supercomputing architectures.
+\newpage
+
+\section{Brain simulation}
+\section{Anatomy of the brain}
+ 
+ The human brain is the main part of the central nervous system
+ which consists of the spinal cord, sensory organs
+ and all the nerves that connect these organs with the rest of the body.
+ These organs are responsible for the control and communication within the body.
+ The nervous system is the most complex system of the human body with respect to functionality.
+ It contains billions of nerve and glia cells. 
+ The nerve cells are connected via synapses to a complex network.
+ Electrical pulses among neurons transmit information through this network.
+ Glia cells help maintain the right concentration of chemical substances in the
+ extracellular space around neurons and provide supporting structures for the
+ growth of neurons and for their spatial arrangement.
+  \subsection{Macroscopic structure}
+  \label{sec:Macroscopicstructure}
+  The anatomy of the brain varies in cell density and functionality.
+  The outer layer is called gray matter,the color is caused by the high density of nerve cells.
+  Underneath the gray matter is the white matter, which 
+ mainly consists of connection fibers of the nerve cells.
+ The thalamus is located in the middle of the brain and functions as a relay station between the sensory system and the cortical system for cognitive and motor control.
+  \begin{figure}[!htbp]
+  %\subfigure[A cross-section of the human brain shows different densities of nerve cells \cite{CN}.]{
+  %\includegraphics[scale=0.3]{pictures/Aufbau1.png}
+  %\label{Aufbau1}
+  %}
+  \hfill
+  \subfigure[A general map of the human brain assigns parts of the gray matter to fuctionalities \cite{CN}.]{
+  \includegraphics[scale=0.5]{pictures/Aufbau2.png}
+  \label{Aufbau2}
+  }
+  \hfill
+  \subfigure[The vertical structure of the gray matter shows six layers \cite{CN}.]{
+  \includegraphics[scale=0.5]{pictures/mikro_aufbau.png}
+  \label{mikroaufbau}
+  }
+  \caption{Macroscopic structure of the human brain.}
+  \end{figure}
+ Due to the high density of nerve cells, the gray matter is the main source of information processing of the brain.
+ Functionalities of the grey matter can still be assigned to parts of the brain as shown in Figure \ref{Aufbau2}.
+  However, the number of nerve cells (neurons), the number of connections (synapses) and the structure differs from person to person.
+  On average the number of neurons and synapses in the human brain is around $8*10^{10}$ and $1*10^{15}$, respectively. 
+  The connections of each neuron is dynamic and can change over time. \\
+  Examining  vertical structure of the cortex,
+  the gray matter can be partitioned in six layers as shown in figure \ref{mikroaufbau}.
+  The cells in each layer have similar cell type, connections to other layers and connections to the thalamus and other parts.
+  %-forebrain(anterior part of the brain)
+  %-neocortex(surface of the mammalian brain, gray)
+ 
+ 
+  \newpage
+  \subsection{Microscopic structure}
+  The nerve cells are tiny structures that are connected to each other.
+  In order to fully understand the brain, it is necessary to take a deeper look at the nerve cells.
+  There are different cell types in a brain. They vary in structure and size.
+  Pyramidal, spiny stellate and smooth stellate cells occur most often.
+  
+  Figure \ref{Corticalneurons} depicts a typical neuron.
+  It contains the soma (the cell body) dendrites and axons.
+  Electrical pulses are transported from the dendrites to the soma.
+  In case of a spike, an electrical impulse is forwarded through the axon.
+  These axons are connected via synapses to further dendrites.
+  Electrical impulses are transmitted via either chemical reactors (chemical synapses)
+  or electrical contacts (gap junctions) between the axons and dendrites.
+  \begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.65]{pictures/Complete_neuron_cell_diagram_en.eps}
+    \caption{Microscopic structure of a neuron. \cite{neuronpic}}
+    \label{Corticalneurons}
+  \end{figure}
+  There are excitatory and inhibitory neurons.
+  The excitatory neurons excite connected neurons, 
+  in contrast the inhibitory neurons inhibit connected neurons.
+  % replace ÒfollowingÓ for the actual neuron, do excitatory neurons excite inhibitory neurons or other excitatory? 
+
+  Via electrical currents, the connected neurons influence the membrane potential of each neuron.
+  For example, Figure \ref{membrane_potential} shows the membrane potential plotted over time.
+  Chemical processes inside the neuron generate a spike if the membrane potential reaches a specific electrical level called the threshold.  
+  As shown in Figure \ref{membrane_potential} spikes are peaks in the membrane potential.  
+  
+  %-cortical neurons
+  %-different cells: pyramidal, spiny stellate, smooth stellate
+  %-cortical layers
+  %-synapses
+  
+  %-10e12 neurons in the human brain
+  \begin{figure}[!htbp]
+  \subfigure[Membrane potential of a neuron over the time.
+  The peaks are called spikes.
+  There are four spikes in the time span shown.
+  The firing threshold of the cell is at about 58 mV \cite{CN}.]{
+  \includegraphics[scale=0.36]{pictures/membrane_potential.png}
+  \label{membrane_potential}
+  }
+  \hspace{0.5cm}
+  \subfigure[The dot plot shows spikes of each neuron over time. On the y-axis there are the neurons number.
+  The histogram in the lower panel sums up all spikes for each time bin. \cite{CN}]{
+  \includegraphics[scale=0.36]{pictures/spike_plot.png}
+  \label{spikeplot}
+  }
+  \end{figure}
+  
+  In order to analyze the membrane potential more objectively it is reduced to timings of the spikes.
+  For multiple neuron the spike timings in a dot plot can be visualized as in Figure \ref{spikeplot}.
+  One can get an overview of the activity in a whole neuronal network if the spike sums are
+  plotted (summed up spikes for each time bin) in a histogram (bottom row of figure \ref{spikeplot}).
+   
+\section{Virtual mouse}
+The HBP neurorobotics team built a model mouse brain and a model mouse body, integrating them both into a single simulation and providing a simplified but comprehensive model of how the body and the brain interact with each other. It gives the possibility to
+replicate sensory input and motor output using the mouse models.
+The goal is to build the tools and the infrastructure that will allow researchers to perform virtual experiments on mice and other virtual organisms.
+
+The HBP scientists used biological data of the mouse brain collected by the Allen Brain Institute in Seattle and the Biomedical Informatics Research Network in San Diego. These data contain detailed information about the position of the mouse brain's 75 million neurons and the connections between different regions of the brain. They integrated this information with complementary data on the shapes, sizes and connectivity of specific types of neurons collected by the Blue Brain Project in Geneva. A simplified version of the virtual mouse brain (just 200,000 neurons) was then mapped to different parts of the mouse body, including the mouse's spinal cord, whiskers, eyes and skin. For instance, touching the mouse's whiskers activated the corresponding parts of the mouse sensory cortex.\cite{virtualmouse}
+	
+\section{Allen Brain Atlas}
+The Allen Institute for Brain Science provides a high-resolution map of neural connections in the mouse brain.
+   It contains several injection experiments (see Figure \ref{fig:atlas}). The provided datasets of the experiments 
+   contains a 3D image of cell injection and a 3D image of its axonal projection labelled by viral
+   tracers.
+   
+   \begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[Injection sites - showing all available experiments]{%
+            \label{fig:allInjections}
+            \includegraphics[width=0.4\textwidth]{pictures/connectionBrowser_allinjections.png}
+        }
+        \hspace{1cm}
+        \subfigure[Projection density of one experiment]{%
+            \label{fig:oneProjection}
+            \includegraphics[width=0.32\textwidth]{pictures/connectionBrowser_oneinjections.png}
+       }
+   	\end{center}
+    	\caption{%
+         Illustration of the given experiments and the projection image of an example experiment.
+   		 It gives an insight into the synaptic structure of the whole brain. The colors are
+   		 inverted to enhance the visibility.
+     }%
+   \label{fig:atlas}
+   \end{figure}
+   The images provide connection information between neurons all over the brain.
+   The extracted connectivity information is used to build a long range connectivity inside
+   the mouse brain model.
+   \begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[Illustration injection]{%
+           \label{fig:allInjections}
+           \includegraphics[width=0.15\textwidth]{pictures/cg_illustration_injection.eps}
+        }
+        \hspace{0.5cm}
+        \subfigure[Illustration projection]{%
+            \label{fig:oneProjection}
+            \includegraphics[width=0.15\textwidth]{pictures/cg_illustration_projection.eps}
+       }
+       \hspace{0.5cm}
+       \subfigure[Merge experiment]{%
+            \label{fig:allInjections}
+            \includegraphics[width=0.15\textwidth]{pictures/cg_illustration_merge.eps}
+        }
+        \hspace{0.5cm}
+        \subfigure[Specify pre-synaptic and post-synaptic neurons]{%
+            \label{fig:oneProjection}
+            \includegraphics[width=0.15\textwidth]{pictures/cg_illustration_neurons.eps}
+       }
+    \end{center}
+    	\caption{%
+        Illustration of which neurons are selected inside the injection and the projection region.
+        Neurons inside the injected voxels are selected as pre-synaptic neurons.
+        Neurons inside the projection voxels, substracted by the injected voxels,
+        are selected as post-synaptic neurons.
+     }%
+   \label{fig:atlasvoxel}
+   \end{figure}
+
+The 3D images contain discrete voxelized density values.
+Most entries are zero. All entries which are above a given threshold are interpreted 
+as injected and projected voxels.
+Using a piecewise constant interpolation the values are assigned to each neuron.
+For one experiment pre-synaptic and possible post-synaptic neurons are specified (see Figure \ref{fig:atlasvoxel}).
+A set of experiments is used to connect neurons located at the injections
+to the neurons at the projections. Because multiple experiments have injected the same regions and therefore
+same neurons, for each neuron the experiment  which has the lowest total injection
+density (sum of all injection densities)is used.
+The algorithm iterates over all experiments and determines its
+total injection. Inside, it iterates over all injected voxels.
+Connections are generated for each neuron inside the voxel,
+if the total injection density of the experiment is smaller than 
+all used experiments before for these voxel.
+For each neuron $10,000$ (source neuron) connections are generated to neurons (target neurons) in the experiment projection area.
+	The target neurons are randomly (taking each probability value into account) picked
+	out of all possible neurons inside the projection area.
+	The delay is determined from on the distance of the source and target neuron.
+	Further parameters are determined with a specific direct function and a random variable.
+   
+   \begin{algorithm}
+	\KwData{Injection experiments}
+	\KwResult{Long range synapses}
+	\For{each experiment}{
+		identify the corresponding rAAV
+		\For{each injected voxel}{
+			\If{rAAV smaller than one used before}{
+				\For{each neuron n in voxel}{
+					Select all neurons in the projection area; \\
+					Assign each of them the normalized intensity value $D_i$ of the voxel they are situated in \\
+					Generate a random number P between 0 and 1; \\
+					Pick randomly a neuron i; \\
+					\If{$P < D_i$}{
+						Create an efferent synapse from the selected neuron to neuron $i$; \\
+						Assign synaptic parameters; \\
+					}
+					Repeat from step 4) until Nsy=10000 efferent synapses are assigned	;
+				}
+			}
+		}
+	}
+\label{alg2}
+\caption{Sequential long range connectivity generation using Allen Atlas data}
+\end{algorithm}
+   
+   \newpage
+\section{Blue Brain Project recipe}
+
+The Blue Brain Project was able to reconstruct a microcircuit of part of somatosensory cortex of a juvenile rat \cite{markram2015reconstruction}.
+Members of the Blue Brain Project presented a complementary algorithmic approach that reconstructs neuronal microcircuitry
+across all layers using available sparse data and that leverages biological principles and
+interdependencies between datasets to predict missing biological data.
+The algorithms with the available data form a recipe which is applied to the mouse
+brain model to estimate the short range connectivity inside the mouse neocortex.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.9]{pictures/BBPconnectionPropasMatrix.eps}
+\caption{(Left) Synapses per connection. A matrix of the average synapses per connection for multi-synapse connections formed between the 55 m-types.
+(Right) Connection probabilities. A matrix of average connection probabilities within 100 mm.}
+\label{BBPconnectionPropasMatrix}
+\end{figure}
+The recipe is mainly based on connection probabilities of different neuron types inside the somatosenory cortex.
+To a given point neuron cloud with neuron type information the recipe returns synaptic
+connection details (e.g matrices in Figure \ref{BBPconnectionPropasMatrix} shows the number of connections and connection probability between two neurons concerning their \emph{m-type}), which are used to extent the mouse brain model with short range connectivity. 
+\begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[3D visualization of a reconstructed mouse
+isocortical column that has a similar neuron density as the original Blue Brain Project column]{%
+            \label{fig:shortColumn}
+            \includegraphics[width=0.22\textwidth]{pictures/g3111.png}
+        }
+        \hspace{0.5cm}
+        \subfigure[3D visualization of the reconstructed mouse
+isocortical column inside a point neuron model of the mouse brain. ]{%
+            \label{fig:shortColumnInCircuit}
+            \includegraphics[width=0.34\textwidth]{pictures/column_in_brain_4_edit.png}
+       } 
+    	   \end{center}
+    	\caption{ Illustration of the reconstructed mouse isocortical column.
+    	Layers 1, 2/3, 4, 5 and 6 are shown in different colors.
+     }%
+   \label{fig:atlas}
+   \label{fig:shortColumnInCircuit}
+\end{figure}
+The given generation script loads needed neuron parameters (layer, m-type,
+e-type, coordinates,..) from an HDF5 file (see \ref{fig:allInjections}).
+After that it iterates over all neurons inside the neocortex region
+(neurons which are in layer 1 to 6 specified with the parameter layer).
+For each neuron (source neuron) all neurons (target neurons) inside its surrounded column
+(see geometrical illustration in Figure \ref{fig:shortColumn} and voxelized 2D illustration in
+Figure \ref{illcolumn}) are selected.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=2.5]{pictures/illustration_shortrange_select.eps}
+\caption{Illustration of column neuron selection (green/border) for a pre-synaptic neuron (blue).
+The neurons are stored in lists per voxel to simply the search by position.
+The grid represents the voxels. The dotted line represents the search region.
+The search algorithm iterates over all neurons inside the blue region.
+The dashed line represents the column.}
+\label{illcolumn}
+\end{figure}
+A random number $P$ is generated and a neuron is picked randomly from the selection.
+The neurons acceptance value $D_i$ is determined from the given BBP matrices.
+If it is below $P$ a connection between the two neurons is created.
+Therefore all synaptic parameters are determined from the BBP matrices.
+   \begin{algorithm}[ht!]
+	\KwData{BBP matrices}
+	\KwResult{Short range synapses}
+	\For{each neuron n}{
+		Select all neurons in neuron $i$ column area; \\
+		Generate a random number P between 0 and 1; \\
+		Pick randomly a neuron j from selected area; \\
+		Determine $D_i$ based on BBP matrices (neuron i properties, neuron j properties); \\
+		\If{$P < D_i$}{
+			Create an efferent synapse from neuron $i$ to neuron $j$; \\
+			Assign synaptic parameters; \\
+		}
+	}
+\caption{Short range connection generation using Blue Brain Project recipe}
+\label{alg:BBP}
+\end{algorithm}
+\newpage
+\section{Neural Simulation Tool}
+\label{NEST}
+Neural Simulation Tool, NEST, is a simulator that spikes neural network models that focuses on the dynamics, size and structure of neural systems rather than on the exact morphology of individual neurons. The development of NEST is coordinated by the NEST Initiative. NEST is used to model networks with simplified morphologies of spiking neurons of any size. For example it is used with
+models of information processing e.g. in the visual or auditory cortex of mammals, models of network activity dynamics, e.g. laminar cortical networks or balanced random networks and models of learning and plasticity. A NEST simulation tries to follow the logic of an electrophysiological experiment that takes place inside a 
+computer in which the neural system to be investigated must be defined by the experimenter. 
+The definition is based on a number of neurons with parameters and connections between these neurons. NEST supports the generation based on probabilistic values. The stochastic settings of a neuronal network can be used to create its artificial copy inside of NEST. To manipulate or observe the network dynamics, the experimenter can define devices which represent the various instruments (for measuring and stimulation) found in an experiment. These devices write their data either on to the memory or to the file. 
+
+NEST features the execution on parallel environments (e.g. super computers as JUQUEEN).
+Therefore it uses the MPI (Message Passing Interface \cite{snir1998mpi}) standard for interprocess communication.
+For thread parallelism it supports both PThreads\cite{nichols1996pthread} and OpenMP\cite{dagum1998openmp}.
+
+
+\newpage
+\subsection{Data structure}
+\label{sec:NEST:Datastructure}
+NEST keeps the full neuronal network model in memory
+and distinguishes between nodes and connections.
+Nodes and connections represent neurons and synapses, respectively.
+Nodes hold model parameters.
+However synapses store model parameters, and the pre-synaptic and post-synaptic neuron information, which each synapse connects.
+
+In multi process environments nodes are distributed on processes.
+For multi threaded environments each thread processes a subset of nodes.
+Each process holds a list of meta information of all neurons.
+However the model objects are only stored on one process.
+Node $i$ is stored on process $p_i$ (\ref{eq:processfromid}) and is processed by thread $t_i$ (\ref{eq:threadfromid}).
+\begin{equation}
+ 	p_i = i \bmod N_{processes}
+ 	\label{eq:processfromid}
+\end{equation}
+\begin{equation}
+ 	t_i = \frac{i}{N_{processes}} \bmod N_{threads}
+ 	\label{eq:threadfromid}
+\end{equation}
+$N_{processes}$ and $N_{threads}$ corresponds to the number of processes and number of threads, respectively.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.3]{pictures/NeuronsOnNodes.png}
+\caption{Illustration how NEST distributes nodes on processes based on their id}
+\label{fig:NeuronsOnNodes}
+\end{figure}
+Figure \ref{fig:NeuronsOnNodes} illustrate the distribution of node model objects on
+the different processes.
+Synapses are stored on the thread (or process for environments without thread parallelisms) where the post-synaptic node is placed.
+Each thread holds a sparse table \ref{fig:NESTsynstorage} containing all
+local synapses.
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.9]{pictures/NEST_syn_storage.eps}
+\caption{A sparse table
+(dark orange structure and attached light orange boxes with arrows) holds the
+thread-local connection objects (pink squares) sorted according to the global
+index of the associated pre-synaptic node. The sparse table consists of $n_{gr}$
+equally-sized groups, where each group maintains a bit field (tiny squares)
+with one bit for each global node index in the group indicating the presence
+or absence of local targets. If a particular node has local targets, the sparse
+table stores a pointer to an additional inner data structure (light orange)
+Auto-adjusting connection infrastructure of NEST.
+Case 1: A particular node has less than $K_{cutoff}$
+local connections and all are of the same type. A lightweight inner structure
+(HomConnector) stores the connection objects in a fixed-size array.
+A particular node has at least $K_{cutoff}$
+local connections and all are of the same type. A HomConnector stores the
+connection objects in a dynamically-sized vector (copied and simplified from \cite{kunkel2014spiking}).
+}
+\label{fig:NESTsynstorage}
+\end{figure}
+
+\newpage
+\section{Visualization}
+To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed. 
+Different types of methods allow to extract stochastic characteristics from spike trains.
+Besides this visualization of the spike trains taking their location into account,
+it can give an impression of the activity.
+
+\begin{itemize}
+      \item Visualization tools available
+      \item BBP
+      \item ViSNEST
+\end{itemize}
+
+\section{Parallel IO}
+Full-scale data-driven simulation require big data. 
+Therefore, efficient data processing and capabilities of the data format is important. 
+To build a large scale neuronal network from point to point connectivity a large bandwidth to acess the data from disks is needed.
+For a simulation of the mouse brain model $16$ TB of data have to be loaded from disk.
+Imprecise parallel IO access can lower the resulting bandwidth.
+Thus, the distribution of the parallel loading has to be carefully chosen. HDF5 allows parallel access to one file.
+It uses MPI-IO to manage parallel read and write operations. Further HDF5 is a self descriptive format and therefore easy to handle
+and exchanged between different platforms. Previously reduced circuits are stored in HDF5 file format by the neurorobotics team, 
+because of its easy to use Python interface. On a personal computer a light weight python implementation allows to load a given
+circuit from HDF5 to NEST, using HDF5 Python interface with the NEST python interface. Therefore selecting the same or similar data 
+format is preferred to reduce the number of needed adaptations of scripts.
+
+The Hierarchical Data Format (HDF) implements a model for managing and storing data. The model includes an abstract data model and an abstract storage model (the data format), and libraries to implement the abstract model and to map the storage model to different storage mechanisms. The HDF5 Library provides a programming interface  for an implementation of the abstract models.
+The main entities of data models are datasets.
+A dataset is a multidimensional (rectangular) array of data elements.
+The data elements have to be from the same data format.
+The data formats can be a native format as INT, DOUBLE, or a compound of data formats.
+To map the storage model of a dataset to memory, hyperslab selections \ref{fig:hdf5hyperslabs} provide access to subsets of the multidimensional 
+array.
+\begin{figure}[ht!]
+   	\begin{center}
+        \subfigure[Hyperslab selection of HDF5 in a single dataset.
+        Hyperslabs allow to only access specific entries in at dataset.]{%
+            \label{fig:shortColumn}
+            \includegraphics[scale=0.8]{pictures/HDF5Hyperslab.eps}
+        }
+        \hspace{0.5cm}
+        \subfigure[Hyperslab selections are used to distribute loaded data on the processes. \emph{N1}, \emph{N2} and \emph{N3} correspond to the nodes 1, 2 and 3, respectively.]{%
+            \label{fig:shortColumnInCircuit}
+            \includegraphics[scale=0.8]{pictures/HDF5Parallel.eps}
+            \label{fig:hdf5hyperslabs:parallel}
+       }
+  
+    	   \end{center}
+    	\caption{%
+        Illustration of the hyperslab functionallity of HDF5 and how it can be used for data distribution.
+     }%
+   \label{fig:hdf5hyperslabs}
+   \end{figure}
+Parallel HDF5 is a configuration of the HDF5 library which lets you share open files across multiple parallel processes. It uses the MPI (Message Passing Interface) standard for interprocess communication. The parallel HDF5 library offers functionality to read and write from file collectively and independently.
+Using hyperslab selections each process can access separate parts of a dataset \ref{fig:hdf5hyperslabs:parallel}.
+
+\section{Task description}
+In the second chapter will expand on the implementation, which enables the simulation of a full mouse brain model with NEST.
+The described algorithm in chapter 1 was developed to create mouse brain models at smaller scale.
+A well tested model of $200,000$ neurons, which corresponds to $0.3\%$ of the full model, should be scaled up to $75,000,000$ neurons.
+Using the given implementation to generate the full model is not feasible, because of a lack of efficiency of the given implementations.
+Further, a sequential approach is not possible in current computer architectures.
+Therefore the sequential algorithms are parallized and implemented in \emph{C++}.
+%paralyzed or paralleled? 
+
+The neuronal simulator does not support the loading of large models.
+Therefore the neuronal simulator is extended with a new import module.
+Data formats are proposed, which provide all necessary requirements for storing
+the generated circuit
+and importing the data by the neuronal simulator.
+
+The work detailed in this thesis includes: Defining a data format, rewriting the generation programs and extending the neuronal simulator with an import module.
+Further, debugging and testing of the generated model and its simulation face new requirements.
+%tackle new requirements? i donÕt get this
+The work was done as part of the high performance computing team of the Blue Brain Project in close collaboration with Csaba Eroe and the visualization teams from the Blue Brain Project and the IT-Center Aachen.
+New model validation techniques had to be developed and are partly shown in the following chapters.
+

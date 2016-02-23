@@ -1,0 +1,106 @@
+%\documentclass[german, twoside, parskip]{VRThesis} % dies ist eine deutsche Diplomarbeit
+\documentclass[english,twoside, parskip]{VRThesis} % this is an english master thesis
+
+% replace this by the title of the thesis
+\title{Simulating the mouse brain model constructed from Allen Institute for Brain Science data on the Blue Brain 4}
+% replace this by the authors name
+\author{Till Schumann}
+% replace this by the date of issue (Abgabedatum), for PhD thesis date of the exam
+\date{\today}                 
+
+% options for master thesis and Diplomarbeit
+% Matrikelnummer, student ID
+\studentid{293576} 
+\fieldofstudy{Computational Engineering Science}
+%\fieldofstudy{Software Systems Engineering}
+\firstsupervisor{Prof. Dr. Torsten W. Kuhlen \\ Visual Computing Institute}
+%\firstsupervisor{Prof. C. Bischof, Ph.D. \\ Institute for Scientific Computing}
+\secondsupervisor{Prof. Dr. Markus Diesmann \\ Institute for Computational Neuroscience}
+\tutor{Dr. Fabien Delalondre}
+
+% options for a PhD thesis
+%\academictitle{eines Doktors der Naturwissenschaften}
+%\academictitle{einer Doktorin der Naturwissenschaften}
+%\bornin{Bonn}
+%\firstsupervisor{Prof. C. Bischof, Ph.D.}
+%\secondsupervisor{Univ.-Prof. Dr. A. Supervisor}
+%\onlinesentence{}
+
+\addtolength{\oddsidemargin}{+.2in}
+\addtolength{\evensidemargin}{-.2in}
+
+\usepackage{url}
+\usepackage{subfigure}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{caption}
+%\DeclareCaptionFont{white}{\color{white}}
+%\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
+%\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+
+
+
+\usepackage[]{algorithm2e}
+\usepackage{pgfplots}
+
+\begin{document} 
+
+% generates the title page - use the proper one for your thesis
+%\maketitle
+\makecoverMaster % this is the thesis cover (a shorter version of the title page)
+\maketitleMaster % this is the thesis title page
+%\maketitlePhD
+%\maketitlePhDfinal
+
+\section*{Abstract}
+
+In 2014, the Neurorobotics team of the Blue Brain Project (BBP), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
+of a mouse brain from data provided by the Allen Institute for Brain Science (Provide reference of Allen Institute).
+Using NEST software, the BBP Neurorobotics team was then able to simulate a
+scaled-down model of the mouse brain on a laptop computer, paving the way towards
+making a mouse brain interact with an environment. A full-scale implementation of
+the mouse brain model is possible, but requires the of large scale resources with low latency requirements only modern supercomputers can provide.
+The current functionality of NEST supports  generating large neuronal networks
+on a super computer based an random distributions but not yet from experimental data contained in brain atlases. 
+We suggest as part of this thesis to first develop the means to fully model a mouse brain from experimental data using NEST software on available supercomputing architectures.
+Building from this experience, we wish to work on accelerating NEST computation up to real time so that the study of mouse brain plasticity becomes
+tractable. Leveraging from this new set of functionalities, we plan to derive network requirements for the HBP to drive the design
+of the HBP network across supercomputing centers so that both neurorobotics and interactive supercomputing applications can be demonstrated.
+The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
+a user interface based on its own description language \emph{SLI} and  and a Python interface.
+The new use case shall be integrated into the standard work flow of NEST.
+Besides the functionality in \emph{C++} the interfaces have to be extended.
+The difficulties of the network generation is based on a difference in 
+the NEST internal data structure and the data delivered by the Allen Institute.
+Connection information contains target and source neurons besides biochemical
+information of the synapses. Because of the in vitro injection methods the
+connection information maps the synapse from the source to the target neurons.
+For multi process simulations NEST distributes all neurons based on a modulo function 
+to the processes. Because of memory optimizations the synapses are only stored on the
+post synaptic process. This means that the connection information is stored
+on the process, where the target neuron is located. Therefore, a transformation of the given data is
+necessary. Preprocessing of the input data should be avoided as far as possible to capture
+future use cases.
+The resulting implementation shall load the connection information efficiently in parallel,
+distribute the synapse information to the post synaptic node and store it in
+the NEST data structure.
+Further requirements of the implementation are an efficient use of the available resources as
+memory and computation power. 
+
+% generates the statement (Erklärung) page for master thesis and Diplomarbeit
+\makestatement
+
+% generates the table of contents (Inhaltsverzeichnis)
+\tableofcontents
+
+
+\include{chapter_introduction}
+\include{chapter_implementation}
+\include{chapter_conclusions}
+\include{appendix_background}
+
+\bibliography{gesammelte_werke} %Literaturverzeichnis
+\bibliographystyle{abbrv}       %Stil des Literaturverzeichnisses (en)
+
+
+\end{document} 
