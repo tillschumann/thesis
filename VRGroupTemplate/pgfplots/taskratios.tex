@@ -1,4 +1,4 @@
-\documentclass[border=10pt]{standalone}
+\documentclass[]{standalone}
 \usepackage{pgfplots}
 \pgfplotsset{width=7cm,compat=1.8}
 \begin{document}
@@ -8,9 +8,10 @@
 	bar width=15pt,
 	%nodes near coords,
     enlargelimits=0.34,
-    legend style={at={(0.5,-0.20)},
+    legend style={at={(0.5,-0.30)},
       anchor=north,legend columns=-1},
     ylabel={percentage},
+    xlabel={numer of racks},
     symbolic x coords={1, 2, 4, 8, 
 		16, 28},
     xtick=data,
@@ -26,7 +27,7 @@
   (4,9.14300033) (8,6.11830068) (16,4.1997305) (28,2.50592143)};
 \addplot+[ybar] plot coordinates {(1,14.85205923) (2,16.64452011) 
   (4,17.26731758) (8,13.12810085) (16,9.64070852) (28,5.39761205)};
-\legend{\strut load, \strut alltoall,\strut det,\strut sort, \strut connect}
+\legend{\strut Read, \strut Alltoall,\strut Det. Node,\strut Sort, \strut Connect}
 \end{axis}
 \end{tikzpicture}
 \end{document}

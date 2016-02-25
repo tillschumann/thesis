@@ -14,6 +14,17 @@ The purpose of this thesis is to develop the means to fully model a mouse brain 
 \newpage
 
 \section{Brain simulation}
+Brain simulations is a interdisciplinary field that links the diverse fields 
+neuroscience, physics, computational biology and computer science together.
+With the fast development of computer systems and the growing availability of experimental data,
+computational simulations get more important. The computational power, which is available
+now and will be available in the next years, allows simulations of mammalian brains. Even a
+simulation of the human brain seems to be doable in the upcoming years. Modelling nervous
+systems helps us to understand the functionality of the human brain. It can help us to
+understand different kinds of diseases like Alzheimer?s and can help to develop novel therapies.
+Since the human brain is not accessible to direct experimental studies models of the brain are
+essential to understand its functionality.
+
 \section{Anatomy of the brain}
  
  The human brain is the main part of the central nervous system
@@ -244,7 +255,8 @@ brain model to estimate the short range connectivity inside the mouse neocortex.
 \centering
 \includegraphics[scale=0.9]{pictures/BBPconnectionPropasMatrix.eps}
 \caption{(Left) Synapses per connection. A matrix of the average synapses per connection for multi-synapse connections formed between the 55 m-types.
-(Right) Connection probabilities. A matrix of average connection probabilities within 100 mm.}
+(Right) Connection probabilities.
+A matrix of average connection probabilities within 100 mm. \cite{markram2015reconstruction}}
 \label{BBPconnectionPropasMatrix}
 \end{figure}
 The recipe is mainly based on connection probabilities of different neuron types inside the somatosenory cortex.
@@ -290,7 +302,7 @@ The dashed line represents the column.}
 A random number $P$ is generated and a neuron is picked randomly from the selection.
 The neurons acceptance value $D_i$ is determined from the given BBP matrices.
 If it is below $P$ a connection between the two neurons is created.
-Therefore all synaptic parameters are determined from the BBP matrices.
+Therefore, all synaptic parameters are determined from the BBP matrices.
    \begin{algorithm}[ht!]
 	\KwData{BBP matrices}
 	\KwResult{Short range synapses}
@@ -316,7 +328,7 @@ computer in which the neural system to be investigated must be defined by the ex
 The definition is based on a number of neurons with parameters and connections between these neurons. NEST supports the generation based on probabilistic values. The stochastic settings of a neuronal network can be used to create its artificial copy inside of NEST. To manipulate or observe the network dynamics, the experimenter can define devices which represent the various instruments (for measuring and stimulation) found in an experiment. These devices write their data either on to the memory or to the file. 
 
 NEST features the execution on parallel environments (e.g. super computers as JUQUEEN).
-Therefore it uses the MPI (Message Passing Interface \cite{snir1998mpi}) standard for interprocess communication.
+Therefore, it uses the MPI (Message Passing Interface \cite{snir1998mpi}) standard for interprocess communication.
 For thread parallelism it supports both PThreads\cite{nichols1996pthread} and OpenMP\cite{dagum1998openmp}.
 
 
@@ -331,27 +343,30 @@ However synapses store model parameters, and the pre-synaptic and post-synaptic 
 
 In multi process environments nodes are distributed on processes.
 For multi threaded environments each thread processes a subset of nodes.
-Each process holds a list of meta information of all neurons.
-However the model objects are only stored on one process.
-Node $i$ is stored on process $p_i$ (\ref{eq:processfromid}) and is processed by thread $t_i$ (\ref{eq:threadfromid}).
+Each rank holds a list of meta information of all neurons.
+However the model objects are only stored on one rank.
+Node $i$ is stored on rank $r_i$ (\ref{eq:processfromid}) and is processed by thread $t_i$ (\ref{eq:threadfromid}).
 \begin{equation}
- 	p_i = i \bmod N_{processes}
+ 	r_i = i \bmod N_{ranks}
  	\label{eq:processfromid}
 \end{equation}
 \begin{equation}
- 	t_i = \frac{i}{N_{processes}} \bmod N_{threads}
+ 	t_i = \frac{i}{N_{ranks}} \bmod N_{threads}
  	\label{eq:threadfromid}
 \end{equation}
-$N_{processes}$ and $N_{threads}$ corresponds to the number of processes and number of threads, respectively.
+$N_{ranks}$ and $N_{threads}$ corresponds to the number of ranks and number of threads, respectively.
 \begin{figure}[ht!]
 \centering
-\includegraphics[scale=0.3]{pictures/NeuronsOnNodes.png}
-\caption{Illustration how NEST distributes nodes on processes based on their id}
+\includegraphics[scale=0.4]{pictures/NESTonCluster.eps}
+\caption{Illustration how NEST distributes nodes on ranks based on their id.
+The squares represent the MPI ranks.
+The circles represent the neurons and their locality.
+The arrows represent synapses between the neurons.}
 \label{fig:NeuronsOnNodes}
 \end{figure}
-Figure \ref{fig:NeuronsOnNodes} illustrate the distribution of node model objects on
-the different processes.
-Synapses are stored on the thread (or process for environments without thread parallelisms) where the post-synaptic node is placed.
+Figure \ref{fig:NeuronsOnNodes} illustrates the distribution of node model objects on
+the different ranks.
+Synapses are stored on the thread (or rank for environments without thread parallelisms) where the post-synaptic node is placed.
 Each thread holds a sparse table \ref{fig:NESTsynstorage} containing all
 local synapses.
 \begin{figure}[ht!]
@@ -376,18 +391,18 @@ connection objects in a dynamically-sized vector (copied and simplified from \ci
 \label{fig:NESTsynstorage}
 \end{figure}
 
-\newpage
-\section{Visualization}
-To interpret the output of a neuronal simulation the spiking activity of the neurons is analyzed. 
-Different types of methods allow to extract stochastic characteristics from spike trains.
-Besides this visualization of the spike trains taking their location into account,
-it can give an impression of the activity.
+%\newpage
+%\section{Visualization}
+%To interpret the output of a neuronal simulation the spiking activity of the neurons is %analyzed. 
+%Different types of methods allow to extract stochastic characteristics from spike trains.
+%Besides this visualization of the spike trains taking their location into account,
+%it can give an impression of the activity.
 
-\begin{itemize}
-      \item Visualization tools available
-      \item BBP
-      \item ViSNEST
-\end{itemize}
+%\begin{itemize}
+%      \item Visualization tools available
+%      \item BBP
+%      \item ViSNEST
+%\end{itemize}
 
 \section{Parallel IO}
 Full-scale data-driven simulation require big data. 
@@ -399,7 +414,7 @@ Thus, the distribution of the parallel loading has to be carefully chosen. HDF5 
 It uses MPI-IO to manage parallel read and write operations. Further HDF5 is a self descriptive format and therefore easy to handle
 and exchanged between different platforms. Previously reduced circuits are stored in HDF5 file format by the neurorobotics team, 
 because of its easy to use Python interface. On a personal computer a light weight python implementation allows to load a given
-circuit from HDF5 to NEST, using HDF5 Python interface with the NEST python interface. Therefore selecting the same or similar data 
+circuit from HDF5 to NEST, using HDF5 Python interface with the NEST python interface. Therefore, selecting the same or similar data 
 format is preferred to reduce the number of needed adaptations of scripts.
 
 The Hierarchical Data Format (HDF) implements a model for managing and storing data. The model includes an abstract data model and an abstract storage model (the data format), and libraries to implement the abstract model and to map the storage model to different storage mechanisms. The HDF5 Library provides a programming interface  for an implementation of the abstract models.
@@ -417,7 +432,7 @@ array.
             \includegraphics[scale=0.8]{pictures/HDF5Hyperslab.eps}
         }
         \hspace{0.5cm}
-        \subfigure[Hyperslab selections are used to distribute loaded data on the processes. \emph{N1}, \emph{N2} and \emph{N3} correspond to the nodes 1, 2 and 3, respectively.]{%
+        \subfigure[Hyperslab selections are used to distribute loaded data on the ranks. \emph{N1}, \emph{N2} and \emph{N3} correspond to the nodes 1, 2 and 3, respectively.]{%
             \label{fig:shortColumnInCircuit}
             \includegraphics[scale=0.8]{pictures/HDF5Parallel.eps}
             \label{fig:hdf5hyperslabs:parallel}
@@ -430,7 +445,16 @@ array.
    \label{fig:hdf5hyperslabs}
    \end{figure}
 Parallel HDF5 is a configuration of the HDF5 library which lets you share open files across multiple parallel processes. It uses the MPI (Message Passing Interface) standard for interprocess communication. The parallel HDF5 library offers functionality to read and write from file collectively and independently.
-Using hyperslab selections each process can access separate parts of a dataset \ref{fig:hdf5hyperslabs:parallel}.
+Using hyperslab selections each rank can access separate parts of a dataset \ref{fig:hdf5hyperslabs:parallel}.
+
+\section{Available super computers}
+Within the master thesis the Blue Brain 4 and the JUQUEEN are available for usage.
+Both super computers are IBM Blue Gene/Q systems.
+The Blue Brain 4 system is a key scientific tool for the neuroscientific research done at EPFL within the Blue Brain project. \cite{BlueBrain4}
+JUQUEEN is an IBM Blue Gene/Q system which is installed and operated at JSC.
+Blue Brain 4 has 4 and JUQUEEN has 28 racks.
+Each rack contains 32 node boards with 32 compute nodes each. A node consists of a processor comprising 16 1.6 GHz 64 bit IBM PowerPC A2 cores.
+In order to use this architecture efficiently a hybrid parallelization strategy is necessary in general (e.g. MPI/OpenMP or MPI/Pthreads), especially since the main memory is limited to 16 GB per node (or 256 MB per process/thread with 4 processes/threads per core). \cite{JUQUEEN}
 
 \section{Task description}
 In the second chapter will expand on the implementation, which enables the simulation of a full mouse brain model with NEST.
@@ -438,11 +462,11 @@ The described algorithm in chapter 1 was developed to create mouse brain models 
 A well tested model of $200,000$ neurons, which corresponds to $0.3\%$ of the full model, should be scaled up to $75,000,000$ neurons.
 Using the given implementation to generate the full model is not feasible, because of a lack of efficiency of the given implementations.
 Further, a sequential approach is not possible in current computer architectures.
-Therefore the sequential algorithms are parallized and implemented in \emph{C++}.
+Therefore, the sequential algorithms are parallized and implemented in \emph{C++}.
 %paralyzed or paralleled? 
 
 The neuronal simulator does not support the loading of large models.
-Therefore the neuronal simulator is extended with a new import module.
+Therefore, the neuronal simulator is extended with a new import module.
 Data formats are proposed, which provide all necessary requirements for storing
 the generated circuit
 and importing the data by the neuronal simulator.

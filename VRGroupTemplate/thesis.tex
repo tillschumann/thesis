@@ -15,8 +15,9 @@
 %\fieldofstudy{Software Systems Engineering}
 \firstsupervisor{Prof. Dr. Torsten W. Kuhlen \\ Visual Computing Institute}
 %\firstsupervisor{Prof. C. Bischof, Ph.D. \\ Institute for Scientific Computing}
-\secondsupervisor{Prof. Dr. Markus Diesmann \\ Institute for Computational Neuroscience}
-\tutor{Dr. Fabien Delalondre}
+\secondsupervisor{Dr. Fabien Delalondre \\ Blue Brain Project}
+%\tutor{Dr. Hristo Iliev}
+\tutor{Dr. Hristo Iliev}
 
 % options for a PhD thesis
 %\academictitle{eines Doktors der Naturwissenschaften}
@@ -38,6 +39,8 @@
 %\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
 %\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
 
+\usepackage{longtable}
+
 
 
 \usepackage[]{algorithm2e}
@@ -52,8 +55,12 @@
 %\maketitlePhD
 %\maketitlePhDfinal
 
-\section*{Abstract}
+% generates the statement (Erklärung) page for master thesis and Diplomarbeit
+\makestatement
 
+\null\newpage
+\pagenumbering{roman}
+\section*{Abstract}
 In 2014, the Neurorobotics team of the Blue Brain Project (BBP), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
 of a mouse brain from data provided by the Allen Institute for Brain Science (Provide reference of Allen Institute).
 Using NEST software, the BBP Neurorobotics team was then able to simulate a
@@ -87,18 +94,53 @@ the NEST data structure.
 Further requirements of the implementation are an efficient use of the available resources as
 memory and computation power. 
 
-% generates the statement (Erklärung) page for master thesis and Diplomarbeit
-\makestatement
-
 % generates the table of contents (Inhaltsverzeichnis)
 \tableofcontents
 
-
+\clearpage
+\setcounter{page}{1}
+\pagenumbering{arabic}
 \include{chapter_introduction}
 \include{chapter_implementation}
 \include{chapter_conclusions}
 \include{appendix_background}
+\chapter{Symbol list}
+\begin{longtable}[l]{p{50pt} p{400pt}}
+\textbf{Symbol}	 & \textbf{Description} \\
+$N_{ranks}$	 & number of ranks\\
+$N_{threads}$ & number of threads per rank\\
+$N_{neurons}$ & number of neurons\\
+$N_{params}$ & number of parameters\\
+$N_{block}$ & entries inside of block\\
+$M_{max}$ & maximal memory consumption\\
+$m_{synapse}$ & memory consumption of a synapse object\\
+$r_i$ & rank correspond to neuron $i$\\
+$t_i$ & thread correspond to thread $i$\\
+$K_{cuttoff}$ & cutoff parameter for number of in-coming synapses per neuron\\
+$T$ & wall-clock time of the read step\\
+$L$ & wall-clock time of one iteration\\
+$L_{sub}$ & wall-clock time of \emph{sub} in one iteration\\
+$L_{estimate}$ & estimation of the wall-clock time of one iteration\\
+$P_{x,y,z}$ & projection density of voxel with coordinates x,y,z\\
+$N_{x,y,z}$ & number of neurons inside voxel with coordinates x,y,z\\
+$t_{sim}$ & biological time inside simulation
+\end{longtable}
 
+\chapter{Acronym list}
+\begin{longtable}[l]{p{50pt} p{400pt}}
+\textbf{Symbol}	 & \textbf{Description} \\
+NEST	 & Neuronal Simulation Tools\\
+SLI	 & SLI is the simulation language interface of NEST. It is a stack language where each command
+expects to find its arguments on the stack.\\
+HDF & Hierarchical Data Format \\
+HBP & Human Brain Project \\
+BBP & Blue Brain Project \\
+CSCS & Swiss National Supercomputing Center \\
+Blue Gene 4 & super computer at CSCS \\
+JSC & Forschungszentrum J\"{u}lich \\
+JUQUEEN & super computer at JSC \\
+IO & input or output operation \\
+\end{longtable}
 \bibliography{gesammelte_werke} %Literaturverzeichnis
 \bibliographystyle{abbrv}       %Stil des Literaturverzeichnisses (en)
 
