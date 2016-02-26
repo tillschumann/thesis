@@ -15,9 +15,10 @@
 %\fieldofstudy{Software Systems Engineering}
 \firstsupervisor{Prof. Dr. Torsten W. Kuhlen \\ Visual Computing Institute}
 %\firstsupervisor{Prof. C. Bischof, Ph.D. \\ Institute for Scientific Computing}
-\secondsupervisor{Dr. Fabien Delalondre \\ Blue Brain Project}
+\secondsupervisor{Prof. Markus Diesmann \\ Computational and Systems Neuroscience}
 %\tutor{Dr. Hristo Iliev}
 \tutor{Dr. Hristo Iliev}
+\extutor{Dr. Fabien Delalondre}
 
 % options for a PhD thesis
 %\academictitle{eines Doktors der Naturwissenschaften}
@@ -45,6 +46,7 @@
 
 \usepackage[]{algorithm2e}
 \usepackage{pgfplots}
+\usepackage{textcomp}
 
 \begin{document} 
 
@@ -61,20 +63,16 @@
 \null\newpage
 \pagenumbering{roman}
 \section*{Abstract}
-In 2014, the Neurorobotics team of the Blue Brain Project (BBP), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
-of a mouse brain from data provided by the Allen Institute for Brain Science (Provide reference of Allen Institute).
-Using NEST software, the BBP Neurorobotics team was then able to simulate a
+In 2014, the Neurorobotics team of the Blue Brain Project\cite{bbp} (BBP), project of the Ecole Federale Polytechnique Federale de Lausanne (EPFL), successfully produced a point-neuron model
+of a mouse brain from data provided by the Allen Institute for Brain Science\cite{AllenInstitute}.
+Using NEST\cite{gewaltig2007nest} software, the BBP Neurorobotics team was then able to simulate a
 scaled-down model of the mouse brain on a laptop computer, paving the way towards
 making a mouse brain interact with an environment. A full-scale implementation of
-the mouse brain model is possible, but requires the of large scale resources with low latency requirements only modern supercomputers can provide.
+the mouse brain model is possible, but requires the resources of large scale resources with low latency requirements only modern supercomputers can provide.
 The current functionality of NEST supports  generating large neuronal networks
-on a super computer based an random distributions but not yet from experimental data contained in brain atlases. 
-We suggest as part of this thesis to first develop the means to fully model a mouse brain from experimental data using NEST software on available supercomputing architectures.
-Building from this experience, we wish to work on accelerating NEST computation up to real time so that the study of mouse brain plasticity becomes
-tractable. Leveraging from this new set of functionalities, we plan to derive network requirements for the HBP to drive the design
-of the HBP network across supercomputing centers so that both neurorobotics and interactive supercomputing applications can be demonstrated.
+on a super computer based an random distributions but not yet from big experimental data contained in brain atlases.
 The neuronal spiking network simulator NEST is developed in \emph{C++} and delivers
-a user interface based on its own description language \emph{SLI} and  and a Python interface.
+a user interface based on its own description language \emph{SLI} and a Python interface.
 The new use case shall be integrated into the standard work flow of NEST.
 Besides the functionality in \emph{C++} the interfaces have to be extended.
 The difficulties of the network generation is based on a difference in 
@@ -97,14 +95,23 @@ memory and computation power.
 % generates the table of contents (Inhaltsverzeichnis)
 \tableofcontents
 
-\clearpage
-\setcounter{page}{1}
-\pagenumbering{arabic}
-\include{chapter_introduction}
-\include{chapter_implementation}
-\include{chapter_conclusions}
-\include{appendix_background}
-\chapter{Symbol list}
+%\listoffigures
+\cleardoublepage
+% \phantomsection
+\addcontentsline{toc}{chapter}{\listfigurename}
+\listoffigures
+
+
+%\listoftables
+\cleardoublepage
+% \phantomsection
+\addcontentsline{toc}{chapter}{\listtablename}
+\listoftables
+
+\cleardoublepage
+% \phantomsection
+\addcontentsline{toc}{chapter}{List of Symbols}
+\chapter*{List of Symbols}
 \begin{longtable}[l]{p{50pt} p{400pt}}
 \textbf{Symbol}	 & \textbf{Description} \\
 $N_{ranks}$	 & number of ranks\\
@@ -115,32 +122,48 @@ $N_{block}$ & entries inside of block\\
 $M_{max}$ & maximal memory consumption\\
 $m_{synapse}$ & memory consumption of a synapse object\\
 $r_i$ & rank correspond to neuron $i$\\
+$r_{me}$ & own rank id $i$\\
 $t_i$ & thread correspond to thread $i$\\
 $K_{cuttoff}$ & cutoff parameter for number of in-coming synapses per neuron\\
-$T$ & wall-clock time of the read step\\
+$\Delta T$ & wall-clock time of the read step\\
 $L$ & wall-clock time of one iteration\\
-$L_{sub}$ & wall-clock time of \emph{sub} in one iteration\\
+$L_{part}$ & wall-clock time of \emph{part} in one iteration\\
 $L_{estimate}$ & estimation of the wall-clock time of one iteration\\
 $P_{x,y,z}$ & projection density of voxel with coordinates x,y,z\\
 $N_{x,y,z}$ & number of neurons inside voxel with coordinates x,y,z\\
 $t_{sim}$ & biological time inside simulation
 \end{longtable}
 
-\chapter{Acronym list}
-\begin{longtable}[l]{p{50pt} p{400pt}}
+\cleardoublepage
+% \phantomsection
+\addcontentsline{toc}{chapter}{List of Acronyms}
+\chapter*{List of Acronyms}
+\begin{longtable}[l]{p{80pt} p{300pt}}
 \textbf{Symbol}	 & \textbf{Description} \\
 NEST	 & Neuronal Simulation Tools\\
 SLI	 & SLI is the simulation language interface of NEST. It is a stack language where each command
 expects to find its arguments on the stack.\\
 HDF & Hierarchical Data Format \\
+EPFL & Ecole Federale Polytechnique Federale de Lausanne \\
 HBP & Human Brain Project \\
 BBP & Blue Brain Project \\
 CSCS & Swiss National Supercomputing Center \\
-Blue Gene 4 & super computer at CSCS \\
+Blue Brain 4 & super computer at CSCS \\
 JSC & Forschungszentrum J\"{u}lich \\
 JUQUEEN & super computer at JSC \\
 IO & input or output operation \\
+MPI & Message Passing Interface \\
 \end{longtable}
+
+\clearpage
+\setcounter{page}{1}
+\pagenumbering{arabic}
+\include{chapter_introduction}
+\include{chapter_implementation}
+\include{chapter_conclusions}
+\include{appendix_background}
+
+
 \bibliography{gesammelte_werke} %Literaturverzeichnis
 \bibliographystyle{abbrv}       %Stil des Literaturverzeichnisses (en)
 

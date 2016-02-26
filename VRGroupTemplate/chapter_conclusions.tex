@@ -29,8 +29,9 @@
 
 \chapter{Results}
 
-\section{Mouse brain model properties}
+The generated mouse brain models, the programs and an example simulation are presented in this chapter.
 
+\section{Mouse brain model properties}
 Three different circuits (see Table \ref{table:circuits}) are generated: The full mouse brain circuit,
 a smaller circuit that contains 25 percent of the full mouse brain circuit and
 $\frac{1}{300}$ of the full circuit. The percentage is related to the number of neurons inside
@@ -48,7 +49,7 @@ number of connections should be of the same proportion as number of neurons.
     full & $100\%$ & $~7.5*10^7$ & $~6.6*10^{11}$ & $~16$ TB \\ \hline
     \end{tabular}
 %    \end{centering}
-    \caption{The circuits \emph{threehundredths}, \emph{quater} and \emph{full} were created for testing and debugging on different scales.
+    \caption[Generated mouse brain circuits]{Generated mouse brain circuits. The circuits \emph{threehundredths}, \emph{quater} and \emph{full} were created for testing and debugging on different scales.
 All circuits were generated with identical parameters, only the input neuron file varies.}
 
 \label{table:circuits}
@@ -63,21 +64,20 @@ There are five synapse parameter per connection. This results in 15 TB of data
 for the long range connectivity and 600 GB for the short range connectivity.
 Thus, the generated circuit contains around 16 TB of data and it is split in three HDF5
 files (neuron file, long range synapses file and short range synapses file).
-The properties of the smaller circuits are equivalent.
+The properties for the smaller circuits are equivalent.
 
 \section{Manipulation of circuit}
 
 The connection generation implementations accept a set of command line arguments.
-The arguments allow to influence the program execution.
+The arguments allow to influence the circuit generation.
 All accepted arguments are listed in table \ref{tab:longrangeargs}.
 Besides data path manipulations the voxel experiment assignment can be 
 manipulated on different levels. The number of used experiments can be specified
 and limited. The interpolation can be enabled and limited to a range.
-Also, the available voxel information can be mirrored to the other hemisphere.
+Further, the available voxel information can be mirrored to the other hemisphere.
 Apart from this, the voxel experiment assignment can be exported to a file.
 This file can be manipulated externally and imported again.
-
-The weights of all created synapses can be strengthened by a set factor.
+The weights of all created synapses can be strengthened by a factor.
 This is necessary for reduces models.
 \begin{table}[ht!]
 \begin{centering}
@@ -86,9 +86,9 @@ This is necessary for reduces models.
     Argument & expected type & function \\ \hline \hline
     \emph{-e} & path & set path to file, which contains picked experiment ids \\ \hline
     \emph{-n} & path & path to input neuron file \\ \hline
-    \emph{-h} & path &  output folder\\ \hline
-    \emph{-s} & - &  save voxel information\\ \hline
-    \emph{-l} & path &  load voxel information\\ \hline
+    \emph{-h} & path & output folder\\ \hline
+    \emph{-s} & - & save voxel information\\ \hline
+    \emph{-l} & path & load voxel information\\ \hline
     \emph{-o} & - &  enable voxel interpolation\\ \hline
     \emph{-x} & - &  enable mirroring of voxels\\ \hline
     \emph{-c} & integer & only use one experiment with given id \\ \hline
@@ -96,13 +96,11 @@ This is necessary for reduces models.
     \emph{-d} & integer & limit search distance for voxel interpolation \\ \hline
     \emph{-i} & integer & strengthening of weights for each synapse \\ \hline
     \end{tabular}
-    \caption{Long range generation arguments to influence program execution.}
+    \caption{Long range generation arguments to influence circuit generation.}
     \label{tab:longrangeargs}
 \end{centering}
 \end{table}
 
-The short range generation only accepts path manipulations and weight strengthening.
-The arguments are listed in table \ref{tab:shortrangeargs}.
 \begin{table}[ht!]
 \begin{centering}
     \begin{tabular}{ | c | l | p{7cm} |}
@@ -117,26 +115,32 @@ The arguments are listed in table \ref{tab:shortrangeargs}.
 \end{centering}
 \end{table}
 
+The short range generation only accepts path manipulations and weight strengthening.
+The arguments are listed in table \ref{tab:shortrangeargs}.
+
 \section{NEST import module}
 
-Only one simulation case (\ref{ambmusecase}) of the mouse brain model is used in this thesis for performance evaluations.
+One simulation case (see Appendix \ref{ambmusecase}) of the mouse brain model is used in this thesis for performance evaluations.
 Never the less, more use-cases are possible with the given implementations.
 In general the neuron load module can be used as the neuron create function
-and the synapses load module can be as the neuron connect function (see \url{www.nest-simulator.org/neural_simulations}).
-Further, the given circuit can be loaded and adapted (use offset or scaling factor for parameters).
+and the synapses load module can be used as the connect function (see \url{www.nest-simulator.org/neural_simulations}).
+Further, the given circuit can be loaded and adapted (e.g. use offsets or scaling factors for parameters).
 Loaded neurons can be divided into subnets. 
 The \emph{SLI} functionality allows to access these subnets.
 Thus, the grouping performed with the subnet dataset is available for all \emph{SLI} functions.
 Stimulus generator and \emph{Spikedetector} or \emph{Multimeter} can be used to stimulate
 and observe specific neurons, respectively.
-More use-cases are possible: For example the \emph{SLI} connect functions can be used to strengthening or weakening the connections between the two
-parts of the circuit.
+More use-cases are possible: For example the \emph{SLI} connect functions can be used to strengthening or weakening the connections between two
+subnets of the circuit.
 
 An example SLI script is listed below.
-It loads neuron and synapses information from the specified files.
-Set a stimulus to neurons and connects neurons to a Spikedetector.
-The example is similar to the used use-case.
-\begin{lstlisting}[label=sliSynapses,caption=Example importing synapses]
+It loads neurons and synapses from the specified files,
+set a stimulus to neurons and connects neurons to a Spikedetector.
+The example (see Figure \ref{fig:exa:nestimport}) is similar to the tested use-case.
+
+\newpage
+\begin{figure}[ht!]
+\begin{lstlisting}[]
 %% Load neurons
 /model /aeif_cond_exp def
 /subnet (subnet_wl) def
@@ -172,17 +176,14 @@ offset model nest_names hdf5_names param_facts param_offset filepath H5SynapseTl
 %% Simulate for 100 ms
 100.0 Simulate
 \end{lstlisting}
+\caption{Example SLI script importing synapses}
+\label{fig:exa:nestimport}
+\end{figure}
 
-\section{Import neurons}
-The import neuron module can be executed with the function \emph{SLI} function  \emph{H5NeuronCsX}. It loads all neurons with its parameters
-from the given HDF5 file. The function expects 4 input parameters:
+\subsection{Import neurons}
+The import neuron module can be called with the function \emph{SLI} function  \emph{H5NeuronCsX}. It loads all neurons with its parameters
+from the given HDF5 file. The function expects $8$ input parameters:
 \begin{itemize}
-      \item Name of the a subnet dataset (String).
-The subset has to contain for each neuron an integer value.
-The neurons are grouped together by this subnet value.
-      \item A list of all datasets which values are interpreted as list of parameters.
-      
-     
       \item Name of the used neuron model
       \item A list of dataset/parameter names, which are loaded from the hdf5 file and written to the neuron model
       \item A list of factor: The parameters are multiplied by the values
@@ -190,11 +191,11 @@ The neurons are grouped together by this subnet value.
       \item Name of the a subnet dataset (String).
 The subset has to contain for each neuron an integer value.
 The neurons are grouped together by this subnet value.
-      \item path to the hdf5 file
+      \item Filepath to the HDF5 neuron file
 \end{itemize}
-It returns the neuron id of the first neuron is created.
+It returns the neuron id of the first neuron it creates.
 \begin{figure}[ht!]
-\begin{lstlisting}[label=sliNeurons, caption=Example usage of the import neuron module]
+\begin{lstlisting}[]
 /model /aeif_cond_exp def
 /subnet (subnet_wl) def
 /names [(C_m) (Delta_T) (E_L) (E_ex)] def
@@ -204,18 +205,18 @@ It returns the neuron id of the first neuron is created.
 model names param_factor param_offest subnet filepath H5NeuronCsX /offset Set
 
 \end{lstlisting}
-\caption{Calling the neuron import module via H5NeuronCsX SLI command.
-\emph{nmodel} defines the neuron model.
+\caption[Calling the neuron import module via H5NeuronCsX SLI command]{Calling the neuron import module via H5NeuronCsX SLI command.
+\emph{model} defines the neuron model.
 \emph{subnet} defines the name of the subnet dataset.
-\emph{nparameters} defines the name of the parameters datasets.
+\emph{names} defines the name of the parameters datasets.
 \emph{param\_factor} specifies an factor for each parameter value.
 \emph{param\_offset} specifies an offset for each parameter value.
 \emph{filepath} defines the filepath to the hdf file.
-\emph{offset} returns the id of the first neuron loaded.}
+\emph{offset} returns the id of the first neuron created.}
 \end{figure}
 
-\section{Import synapses}
-The import synapse module can be executed with the \emph{SLI} function  \emph{H5SynapseTll}. It loads all synapses with its given parameters
+\subsection{Import synapses}
+The import synapse module can be called with the \emph{SLI} function  \emph{H5SynapseTll}. It loads all synapses with its given parameters
 from the given HDF5 file. The function expects 7 input parameters:
  
 \begin{itemize}
@@ -223,12 +224,12 @@ from the given HDF5 file. The function expects 7 input parameters:
       \item Name of the used synapse model
       \item A list of parameter names, which are overwritten by the loaded values
       \item A list of column names, where the parameter values are loaded from
-      \item A list of factor: The parameters are multiplied by the values
+      \item A list of factors: The parameters are multiplied by the values
       \item A list of offsets: The parameters are increased by the values
-      \item path to the hdf5 file
+      \item Filepath to the HDF5 synapse file
 \end{itemize}
 \begin{figure}[ht!]
-\begin{lstlisting}[label=sliSynapses, caption=Example usage of the import synapse module]
+\begin{lstlisting}[]
 /model /tsodyks2_synapse def
 /hdf5_names [(delay) (weight) (U0)] def
 /nest_names [(delay) (weight) (U)] def
@@ -237,22 +238,22 @@ from the given HDF5 file. The function expects 7 input parameters:
 /filepath (circuit/syn.h5) def
 offset model nest_names hdf5_names param_facts param_offset filepath H5SynapseTll
 \end{lstlisting}
-\caption{Calling the synapse import module with the
-SLI command \emph{H5SynapseTll}
+\caption[Calling the synapse import module with the SLI command \emph{H5SynapseTll}]{Calling the synapse import module with the
+SLI command \emph{H5SynapseTll}.
 \emph{offset} sets the offset of the neuron ids.
-\emph{synmodel} specifies the synapse model name.
+\emph{model} specifies the synapse model name.
 \emph{hdf5\_names} specifies the loaded synapse parameters
 \emph{nest\_names} specifies the related synapse model parameters.
 \emph{param\_facts} specifies factors for the parameter values.
 \emph{param\_offset} specifies offsets for the parameter values.
-\emph{filepath} specifies the filepath to the hdf5 file.}
+\emph{filepath} specifies the filepath to the HDF5 file.}
 \end{figure}
 
 \section{Full mouse brain simulation}
-The full mouse brain simulation was executed successfully on six racks of the JUQUEEN system.
+The full mouse brain simulation was executed successfully on $6$ racks of the JUQUEEN system.
 For the simulation the full mouse brain model is loaded with a synapse weight strengthening of $10$.
 The strengthening increases the diffusion of activity.
-It enables the activation most of the neurons.
+It enables the activation of most neurons.
 \begin{figure}[ht!]
      \begin{center}
         \subfigure[$t_{sim}=6 ms$]{%
@@ -276,16 +277,17 @@ It enables the activation most of the neurons.
            \includegraphics[scale=0.11]{pictures/vlcsnap-25ms.png}
 		}
     \end{center}
-    \caption{%
+    \caption[Visualized spiking activity of a full mouse brain simulation]{%
         Visualized spiking activity of a full mouse brain simulation.
         The figures show active neurons in four different time steps;
         Only active neurons are shown.
-        The color represent the region of each neuron given by the Allen Brain Atlas.
+        The color represent the region of each neuron given by the Allen Brain Atlas\cite{jones2009allen}.
      }%
    \label{fig:sim}
 \end{figure}
-The Figures \ref{fig:sim} show spiking activity for the given network.
-Because of the strong strengthening the whole model excites and run into numerical errors
+
+Figures \ref{fig:sim} shows spiking activity for the given network.
+Because of the strong strengthening, the whole model excites and run into numerical errors
 after a few milliseconds. But the run illustrates the possibility of the full mouse brain model
 simulation. Even though the model is still under development, first experiments allow an insight 
 into its behaviour.
@@ -296,8 +298,10 @@ The generated model and the performance of the implementations are discussed.
 
 \section{Mouse brain model extensions}
 The given mouse brain model contained less synapses than there are in a living mouse.
-To run a full mouse brain model anyway the circuit generation was extended by an interpolation.
-The interpolation enables to generate a full mouse brain model from incomplete experimental data.
+The Allen Brain Atlas does not have injections for all brain regions.
+Thus, for some regions the connections information are missing.
+An interpolation enables to generate a full mouse brain model from incomplete experimental data.
+To create a full mouse brain model anyway, the circuit generation was extended by an interpolation.
 The interpolation, which are applied to the long range connection generation, introduces errors.
 For illustration Figure \ref{interpolationdistance} shows the locality of missing voxels in one slice.
 The quality of the interpolation can be estimated from distance between each voxel and the nearest injected voxel (color scale in Figure \ref{interpolationdistance}).
@@ -305,12 +309,11 @@ It highlights problematic regions.
 \begin{figure}[ht!]
 \centering
 \includegraphics[scale=0.5]{pictures/distance_x_y_70.eps}
-\caption{Plotted values from the nearest neighbor algorithm. One sees the distance to the next injected voxel.}
+\caption[Plotted values from the nearest neighbor algorithm]{Plotted values from the nearest neighbor algorithm. One sees the distance to the next injected voxel.}
 \label{interpolationdistance}
 \end{figure}
-The full mouse brain model can be loaded inside of NEST with the implemented modules.
-If more experiments become available, they can easily be included into
-the circuit generation. Further model properties are not discussed here.
+If more injection experiments become available, they can easily integrated into
+the circuit generation.
 
 
 
@@ -320,44 +323,44 @@ Because of the small size of the file (9 GB) in comparison to the synapse datase
 to a transposed data format can be neglected. Thus, there is still advantage of having different datasets and being able
 to add new datasets/parameters. It also implies that the generation script does not have to be converted and no 
 conversion scripts are needed. The synapse data format focuses on an efficient storage of all essential values and parameters.
-But the self descriptive format also allows a visualization and changes in the parameters.
+The self descriptive format allows a visualization and adoptions of the parameters.
 
 \section{Long range connections generation}
 Moving the best injection per voxel search outside the main iteration
 avoids unnecessary calculations and reduces the complexity of the main iteration.
-In the sequential algorithm, parts of the connections are regenerated in each iteration.
+In the sequential algorithm, parts of the connections are regenerated.
 This is avoided by selecting the best injection per voxel beforehand.
 
-Optimization of the linear acceptance rejection function (see \ref{par:linearacceptancerejection})
+Optimization of the linear acceptance rejection function (see paragraph \emph{Linear acceptance rejection optimization} in chapter 2.2)
 reduces the complexity of picking post-synaptic neurons.
 For the full circuit this corresponds to a reduction of the complexity order  by two.
-Using all core inside the function gives a further speed up.
+Using all cores inside the function gives a further speed up.
 Each thread has to pick $~\frac{10,000}{N_{threads}}$ voxels instead of
 $10,000$.
 
-The program execution takes around 15h on the Blue Brain IV using 2048 nodes generating the full circuit.
+The program execution takes around 15h on the Blue Brain 4 using 2048 nodes for the full circuit.
 Each node uses all threads. Optimized collective writing operations could 
-lower the needed execution time.
-But is not feasible, because the generation script will be executed only a few times
+lower the needed execution time,
+but is not feasible, because the generation script will be executed only a few times
 and the computational resources are given.
 
 \section{Short range connections generation}
 We ported the sequential algorithm directly to a parallel implementation without changing it.
-We introduce a Master-Slave aprraoch to mange the work distribution.
+We introduce a Master-Slave aprraoch to manage the work distribution.
 It enables an easy distribution of the independent iterations.
 The critical part of the implementation is the IO because the number of created synapses is not known in the beginning.
-Therefore, the file size cannot be calculated beforehand, which is mandatory for an efficient writing to HDF5 files. 
+Therefore, the file size cannot be calculated beforehand, which is mandatory for efficient writing to HDF5 files. 
 By using a buffer or temporary files this problem can be avoided.
-Because of the given resources (Blue Brain IV)
+Because of the given resources (Blue Brain 4),
 writing all synapses to buffer is feasible (already for a small number of nodes the created synapses fit in memory).
 The buffer implementation, which behaves like a queue, is efficient in terms of writing to disk and writing to file
 if the queue chunks are large enough. Using larger chunks leads to 
 a higher utilization of the theoretical bandwidth. Additionally, it leads to less independent
 write operations which reduces the waiting time in serialization mechanisms.
 
-The program execution takes around half an hour on the Blue Brain IV using 256 nodes for the full circuit.
+The program execution takes around half an hour on the Blue Brain 4 using 256 nodes for the full circuit.
 Two MPI ranks per node are launched. Optimizing the load balance could lead a better performance.
-But is not feasible, because the generation script will be executed only a few times
+But it is not feasible, because the generation script will be executed only a few times
 and the computational resources are given.
 
 \section{Import circuit}
@@ -365,24 +368,24 @@ Loading the mouse brain model inside of NEST is the main goal of the thesis.
 Therefore, NEST is extended with two import modules, which enable to import the
 generated mouse brain model. To show that the implemented algorithms are feasible, 
 the circuit properties which affect the load balance, are analysed.
-The synapse import module has to load around 15 TB of data for the full mouse brain model.
-The neuron import module has to load only 9 GB of data.
+The synapse import module has to load around $16$ TB of data for the full mouse brain model.
+The neuron import module has to load $9$ GB of data.
 Therefore, only the efficiency of the synapse import module is analysed.
 Timings of the neuron import module are negligible.
-The performance characteristics of the implemented algorithm is presented.
+The performance characteristics of the implemented Algorithm \ref{alg:import:synapses} are presented.
 The IO performance of the implementation affects mainly the usability.
 Runs on different scales should give detailed information about the reached bandwidth.
-Therefore, IBM Blue Gene /Q systems in Lugano (Blue Brain IV) and in J\"{u}lich (JUQUEEN) are used.
+Therefore, IBM Blue Gene /Q systems in Lugano (Blue Brain 4) and in J\"{u}lich (JUQUEEN) are used.
 
+\newpage
 During development the connect step was identified as the bottleneck.
-Therefore, we introduced thread parallelism of the \emph{connect} step (see Section \ref{sec:speedup:connect}).
+Therefore, we introduced thread parallelism of the \emph{Connect} step (see chapter \ref{sec:speedup:connect}).
 By the following measurements these optimizations are applied.
 
 In the course of a scalability workshop in Forschungszentrum J\"{u}lich we were able to run
-our implementation on different scales of JUQUEEN.
+our implementation at different scales on JUQUEEN.
 Findings of the \emph{Read} step gotten from the workshop are presented in \ref{sec:speedup:load}.
-Optimizations are not included inside the implementation yet.
-Therefore, they are not part of the measurements.
+Optimizations are not included inside the implementation, yet.
 \begin{table}[ht!]
 \begin{center}
 \begin{tabular}{|l|l|l|p{1.9cm}|p{2.1cm}|l|}
@@ -390,8 +393,8 @@ Therefore, they are not part of the measurements.
 name & scaling & importing & mpi ranks per node & threads per mpi rank & racks \\
 \hline\hline
 First    &  strong  & $1.9$ $TB$             & 1 & 16 & 1, 2, 4, 8, 16, 28 \\
-Second    &  weak  & $900$ $\frac{MB}{node}$      & 1 & 16 & 1, 2, 4, 8, 28 \\
-Third    &  weak  & $220$ $\frac{MB}{node}$     & 1 & 16 & 1, 2, 4, 8, 16, 28 \\
+Second    &  weak  & $900$ $MB/node$      & 1 & 16 & 1, 2, 4, 8, 28 \\
+Third    &  weak  & $220$ $MB/node$     & 1 & 16 & 1, 2, 4, 8, 16, 28 \\
 \hline
 \end{tabular}
 \end{center}
@@ -400,14 +403,14 @@ Third    &  weak  & $220$ $\frac{MB}{node}$     & 1 & 16 & 1, 2, 4, 8, 16, 28 \\
 \end{table}
 
 Two weak scaling and one strong scaling scenarios were tested on the JUQUEEN.
-Therefore, the total time of executing the synapse import module were measured.
+Therefore, the total executing time of the synapse import module were measured.
 The properties of the scaling runs are listed in table \ref{schumann:tbl:runs}.
 
 The amount of data read in the import module depends on the number of synapse parameters $N_{params}$,
-the number of read synapses per iteration $N_{blocksize}$ and the number of ranks $N_{ranks}$.
-This results in a measured bandwidth of:
+the number of read synapses per iteration $N_{block}$ and the number of ranks $N_{ranks}$.
+This results in a bandwidth for a measured wall-clock time $\Delta T$ of:
 \begin{equation}
-b = sizeof(float) * N_{params} * \frac{N_{blocksize} * N_{ranks}}{\Delta T}
+b = sizeof(float) * N_{params} * \frac{N_{block} * N_{ranks}}{\Delta T}
 \label{eq:band}
 \end{equation}
 We use the equation \ref{eq:band} to normalize the scaling runs.
@@ -415,16 +418,16 @@ We use the equation \ref{eq:band} to normalize the scaling runs.
 \begin{center}
  \includegraphics[width=0.8\textwidth]{pgfplots/bandwidth.pdf}
 \end{center}
-\caption{Bandwidth comparisons at different scales (see table \ref{schumann:tbl:runs}).
+\caption[Bandwidth comparisons at different scales]{Bandwidth comparisons at different scales (see Table \ref{schumann:tbl:runs}).
 The plotted values are taken from Table \ref{schumann:tbl:scalruns}.
 The \emph{theoretical} line shows the approximate bandwidth peak of the system.}
 \label{schumann:fig:bandwidth}
 \end{figure}
 
-Figure \ref{schumann:fig:bandwidth} plots the measured bandwidth for the runs over number of nodes.
+Figure \ref{schumann:fig:bandwidth} plots the measured bandwidths for the runs over number of nodes.
 The resulted bandwidths tackles around $5\%$ of the peak bandwidth.
 All runs give similar results. The difference of strong versus weak scaling runs seems to be negligible.
-The amount of data, which is loaded does, not influence the results, as well.
+The amount of data that is loaded does not influence the results.
 The reached bandwidth only correlates with the number of racks.
 For both IBM Blue Gene /Q systems the number of IO nodes scales linear with the number of racks.
 Therefore, we cannot conclude if the number of IO nodes or the number of nodes limit the
@@ -432,23 +435,23 @@ bandwidth.
 
 A more detailed look on the task scale should give more insights.
 An instrumented version of the implementation with scorep gives us wall-clock timings of each task.
-The tasks are \emph{Read}, \emph{Def. Node}, \emph{Sort}, \emph{Alltoall} and \emph{Connect} and relate to the main 
-parts of the algorithm (see Figure \ref{fig:ConnectInsideIteration}).
+The tasks are \emph{Read}, \emph{Def. Node}, \emph{Sort}, \emph{Alltoall} and \emph{Connect} and relate to the
+steps of Algorithm \ref{alg:import:synapses} (see Figure \ref{fig:ConnectInsideIteration}).
 We execute the instrumented module on different scales.
 We analyse the measurements with Scalasca (see Appendix \ref{appendix:scalasca}).
-The runtime behaviour is similar, of all runs.
-The duration of \emph{Sort} and \emph{Det. Sort} is constant.
-It depends on the buffer size, which is fixed for all runs.
-Therefore, we can neglect the steps for the analysis.
+The runtime behaviour is similar for all runs.
+The wall-clock timings of \emph{Sort} and \emph{Det. Node} are constant.
+They depend on the buffer size, which is fixed for all runs.
+Therefore, we can skip the steps in the analysis.
 For illustration, we present the runtime proportion of each task for the 1st scaling runs.
 The mean percentage for each tasks over all nodes is calculated (see Figure \ref{schumann:fig:taskratios}).
 \begin{figure}[h!]
 \begin{center}
  \includegraphics[width=0.5\textwidth]{pgfplots/taskratios.pdf}
 \end{center}
-\caption{Measured task durations percentages of the total duration at different scales.
+\caption[Task proportions of total wall-clock timings at different scales]{Task proportions of total wall-clock timings at different scales.
  The displayed percentages are the means of percentages for all nodes.
- The values are extracted from the 1st scaling run (see table \ref{schumann:tbl:runs}).
+ The values are extracted from the 1st scaling run (see Table \ref{schumann:tbl:runs}).
  }
 \label{schumann:fig:taskratios}
 \end{figure}
@@ -472,8 +475,8 @@ racks & MPI ranks & 1st $T$ & 1st \emph{sib} & 2nd $T$ & 2nd \emph{sib} & 3rd $T
 \hline
 \end{tabular}
 \end{center}
-\caption{Scaling runs of the import module using independent read calls on JUQUEEN. \emph{1st $T$} and \emph{sib}, \emph{2nd $T$} and \emph{sib} and
-  \emph{3rd $T$} and \emph{sib} corresponds to the wall-clock timings and number of synapses for the First, Second and Third scaling runs (see table \ref{schumann:tbl:runs}). \emph{M} equates an factor of $2^{20}$ for number of synapses. On each rack $1024$ nodes are used.}
+\caption[Scaling runs of the import module using independent read calls on JUQUEEN]{Scaling runs of the import module using independent read calls on JUQUEEN. \emph{1st $T$} and \emph{sib}, \emph{2nd $T$} and \emph{sib} and
+  \emph{3rd $T$} and \emph{sib} corresponds to the wall-clock timings and number of synapses for the First, Second and Third scaling runs (see Table \ref{schumann:tbl:runs}). \emph{M} equates an factor of $2^{20}$. On each rack $1024$ nodes are used.}
 \label{schumann:tbl:scalruns}
 \end{table}
 
@@ -521,51 +524,54 @@ racks & MPI ranks & 1st $T$ & 1st \emph{sib} & 2nd $T$ & 2nd \emph{sib} & 3rd $T
 %     }%
 %   \label{fig:implV03}
 %\end{figure}
-One can see that \emph{Read} and \emph{Connect} are the bottlenecks.
 For the interpretations of the plots, one has to take into account that different parts of the algorithm
 (\emph{Read} and \emph{Alltoall}) contain mpi collective operations.
 
 \subsection{Read step}
 \label{sec:speedup:load}
 The efficiency of the \emph{Read} step is bounded by the IO bandwidth of the system.
-Blue Brain IV and JUQUEEN have a theoretical bandwidth of $8$ GB/s per rack.
+Blue Brain 4 and JUQUEEN have a theoretical bandwidth of around $8$ GB/s per rack.
 
 Apparently, \emph{Read} and \emph{Alltoall} affect mainly the run time of our module.
-\emph{Read} performs io. It uses the HDF5 library to load synapses from disk to the internal data structure.
-\emph{Alltoall} exchanges synapses between the ranks. Both tasks contain collective MPI calls.
+\emph{Read} performs IO. It uses the HDF5 library to load synapses from disk and copy it into the internal data structure.
+\emph{Alltoall} exchanges synapses between the ranks. Both steps contain collective MPI operations.
 A detailed look at the call stack of the used H5Read function shows that the called MPI read operation is non-collective.
-Using the HDF5 property list interface, we identify that the internal data structure of the import module prevents HDF5 from using collective read operations.
+Using the HDF5 property list interface, we identify that the internal data structure (see Figure \ref{fig:synapsebuffer}) of the import module prevents HDF5 from using collective read operations.
 A collective read operation could result in better read performance.
 Therefore, a comparison of collective versus independent read operations should show possible benefits.
 Because of the limited time at the workshop, we focus on the comparison of a reduced algorithm,
-which allows an easy change of the used data structure.
+which allows an easy change of the internal data structure.
+The adapted data structure eliminates \emph{rank\_id} and \emph{pre\_neuron} from \emph{Synapse} (see Figure \ref{fig:synapsebuffer}).
 We can provide two test implementations with and without adapted data structure.
 \begin{figure}[h!]
 \begin{center}
  \includegraphics[width=0.8\textwidth]{pgfplots/bandwidth_stats.pdf}
 \end{center}
-\caption{Comparison of achieved bandwidth from collective versus independent read operations.
- Values from table \ref{schumann:tbl:indevscol} are used. Theoretical line shows the limits by the
- JUQUEEN system.}
+\caption[Comparison of achieved bandwidth from collective versus independent read operations]{Comparison of achieved bandwidth from collective versus independent read operations.
+ Values from table \ref{schumann:tbl:indevscol} are used. Theoretical line shows the peak bandwidth of
+ JUQUEEN.}
+ \label{fig:indiVScollecBand}
 \end{figure}
-The new algorithm reduces the iterations to the \emph{Read} part with a following MPI barrier.
-The MPI barrier should simulate any \emph{collective} read operations inside the \emph{alltoall} task.
+The new algorithm reduces the iterations to the \emph{Read} step with a following MPI barrier.
+The MPI barrier should simulate any \emph{collective} read operations inside the \emph{Alltoall} task.
 \begin{figure}[h!]
 \begin{center}
  \includegraphics[width=0.5\textwidth]{pgfplots/indiVScollec.pdf}
 \end{center}
 \caption{Comparison of collective versus independent read operations executed on 16 racks.
- Values are extracted from the scorep measurements from the runs listed in table \ref{schumann:fig:indiVScollec}.}
+ Values are extracted from the scorep measurements from the runs listed in Table \ref{schumann:tbl:indevscol}.}
  \label{schumann:fig:indiVScollec}
 \end{figure}
 
 \newpage
 Figure \ref{schumann:fig:indiVScollec} illustrates the benefit of collective versus independent read operations
-on the JUQUEEN system for 16 racks.
+on JUQUEEN for 16 racks.
 Even though the mean time of the read operations is similar, the serializations of the read calls affects the
-imbalance and therefore the idle times at the next collective operations. 
-Therefore, a change in the data structure should bring great benefit for our implementation.
-We are confident that the optimization will result in better usage of the available bandwidth.
+imbalance and therefore the idle times at the next collective operations.
+Figure \ref{fig:indiVScollecBand} show the measured bandwidths for both runs.
+The reached bandwidth is greater than the ones in Figure \ref{schumann:fig:bandwidth}.
+Therefore, the reduced version cannot be compared directly to the import module.
+The measurements have to be interpreted independently.
 
 \begin{table}[h!]
 \begin{center}
@@ -584,8 +590,8 @@ racks & MPI ranks & mpiio & synapses in buffer & time[s] \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Scaling runs of test implementation to compare collective versus independent read calls on JUQUEEN. \emph{bytes~per~synapse} is $24$ for all runs.
-  \emph{M} equates an factor of $2^{20}$ for number of synapses. On each rack $1024$ nodes are used.}
+\caption[Scaling runs of test implementation to compare collective versus independent read calls on JUQUEEN]{Scaling runs of test implementation to compare collective versus independent read calls on JUQUEEN. \emph{bytes~per~synapse} is $24$ for all runs.
+  \emph{M} equates an factor of $2^{20}$. On each rack $1024$ nodes are used.}
 \label{schumann:tbl:indevscol}
 \end{table}
 \subsection{Alltoall step}
@@ -606,24 +612,27 @@ A single connect function call of the NEST api expects the synapse parameters st
 In each iteration the current parameters are assigned to the values inside the already created SLI object.
 This SLI object is passed to the function call.
 Thus, a small overhead for the creation and destroying of the objects are perceived.
+
+\newpage
 \begin{figure}[ht!]
 \centering
 %\includegraphics[scale=0.5]{pictures/boxplot_new_con_dt_1_300_speedup.eps}
-\includegraphics[scale=1]{pgfplots/boxplot_thread.pdf}
-\caption{The connection frequency per node for different number of threads is shown.
+\includegraphics[scale=1.1]{pgfplots/boxplot_thread.pdf}
+\caption[The connection frequency per node for different number of threads is shown]{The connection frequency per node for different number of threads is shown.
 The plot shows boxplots of measured values using the threehundredths circuit.
 The whiskers, the box boundaries and the middle lines represent the maximum outliers,
 the 95/5 quantiles and the median values, respectively.
 }
 \label{boxplotnewcon}
 \end{figure}
+
 Each thread iterates over all synapses, but only stores the connection if the post-synaptic neuron is located on
 the thread. Thus, the connection frequency per thread varies.
-As for nodes the neurons are distributed in the modules fashion on the threads for one node.
+As for ranks the neurons are distributed in the modules fashion on the threads for one node.
 The distribution properties are the same. Thus, there is a larger variation on a larger number of threads.
 Figure \ref{boxplotnewcon} shows measured connection frequencies for the connect step. The measurements are
 extracted from the execution of the threehundredths circuit. It is executed on 128 nodes with varying number of
-threads. The circuit plus fixed number of nodes specify the distribution of neurons per node.
+threads. The circuit plus fixed number of ranks specify the distribution of neurons per node.
 
 \begin{figure}[ht!]
      \begin{center}
@@ -643,8 +652,8 @@ threads. The circuit plus fixed number of nodes specify the distribution of neur
            \includegraphics[scale=0.9]{pgfplots/connetions_thread.pdf}
 		}
     \end{center}
-    \caption{%
-        The measurements are taken the same simulation run with the threehundredths circuit. It is run on the Blue Brain IV.
+    \caption[The measurements are taken from the same simulation run with the threehundredths circuit]{%
+        The measurements are taken from the same simulation run with the threehundredths circuit. It is executed on the Blue Brain 4.
      }%
    \label{detailnewcon}
 \end{figure}
@@ -653,40 +662,43 @@ A larger number of threads leads to smaller wall-clock timings, but the chance o
 %The variations of the timings correlates with the distribution of synapses per node (figure \ref{fullcircuitdist}).
 To look into detail, Figure \ref{detailnewcon:second} shows the measured wall-clock time for each node
 plotted over the maximum number of new connections per thread. It shows a strong correlation between the variable and
-the duration. Thus, the increasing variations of timings can be explained by the variations of synapses per thread.
+the wall-clock timings. Thus, the increasing variations of timings can be explained by the variations of synapses per thread.
 The figure indicates two different timings per connection. There is an offset of regression between the red
 (left point cloud)
 and the green (right point cloud) dots. Red and green dots represent all measurements with less than $40,000$ and more than new synapses per
 node, respectively. Less than $40,000$ new synapses only occurs in the last iteration.
 Figure \ref{detailnewcon:first} shows the density of number of new synapses per node.
-Less synapses results in a smaller vector size. There seems to be a loss of efficiency, which might result from
+Less synapses result in a smaller vector size. There seems to be a loss of efficiency, which might result from
 the use of different cache levels.
 
 \section{Memory consumption}
 During the development of the import module, the goal to fit the full mouse brain model on the
-Blue Brain IV seemed to get unrealistic. We make the assumption that the full machine does not deliver enough memory resources for the whole circuit.
+Blue Brain 4 seemed to get unrealistic. We make the assumption that the full machine does not deliver enough memory resources for the whole circuit.
 Test runs on different scales on the JUQUEEN should give concrete results for the final implementation.
 The test runs load the neuron information and the long range synapses.
 The long range synapses are approximately 96\% of synapses in the full circuit.
 Thus, reducing the test to only the long range synapses is feasible.
-We extended the import module with a logging of imported synapses and the used memory after each iteration.
-We used a BGQ library (see Appendix \ref{bgqmemory}) to measure the memory usage on each node.
+We extended the import module with a logging of imported synapses and the used memory at each iteration.
+We used a IBM Blue Gene /Q library (see Appendix \ref{bgqmemory}) to measure the memory usage on each node.
 The runs on $6$ and $8$ racks executed successfully.
 The run on $4$ racks crashed before ending.
 It run out of memory.
+
+\newpage
 \begin{figure}[h!]
 \begin{center}
  \includegraphics[width=0.9\textwidth]{pgfplots/newconnections.pdf}
 \end{center}
-\caption{Number of synapses in memory over iterations.
+\caption[Number of synapses in memory over iterations]{Number of synapses in memory over iterations.
 The solid, dotted and dashed lines represent the mean, minimum and maximum number of synapses in memory of all nodes, respectively.
-The green lines show the measurements from a run on 8 racks, the blue on 6 racks and the red on 8 racks.
+The green lines show the measurements from a run on 8 racks, the blue ones on 6 racks and the red ones on 8 racks.
 The points represent the last iteration per run.
 Thus, the program iterates $80$ times on $8$ racks, $107$ times on $6$ racks and $140$ times on $4$ racks.
 The numbers 1, 2 and 3 represent references of the mean, minimum and maximum value, respectively.
  }
 \label{fig:newconnections}
 \end{figure}
+
 Figure \ref{fig:newconnections} shows the number of new connections per node for the different runs.
 The vertical distance between the dashed and the dotted line reflects the imbalance of synapses between the nodes.
 Remarkable is the fact, that the imbalance $||p_2-p_3||$ is similar for the three different scales.
@@ -699,7 +711,7 @@ It enables a precise prediction of the needed memory per node.
 \begin{center}
  \includegraphics[width=0.9\textwidth]{pgfplots/memory_plot.pdf}
 \end{center}
-\caption{Used memory* (* only heap) per node over iterations.
+\caption[Used memory* (* only heap) per node over iterations]{Used memory* (* only heap) per node over iterations.
 The solid, dotted and dashed lines represent the mean, minimum and maximum used memory per node, respectively.
 The green lines show the measurements from a run on 8 racks, the blue on 6 racks and the red on 8 racks.
 The points represent the last iteration per run.
@@ -707,7 +719,7 @@ The points 1, 2 and 3 represent references of the final mean, minimum and maximu
 The run executed on 4 racks ran out of memory. Thus, it crashed before it could read all synapses.
 The thin red line represents an estimation for the mean value up to 160 iterations.
 The black solid line illustrates the measured memory limit.
-The intersection point of the thin red line and the black solid line is references with point 1*(red).
+The intersection point of the thin red line and the black solid line is referenced with point 1*(red).
  }
 \label{fig:memoryplot}
 \end{figure}
@@ -715,8 +727,8 @@ Figure \ref{fig:memoryplot} shows the memory usage per node for the different ru
 The black solid line illustrates the memory limit of each node of the IBM Blue Gene /Q.
 One sees that for 4 racks, the long range synapses of the full mouse brain model does not fit in memory.
 An imbalance compensation would not make the model fit on $4$ racks,
-because the needed memory line would cross the memory limit.
-A perfect compensation would result in the memory usage of the measured mean values.
+because the needed memory line would cross the memory limit, anyway.
+A perfect compensation would result in the memory usage of the measured mean values for each node.
 Thus, the intersection point 1*(red) marks the critical point.
 
 Further, the measured values enable an approximation of the memory needed per synapse.
@@ -726,12 +738,11 @@ memory needed per synapse:
 	m_{synapse} = \frac{\Delta memory}{\Delta iteration} * \frac{\Delta iteration}{\Delta synapses} \approx 106
 \end{equation}
 
-This results in approximately $106$ Bytes per synapse.
+This results in approximately $106$ Bytes per synapse, which matches with the size of the NEST synapse object.
+
 %Therefore, we estimate the NEST base with neuron information to use 2GB of memory per node.
 
 %\subsection{Long range connection generation}
-
-
 
 %\subsection{Short range connection generation}
 %\subsection{Load circuit}
@@ -744,29 +755,37 @@ This results in approximately $106$ Bytes per synapse.
 
 
 
-
+\newpage
 \section{Conclusion}
-The implementations presented in chapter two enables the generation and stimulation of a full mouse brain model.
+The implementations presented in chapter two enables the generation and simulation of a full mouse brain model.
 In chapter three the usage of delivered programs are explained. Additionally, an example simulation run is shown.
-Therefor the neuronal simulator NEST was extended by two import modules. The modules
-enable to import the full mouse brain model inside of NEST.
+The neuronal simulator NEST was extended by two import modules.
+Chapter three and four present the resulting implementations and their performance.
+The achieved performance is feasible.
+Even though the main goal of running the full mouse brain model on the Blue Brain 4 is not achieved,
+we showed that we can run the simulation on the same system but on larger scale.
+We also showed  that the full mouse brain model is memory bound for Blue Gene /Q systems.
+Thus, it does not fit on the $4$ racks provided by Blue Brain 4. 
+The simulations on the JUQUEEN system was achieved using $6$ racks.
+
+The modules enable to import the full mouse brain model inside of NEST.
 A pipeline for generating synapses from Allen Brain injections experiments and the Blue Brain Project recipe
 is ported to IBM Blue Gene /Q systems, which can handle the amount of data needed for a full mouse brain simulation.
 Besides demonstrating the current neurological possibilities, the work in this thesis extends the neuronal simulator with the feature of loading well-defined
 point neuron circuits. An integration of the new import functionality into the \emph{SLI}
-interface allows to extend current simulations with well-defined circuit data easily. 
-As more data is available data-driven neuronal simulations will gain further importance in the field of computational neuroscience as it will create a valuable tool for brain research.
+interface allows to extend current simulations with well-defined circuit data easily.
+The extension of the mouse brain model enables the creation of a full mouse brain model.
+This model contains neurons and synapses as they occur in the living animal.
+Even though the interpolations introduce errors, a first simulation of the full mouse brain model is possible.
+The extension enables the preparation and optimizations of the whole pipeline.
+As more and more precise injection experiments are available, they can be integrated into the circuit generation easily.
 Additionally, the virtual mouse brain model will stay in the focus of research.
 Thus, adaptations in the near future are to be expected.
+As more data is available, data-driven neuronal simulations will gain further importance in the field of computational neuroscience.
+%NEST is a valuable tool for brain research.
+%The implemented module extend its possibilities.
 %The used data format is not optimized for the NEST data structure.
 %It stores the circuit data in general way to not put any obstacles in the way.
-
-The achieved performance of importing the circuit is feasible.
-Even though the main goal of running the full mouse brain model on the Blue Brain IV is not achieved,
-we showed that we can run the simulation on the same system but on larger scale.
-We also showed  that the full mouse brain model is memory bound for Blue Gene /Q systems.
-Thus, it does not fit on the $4$ racks provided by the Blue Brain IV system. 
-The simulations on the JUQUEEN system was achieved using $6$ racks.
 
 The mouse brain simulation is a first step in direction of the simulation of a human brain. The simulation of large scale data-driven brain models give new perspectives and hopefully new insights of the brain.
 This thesis presents that a mouse brain model simulation was possible using modern super computers. Although the human brain is around thousand times bigger than a mouse brain, with the enhancement of super computers, resources and large scale neuronal simulation software we move forward to the creation of a human brain model. 
@@ -784,13 +803,20 @@ the mouse brain model is still in development, more efficient implementations of
 circuit generation could be of interest.
 Additionally, there are several possibilities for optimizations of different parts of the pipeline in terms of efficiency and usability.
 
-To fit the given full mouse brain model on the Blue Brain IV (on $4$ racks on IBM Blue Gene /Q system) the precision of  the internal synapse model parameters could be reduces.
+The optimizations proposed in chapter \ref{sec:speedup:load} should be integrated into the synapse import module.
+The changes in the internal data structures can be applied to the import module, without major interventions.
+As show, collective read operations will improve the performance.
+
+To fit the given full mouse brain model on the Blue Brain 4 (on $4$ racks on IBM Blue Gene /Q system) the precision of the internal synapse model parameters could be reduces.
 At the moment, NEST uses double precision
 for all parameters in the used synapse model.
 But the circuit generation only creates single precision values for the parameters.
 The already introduced error wont be aggravated
 by reducing the precision of the five parameters.
-Changes could reduce the memory needed for a synapse object by $20\%$. 
+Changes could reduce the memory needed for a synapse object by $20\%$.
+
+As now a new release of NEST is available, the import module should
+be ported to the new version. The implementations are embedded in \emph{NEST 2.6.0}.
 
 The NEST import modules are only accessible via the SLI interface\cite{SLI}.
 To make it available for more users the import modules should be integrated into the Python
