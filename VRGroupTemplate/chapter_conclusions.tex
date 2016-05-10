@@ -45,11 +45,11 @@ number of connections should be of the same proportion as number of neurons.
     \hline
     Identifier & ratio & neurons & synapses & total size \\ \hline \hline
     threehundredths & $0.3\%$ & $~2.5*10^5$ & $~2.2*10^9$ & $~26$ GB \\ \hline
-    quater & $25\%$ & $~1.9*10^7$ & $~1.6*10^{11}$ & $~4$ TB \\ \hline
+    quarter & $25\%$ & $~1.9*10^7$ & $~1.6*10^{11}$ & $~4$ TB \\ \hline
     full & $100\%$ & $~7.5*10^7$ & $~6.6*10^{11}$ & $~16$ TB \\ \hline
     \end{tabular}
 %    \end{centering}
-    \caption[Generated mouse brain circuits]{Generated mouse brain circuits. The circuits \emph{threehundredths}, \emph{quater} and \emph{full} were created for testing and debugging on different scales.
+    \caption[Generated mouse brain circuits]{Generated mouse brain circuits. The circuits \emph{threehundredths}, \emph{quarter} and \emph{full} were created for testing and debugging on different scales.
 All circuits were generated with identical parameters, only the input neuron file varies.}
 
 \label{table:circuits}
@@ -220,7 +220,7 @@ The import synapse module can be called with the \emph{SLI} function  \emph{H5Sy
 from the given HDF5 file. The function expects 7 input parameters:
  
 \begin{itemize}
-      \item Offset of the neuron ids. Mostly it is equal to first neuron id returned by \emph{H5NeuronCsX}
+      \item Offset of the neuron ids. e.g equal to first neuron id returned by \emph{H5NeuronCsX}
       \item Name of the used synapse model
       \item A list of parameter names, which are overwritten by the loaded values
       \item A list of column names, where the parameter values are loaded from
@@ -404,7 +404,7 @@ Third    &  weak  & $220$ $MB/node$     & 1 & 16 & 1, 2, 4, 8, 16, 28 \\
 
 Two weak scaling and one strong scaling scenarios were tested on the JUQUEEN.
 Therefore, the total executing time of the synapse import module were measured.
-The properties of the scaling runs are listed in table \ref{schumann:tbl:runs}.
+The properties of the scaling runs are listed in Table \ref{schumann:tbl:runs}.
 
 The amount of data read in the import module depends on the number of synapse parameters $N_{params}$,
 the number of read synapses per iteration $N_{block}$ and the number of ranks $N_{ranks}$.
@@ -464,7 +464,7 @@ Comparing the proportions with Figure \ref{schumann:fig:bandwidth}, we conclude 
 \begin{center}
 \begin{tabular}{|r|r|r|r|r|r|r|r|}
 \hline
-racks & MPI ranks & 1st $T$ & 1st \emph{sib} & 2nd $T$ & 2nd \emph{sib} & 3rd $T$ & 3rd \emph{sib} \\
+racks & MPI ranks & 1st $\Delta T$ & 1st \emph{sib} & 2nd $\Delta T$ & 2nd \emph{sib} & 3rd $\Delta T$ & 3rd \emph{sib} \\
 \hline\hline
 1  & 1024      & 1222 & 80640M & 523 & 40320M & 123 & 8960M \\
 2  & 2048      & 642 & 80640M  & 593 & 80640M & 118 & 17920M\\
@@ -475,8 +475,8 @@ racks & MPI ranks & 1st $T$ & 1st \emph{sib} & 2nd $T$ & 2nd \emph{sib} & 3rd $T
 \hline
 \end{tabular}
 \end{center}
-\caption[Scaling runs of the import module using independent read calls on JUQUEEN]{Scaling runs of the import module using independent read calls on JUQUEEN. \emph{1st $T$} and \emph{sib}, \emph{2nd $T$} and \emph{sib} and
-  \emph{3rd $T$} and \emph{sib} corresponds to the wall-clock timings and number of synapses for the First, Second and Third scaling runs (see Table \ref{schumann:tbl:runs}). \emph{M} equates an factor of $2^{20}$. On each rack $1024$ nodes are used.}
+\caption[Scaling runs of import module using independent read calls on JUQUEEN]{Scaling runs of the import module using independent read calls on JUQUEEN. \emph{1st $\Delta T$} and \emph{sib}, \emph{2nd $\Delta T$} and \emph{sib} and
+  \emph{3rd $\Delta T$} and \emph{sib} corresponds to the wall-clock timings and number of synapses for the First, Second and Third scaling runs (see Table \ref{schumann:tbl:runs}). \emph{M} equates an factor of $2^{20}$. On each rack $1024$ nodes are used.}
 \label{schumann:tbl:scalruns}
 \end{table}
 
@@ -548,7 +548,7 @@ We can provide two test implementations with and without adapted data structure.
  \includegraphics[width=0.8\textwidth]{pgfplots/bandwidth_stats.pdf}
 \end{center}
 \caption[Comparison of achieved bandwidth from collective versus independent read operations]{Comparison of achieved bandwidth from collective versus independent read operations.
- Values from table \ref{schumann:tbl:indevscol} are used. Theoretical line shows the peak bandwidth of
+ Values from Table \ref{schumann:tbl:indevscol} are used. Theoretical line shows the peak bandwidth of
  JUQUEEN.}
  \label{fig:indiVScollecBand}
 \end{figure}
@@ -577,7 +577,7 @@ The measurements have to be interpreted independently.
 \begin{center}
 \begin{tabular}{|r|r|r|r|r|r|}
 \hline
-racks & MPI ranks & mpiio & synapses in buffer & time[s] \\
+racks & MPI ranks & mpiio & synapses in buffer & $\Delta T$[s] \\
 \hline\hline
 2  & 2048      & independent  &  8960M & 36.7041712582\\
 4  & 4096      & independent  & 8960M  & 21.6904791038\\
@@ -671,6 +671,7 @@ Figure \ref{detailnewcon:first} shows the density of number of new synapses per 
 Less synapses result in a smaller vector size. There seems to be a loss of efficiency, which might result from
 the use of different cache levels.
 
+\newpage
 \section{Memory consumption}
 During the development of the import module, the goal to fit the full mouse brain model on the
 Blue Brain 4 seemed to get unrealistic. We make the assumption that the full machine does not deliver enough memory resources for the whole circuit.
@@ -684,7 +685,6 @@ The runs on $6$ and $8$ racks executed successfully.
 The run on $4$ racks crashed before ending.
 It run out of memory.
 
-\newpage
 \begin{figure}[h!]
 \begin{center}
  \includegraphics[width=0.9\textwidth]{pgfplots/newconnections.pdf}
@@ -724,6 +724,10 @@ The intersection point of the thin red line and the black solid line is referenc
 \label{fig:memoryplot}
 \end{figure}
 Figure \ref{fig:memoryplot} shows the memory usage per node for the different runs.
+In the first iterations (up to $20$-$40$), the measured used memory stays constant, even thought the number of synapses increases.
+The fact is interpreted as imprecise measurements of deallocated memory space.
+Thus, the usable free memory is expected to be lower.
+This corresponds to the fact, that all lines have a jump in the slope at the same \emph{used memory}.
 The black solid line illustrates the memory limit of each node of the IBM Blue Gene /Q.
 One sees that for 4 racks, the long range synapses of the full mouse brain model does not fit in memory.
 An imbalance compensation would not make the model fit on $4$ racks,
@@ -755,7 +759,6 @@ This results in approximately $106$ Bytes per synapse, which matches with the si
 
 
 
-\newpage
 \section{Conclusion}
 The implementations presented in chapter two enables the generation and simulation of a full mouse brain model.
 In chapter three the usage of delivered programs are explained. Additionally, an example simulation run is shown.

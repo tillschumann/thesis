@@ -15,10 +15,10 @@
 %\fieldofstudy{Software Systems Engineering}
 \firstsupervisor{Prof. Dr. Torsten W. Kuhlen \\ Visual Computing Institute}
 %\firstsupervisor{Prof. C. Bischof, Ph.D. \\ Institute for Scientific Computing}
-\secondsupervisor{Prof. Markus Diesmann \\ Computational and Systems Neuroscience}
+\secondsupervisor{Prof. Dr. Markus Diesmann \\ Computational and Systems Neuroscience and Theoretical Neuroscience}
 %\tutor{Dr. Hristo Iliev}
-\tutor{Dr. Hristo Iliev}
-\extutor{Dr. Fabien Delalondre}
+\tutor{Dr. Hristo Iliev - IT Center}
+\extutor{Dr. Fabien Delalondre - Blue Brain Project}
 
 % options for a PhD thesis
 %\academictitle{eines Doktors der Naturwissenschaften}
@@ -121,17 +121,30 @@ $N_{params}$ & number of parameters\\
 $N_{block}$ & entries inside of block\\
 $M_{max}$ & maximal memory consumption\\
 $m_{synapse}$ & memory consumption of a synapse object\\
+$x_i$ & neuron ids on \emph{Rank 0} $i$\\
 $r_i$ & rank correspond to neuron $i$\\
 $r_{me}$ & own rank id $i$\\
 $t_i$ & thread correspond to thread $i$\\
 $K_{cuttoff}$ & cutoff parameter for number of in-coming synapses per neuron\\
 $\Delta T$ & wall-clock time of the read step\\
 $L$ & wall-clock time of one iteration\\
-$L_{part}$ & wall-clock time of \emph{part} in one iteration\\
+$L_{store}$ & wall-clock time of \emph{store} in one iteration\\
+$L_{load}$ & wall-clock time of \emph{load} in one iteration\\
+$L_{sel}$ & wall-clock time of \emph{sel} in one iteration\\
 $L_{estimate}$ & estimation of the wall-clock time of one iteration\\
 $P_{x,y,z}$ & projection density of voxel with coordinates x,y,z\\
 $N_{x,y,z}$ & number of neurons inside voxel with coordinates x,y,z\\
-$t_{sim}$ & biological time inside simulation
+$t_{sim}$ & biological time inside simulation\\
+$b$ & bandwidth\\
+$\nu$ & distribution coefficient\\
+$\mu$ & imbalance factor\\
+$\omega$ & waiting times\\
+$M$ & distribution of projection values\\
+$n$ & number of neurons per voxel\\
+$m$ & number of voxels in projection\\
+$P$ & probability variable\\
+$D_{i}$ & acceptance boundary value\\
+$rAAV$ & total injection density of one experiment\\
 \end{longtable}
 
 \cleardoublepage
@@ -155,7 +168,7 @@ IO & input or output operation \\
 MPI & Message Passing Interface \\
 \end{longtable}
 
-\clearpage
+\cleardoublepage
 \setcounter{page}{1}
 \pagenumbering{arabic}
 \include{chapter_introduction}

@@ -192,12 +192,13 @@ Each iteration can be partitioned into five parts: acceptance rejection method (
 loading experiment data (\emph{load}), select neurons in injection (\emph{selI}), select neurons in projection (\emph{selP}).
 Thus, the duration per iteration, $L$, is a sum of the partial sums:
 \begin{equation} \label{eq:L}
-	L \approx L_{linear}(n,m,M) + L_{store}(n,\omega) + L_{load}(\nu) + L_{selI}(n) + L_{selP}(m,\nu)
+	L \approx L_{linear}(n,m,M) + L_{store}(n,\omega) + L_{load}(\mu) + L_{selI}(n) + L_{selP}(m,\mu)
 \end{equation}
-$L_{load}(\nu)$, $L_{selI}(n)$ and $L_{selP}(m,\nu)$ are negligible.
+$L_{load}(\mu)$, $L_{selI}(n)$ and $L_{selP}(m,\mu)$ are negligible.
 $\omega$ and $\frac{\partial L_{linear}(n,m,M)}{\partial M}$  can not be estimated satisfyingly.
 $\omega$ represents waiting times, which occur from independent parallel write operations.
 $M$ represents the distribution of probability values.
+$\mu$ represents an imbalance factor.
 The distribution affects the number rejections inside the linear rejection method.
 Therefore, it has a significant impact on the wall-clock time.
 Thus, there is only a rough estimation of the wall-clock time per voxel iteration possible.
@@ -327,6 +328,7 @@ lay inside a cylinder in layer 1 to 6. Visualising the post-synaptic neuron plac
 Stochastic properties were analysed with external scripts, which are not part of this thesis.
 
 The visualization tool Paraview (see Appendix \ref{sec:paraview}) allows a visual comparison of the density values $P_{x,y,z}$ and $N_{x,y,z}$.
+An example is shown in Figure \ref{fig:paraviewex}.
  \begin{figure}[ht!]
 \centering
 \includegraphics[width=0.4\textwidth]{pictures/paraview_ex.png}
@@ -517,7 +519,7 @@ Therefore, Algorithm \ref{alg:import:neurons} sorts out the needed subnets in it
  Read parameter datasets collectively; \\
  Assign parameters to neurons;\\
  \hspace{0.1cm}
-\caption{Import neurons from HDF5 file (see Figure \ref{fig:file:neuron}) inside NEST data structure.}
+\caption{Import neurons from HDF5 file (see Figure \ref{fig:file:neuron}) into NEST data structure.}
 \label{alg:import:neurons}
 \end{algorithm}
 
@@ -594,15 +596,17 @@ Therefore, the dataset of synapses has to be reordered before the synapses can b
  MPI\_Alltoallv using sorted list \\
  Connect all synapses using NEST function \\
 	}
-	\caption{Import synapses, $S_i$ source neuron $i$, $Tn_i$ target neuron $i$.
-	set in brackets contains current needed variables}
+	\caption{Import synapses from HDF5 file into NEST data structure}
 \label{alg:import:synapses}
 \end{algorithm}
 
-Algorithm \ref{alg:import:synapses} loads the synapses block-wise from file, rearranges (see Figure \ref{fig:importsynvis}) the order
+Algorithm \ref{alg:import:synapses} reads the synapses block-wise from file, rearranges (see Figure \ref{fig:importsynvis}) the order
 among ranks and calls the connect function for each synapse on the corresponding rank (see chapter \ref{sec:NEST:Datastructure}).
+For reference, \emph{Read block and store in memory} is called \emph{Read}, \emph{Determine target rank for each synapse} is called
+\emph{Det. Node}, \emph{Sort synapses by target ranks} is called \emph{Sort}, \emph{MPI\_Alltoallv using sorted list} is called \emph{Alltoall}
+and \emph{Connect all synapses using NEST function} is called \emph{Connect} from Algorithm \ref{alg:import:synapses}.
+Needed initializations are grouped to \emph{Initialising}.
 
-\newpage
 \paragraph{Initialising}
 At first each node loads all pre-synaptic neuron references from the \emph{neuron} dataset to memory.
 But each node does not need all of them. 

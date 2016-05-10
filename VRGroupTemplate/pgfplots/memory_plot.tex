@@ -2,7 +2,7 @@
 \usepackage{amsmath}
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
-\pgfplotsset{width=10cm,compat=1.8}
+\pgfplotsset{width=7cm,compat=1.8}
 \begin{document}
 
 %\pgfplotstableread{C4.dat}{\c4}
@@ -14,8 +14,13 @@
     %title=Measured bandwidth,
     xmin=0,
     xmax=160,
+    ymax=17700,
     xlabel={iteration},
-    ylabel={used memory* per node [MB]},
+    ylabel={used memory per node [GB]},
+    ytick={4096, 8192, 12288, 16384},
+    yticklabels={4, 8, 12, 16},
+    xtick={40,80,120,160},
+    scaled y ticks = false,
     grid=major,
     %legend entries={4 racks, min, max, 6 racks, min, max, 8 racks, min, max},
     legend style={cells={anchor=west}},
@@ -27,7 +32,7 @@
 \addplot[thick, mark=none, color=red] table [x expr=\coordindex,y index=0,col sep=space] {M4.dat}; \addlegendentry[]{mean}
 \addplot[dotted,mark=none, color=red] table [x expr=\coordindex,y index=1,col sep=space] {M4.dat}; \addlegendentry{min}
 \addplot[dashed,mark=none, color=red] table [x expr=\coordindex,y index=2,col sep=space] {M4.dat}; \addlegendentry{max}
-\addplot[very thin,mark=none, color=red] plot coordinates {(140,14686.013672) (160,16770.000000)}; \addlegendentry{theoretical}
+%\addplot[very thin,mark=none, color=red] plot coordinates {(140,14686.013672) (160,16760.000000)}; \addlegendentry{est.}
 
 
 \addlegendimage{empty legend}
@@ -37,33 +42,34 @@
 \addplot[dashed, mark=none, color=blue] table [x expr=\coordindex,y index=2,col sep=space] {M6.dat}; \addlegendentry{max}
 
 
-\addlegendimage{empty legend}
-\addlegendentry {8 racks}
-\addplot[mark=none, color=green] table [x expr=\coordindex,y index=0,col sep=space] {M8.dat}; \addlegendentry{mean}
-\addplot[dotted,mark=none, color=green] table [x expr=\coordindex,y index=1,col sep=space] {M8.dat}; \addlegendentry{min}
-\addplot[dashed,mark=none, color=green] table [x expr=\coordindex,y index=2,col sep=space] {M8.dat}; \addlegendentry{max}
+%\addlegendimage{empty legend}
+%\addlegendentry {8 racks}
+%\addplot[mark=none, color=green] table [x expr=\coordindex,y index=0,col sep=space] {M8.dat}; \addlegendentry{mean}
+%\addplot[dotted,mark=none, color=green] table [x expr=\coordindex,y index=1,col sep=space] {M8.dat}; \addlegendentry{min}
+%\addplot[dashed,mark=none, color=green] table [x expr=\coordindex,y index=2,col sep=space] {M8.dat}; \addlegendentry{max}
+
+\addplot[thick, mark=none, color=black] plot coordinates {(0,16384) (160,16384)}; \addlegendentry{limit}
 
 								  
 \addplot[mark=*,color=red] plot coordinates {(140,13848.000000) (140,14686.013672) (140,16112.000000)}
 								  node[pos=0.38, pin=290 :1 ] {} 
 								  node[pos=0, pin=275 :2 ] {} 
-								  node[pos=1, pin=165 :3 ] {}
+								  node[pos=1, pin=175 :3 ] {}
 								  ;
 \addplot[mark=*,color=blue] plot coordinates {(106,10584.000000) (106,11320.238281) (106,12656.000000)}
 								  node[pos=0.35, pin=0 :1 ] {} 
 								  node[pos=0, pin=330 :2 ] {} 
 								  node[pos=1, pin=135 :3 ] {} 
 								  ;
-\addplot[mark=*,color=green] plot coordinates {(79,7976.000000) (79,8617.392452) (79,9952.000000)}
-								  node[pos=0.32, pin=0 :1 ] {} 
-								  node[pos=0, pin=330 :2 ] {} 
-								  node[pos=1, pin=135 :3 ] {} 
-								  ;
-\addplot[mark=*,color=red] plot coordinates {(153.5,16112.000000)}
-								node[pos=0, pin=270 :1* ] {}
-								  ;
-								  								  
-\addplot[mark=none, color=black] plot coordinates {(0,16100) (160,16100)};
+%\addplot[mark=*,color=green] plot coordinates {(79,7976.000000) (79,8617.392452) (79,9952.000000)}
+%								  node[pos=0.32, pin=0 :1 ] {} 
+%								  node[pos=0, pin=330 :2 ] {} 
+%								  node[pos=1, pin=135 :3 ] {} 
+%								  ;
+%\addplot[mark=*,color=red] plot coordinates {(153.5,16112.000000)}
+%								node[pos=0, pin=270 :1* ] {}
+%								  ;
+								  								 
 
 
 \end{axis}
